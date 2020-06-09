@@ -1,6 +1,7 @@
-package com.example.rodrigo.sgame.PlayerNew;
+package com.kyagamy.step.game.newplayer;
 
-import com.example.rodrigo.sgame.CommonSteps;
+
+import com.kyagamy.step.common.step.CommonSteps;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,7 +11,7 @@ import game.GameRow;
 import game.StepObject;
 
 public class GameState {
-    protected ArrayList<GameRow> steps;
+    ArrayList<GameRow> steps;
 
     protected Double currentSpeedMod = 1D;
     protected Double lastScroll = 1D;

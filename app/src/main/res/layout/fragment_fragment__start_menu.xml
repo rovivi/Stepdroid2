@@ -7,7 +7,7 @@
 
     <TextView
         android:id="@+id/loading_text_dialog"
-        style="@style/ShadowWhiteFRee"
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="false"
@@ -21,39 +21,29 @@
         app:layout_constraintTop_toTopOf="@+id/start_image" />
 
     <ImageView
-        android:id="@+id/iv_hexagon3"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:contentDescription="@string/todo"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@android:color/transparent" />
-
-    <ImageView
         android:id="@+id/iv_hexagon1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/todo"
+        android:layout_width="161dp"
+        android:layout_height="141dp"
+        android:layout_marginBottom="32dp"
+        android:contentDescription="todo"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.98"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.952"
         app:srcCompat="@drawable/hexagon2" />
 
     <ImageView
         android:id="@+id/iv_hexagon2"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="50dp"
-        android:contentDescription="@string/todo"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="todo"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_hexagon1"
+        app:layout_constraintEnd_toEndOf="@+id/iv_hexagon1"
+        app:layout_constraintStart_toStartOf="@+id/iv_hexagon1"
+        app:layout_constraintTop_toTopOf="@+id/iv_hexagon1"
         app:srcCompat="@drawable/hexagon2" />
 
     <TextView
@@ -67,7 +57,7 @@
         android:gravity="center"
         android:text=" X "
         android:textAlignment="textEnd"
-        android:textColor="@color/com_facebook_button_login_silver_background_color"
+        android:textColor="@color/colorPrimary"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -81,40 +71,52 @@
         android:id="@+id/start_blour"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="6dp"
-        app:layout_constraintBottom_toBottomOf="@+id/iv_hexagon3"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/iv_hexagon1"
-        app:layout_constraintTop_toTopOf="@+id/iv_hexagon3"
+        app:layout_constraintBottom_toBottomOf="@+id/start_image"
+        app:layout_constraintEnd_toEndOf="@+id/start_image"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/start_image"
+        app:layout_constraintTop_toTopOf="@+id/start_image"
+        app:layout_constraintVertical_bias="1.0"
         app:srcCompat="@drawable/start_1_blour" />
 
     <ImageView
         android:id="@+id/start_image"
         android:layout_width="200sp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
         android:foregroundGravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/iv_hexagon1"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_hexagon2"
+        app:layout_constraintEnd_toEndOf="@+id/iv_hexagon2"
+        app:layout_constraintStart_toStartOf="@+id/iv_hexagon2"
+        app:layout_constraintTop_toTopOf="@+id/iv_hexagon2"
         app:srcCompat="@drawable/ic_start_vector" />
 
-    <TextView
-        android:id="@+id/percent_text_fragment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="8dp"
-        android:text="54%"
-        android:textColor="@android:color/background_light"
-        android:visibility="gone"
+    <FrameLayout
+        android:id="@+id/frame_options"
+        android:layout_width="290dp"
+        android:layout_height="431dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toTopOf="@+id/iv_hexagon2"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.52"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/iv_hexagon2" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_damiss"
+        app:layout_constraintVertical_bias="1.0">
+
+    </FrameLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_levels"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/iv_hexagon1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/frame_options" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

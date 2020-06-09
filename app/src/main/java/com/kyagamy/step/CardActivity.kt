@@ -26,12 +26,10 @@ class CardActivity :  FragmentActivity() {
 
         cycle = findViewById(R.id.cycle)
 
-
-
         val arrayModel =ArrayList<Model>()
         for (x in 0..3){
 
-            arrayModel.add(Model(R.drawable.poster,"title","description"))
+            arrayModel.add(Model(R.drawable.hexa_performance,"title","description"))
             arrayModel.add(Model(R.drawable.ic_launcher_background,"title2","description2 "))
         }
 

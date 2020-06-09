@@ -1,4 +1,4 @@
-package com.kyagamy.step.Common.step.CommonGame
+package com.kyagamy.step.common.step.CommonGame
 
 import android.content.Context
 import android.graphics.*

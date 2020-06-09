@@ -1,10 +1,11 @@
-package com.kyagamy.step.Common.step.CommonGame
+package com.kyagamy.step.common.step.CommonGame
 
 /**
  * Created : Rodrigo Vidal
  * This class is used to manage the preferences in the game
  */
 object ParamsSong {
+
     var speed = 2f
     var judgment = 3
     var av = -1

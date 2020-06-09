@@ -1,4 +1,4 @@
-package com.kyagamy.step.Common.step.CommonGame.CustomSprite;
+package com.kyagamy.step.common.step.CommonGame.CustomSprite;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -10,7 +10,7 @@ import android.graphics.Rect;
 import android.graphics.Shader;
 
 
-import com.kyagamy.step.Common.step.CommonGame.TransformBitmap;
+import com.kyagamy.step.common.step.CommonGame.TransformBitmap;
 
 import java.util.ArrayList;
 

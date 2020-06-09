@@ -1,22 +1,19 @@
-package com.example.rodrigo.sgame.PlayerNew;
+package com.kyagamy.step.game.newplayer;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
-import com.example.rodrigo.sgame.CommonGame.Common;
-import com.example.rodrigo.sgame.CommonGame.CustomSprite.SpriteReader;
-import com.example.rodrigo.sgame.CommonGame.ParamsSong;
-import com.example.rodrigo.sgame.CommonGame.TransformBitmap;
-import com.example.rodrigo.sgame.CommonSteps;
-import com.example.rodrigo.sgame.Player.NoteSkin;
+
+import com.kyagamy.step.common.Common;
+
+import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader;
+import com.kyagamy.step.common.step.CommonGame.ParamsSong;
+import com.kyagamy.step.common.step.CommonSteps;
 
 import java.util.ArrayList;
-import java.util.Stack;
 
 import game.GameRow;
 import game.Note;
@@ -56,7 +53,7 @@ public class StepsDrawer {
         //que tipo de tablero y nivel es aqui se tiene que calcular las medidas necesarias
 
 
-        posInitialX = (int) (Common.WIDTH * 0.1);
+        posInitialX = (int) (Common.Companion.getWIDTH() * 0.1);
         longInfo[1] = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
@@ -68,18 +65,18 @@ public class StepsDrawer {
                 noteSkins[ROUTINE1_SKIN] = new NoteSkin(context, gameMode, "routine2");
                 noteSkins[ROUTINE2_SKIN] = new NoteSkin(context, gameMode, "routine3");
                 noteSkins[ROUTINE3_SKIN] = new NoteSkin(context, gameMode, "soccer");
-                sizeNote = (int) ((Common.WIDTH * 0.8) / 10);
+                sizeNote = (int) ((Common.Companion.getWIDTH() * 0.8) / 10);
                 break;
             case "pump-double":
-                sizeNote = (int) ((Common.WIDTH * 0.8) / 10);
-                noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, ParamsSong.nameNoteSkin);
+                sizeNote = (int) ((Common.Companion.getWIDTH() * 0.8) / 10);
+                noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, "prime");
                 break;
             case "pump-single":
-                sizeNote = (int) ((Common.WIDTH * 0.7) / 5);
-                noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, ParamsSong.nameNoteSkin);
+                sizeNote = (int) ((Common.Companion.getWIDTH() * 0.7) / 5);
+                noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, "prime");
                 break;
             case "pump-halfdouble":
-                noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, ParamsSong.nameNoteSkin);
+                noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, "prime");
                 break;
             //noteSkins[1] = new NoteSkin(context, gameMode, "routine2");
             case "dance-single":

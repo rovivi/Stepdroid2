@@ -6,7 +6,7 @@ import androidx.room.*
 
 @Dao
 interface CategoryDao {
-    @Query("SELECT * FROM Category")
+    @Query("SELECT * FROM Category order by name asc")
     fun getAll(): LiveData<List<Category>>
 
 //    @Query("SELECT * FROM Category")
@@ -21,6 +21,10 @@ interface CategoryDao {
 
     @Query("delete from Category")
     fun deleteAll()
+
+
+    @Query(value = "select  * from Category where name=:arg0")
+    fun getByName(arg0:String):Category
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(cate: Category)

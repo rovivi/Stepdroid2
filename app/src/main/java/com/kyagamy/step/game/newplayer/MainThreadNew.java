@@ -1,7 +1,6 @@
-package com.example.rodrigo.sgame.PlayerNew;
+package com.kyagamy.step.game.newplayer;
 
 import android.graphics.Canvas;
-import android.graphics.PorterDuff;
 import android.view.SurfaceHolder;
 
 public class MainThreadNew extends Thread {

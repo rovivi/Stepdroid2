@@ -1,14 +1,15 @@
-package com.example.rodrigo.sgame.Player;
+package com.kyagamy.step.game.newplayer;
 
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import com.example.rodrigo.sgame.CommonGame.Common;
-import com.example.rodrigo.sgame.CommonGame.CustomSprite.SpriteReader;
-import com.example.rodrigo.sgame.CommonGame.TransformBitmap;
-import com.example.rodrigo.sgame.R;
+
+import com.kyagamy.step.R;
+import com.kyagamy.step.common.Common;
+import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader;
+import com.kyagamy.step.common.step.CommonGame.TransformBitmap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,9 +61,9 @@ public class NoteSkin {
             //receptor.play();
 
             BitmapFactory.Options myOpt = new BitmapFactory.Options();
-            myOpt.inSampleSize = 1 * Common.Compression2D;
+            myOpt.inSampleSize = 1 * Common.Companion.getCompression2D();
             BitmapFactory.Options myOpt2 = new BitmapFactory.Options();
-            myOpt2.inSampleSize = 4 * Common.Compression2D;
+            myOpt2.inSampleSize = 4 * Common.Companion.getCompression2D();
             arrows = new SpriteReader[numberSteps];
             tails = new SpriteReader[numberSteps];
             longs = new SpriteReader[numberSteps];
@@ -77,11 +78,11 @@ public class NoteSkin {
                  //   arrayAux[0]=receptorArray[j];
               //  tapsEffect[j + 5] = new SpriteReader(TransformBitmap.customSpriteArray(BitmapFactory.decodeResource(context.getResources(), R.drawable.pad_pressed, myOpt), 5, 2, j, j + 5, j + 5, j), 0.2f);
                 if (assetPath) {
-                    InputStream stream1 = context.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[j] + "tap.png");
-                    InputStream stream2 = context.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[j] + "hold.png");
-                    InputStream stream3 = context.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[j] + "hold_end.png");
-                    InputStream stream4 = context.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[j] + "receptor.png");
-                    Bitmap [] arrayAux2 =TransformBitmap.customSpriteArray(Objects.requireNonNull(BitmapFactory.decodeStream(stream4, null, myOpt)), 1, 3, 0, 1,2);
+                    InputStream stream1 = context.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[j] + "tap.png");
+                    InputStream stream2 = context.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[j] + "hold.png");
+                    InputStream stream3 = context.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[j] + "hold_end.png");
+                    InputStream stream4 = context.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[j] + "receptor.png");
+                    Bitmap [] arrayAux2 = TransformBitmap.Companion.customSpriteArray(Objects.requireNonNull(BitmapFactory.decodeStream(stream4, null, myOpt)), 1, 3, 0, 1,2);
                     arrows[j] = new SpriteReader(Objects.requireNonNull(BitmapFactory.decodeStream(stream1, null, myOpt)), 3, 2, 0.32f);
                     tails[j] = new SpriteReader(Objects.requireNonNull(BitmapFactory.decodeStream(stream3, null, myOpt)), 6, 1, 0.32f);
                     longs[j] = new SpriteReader(Objects.requireNonNull(BitmapFactory.decodeStream(stream2, null, myOpt)), 6, 1, 0.32f);
@@ -108,7 +109,7 @@ public class NoteSkin {
 
             Bitmap xploBitmap= BitmapFactory.decodeStream(context.getAssets().open(pathNS + "_explosion 6x1.png"));
            // Bitmap ex plotion= TransformBitmap.replaceColor(BitmapFactory.decodeStream(context.getAssets().open(pathNS + "_explosion 6x1.png")),Color.BLACK,Color.TRANSPARENT);
-            Bitmap[] explotionArray= TransformBitmap.customSpriteArray(xploBitmap,6,1,0,1,2,3,4,5);
+            Bitmap[] explotionArray= TransformBitmap.Companion.customSpriteArray(xploBitmap,6,1,0,1,2,3,4,5);
 
             for (int cd = 0; cd < numberSteps; cd++) {
                 Bitmap[] explotionArray2= new Bitmap[6];
@@ -163,10 +164,10 @@ public class NoteSkin {
         for (int j = 0; j < 5; j++) {
             if (true) {
                 try {
-                    InputStream stream1 = c.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[j] + "tap.png");
-                    InputStream stream2 = c.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[j] + "hold.png");
-                    InputStream stream3 = c.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[j] + "hold_end.png");
-                    InputStream stream4 = c.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[j] + "receptor.png");
+                    InputStream stream1 = c.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[j] + "tap.png");
+                    InputStream stream2 = c.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[j] + "hold.png");
+                    InputStream stream3 = c.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[j] + "hold_end.png");
+                    InputStream stream4 = c.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[j] + "receptor.png");
                 } catch (IOException e) {
                     e.printStackTrace();
                     return false;
@@ -182,11 +183,11 @@ public class NoteSkin {
         String pathNS = "NoteSkins/pump/" + name + "/";
         InputStream stream1 = null;
         try {
-            stream1 = c.getAssets().open(pathNS + Common.PIU_ARROW_NAMES[1] + "tap.png");
+            stream1 = c.getAssets().open(pathNS + Common.Companion.getPIU_ARROW_NAMES()[1] + "tap.png");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return TransformBitmap.customSpriteArray(BitmapFactory.decodeStream(stream1), 3, 2, 0)[0];
+        return TransformBitmap.Companion.customSpriteArray(BitmapFactory.decodeStream(stream1), 3, 2, 0)[0];
     }
 
 

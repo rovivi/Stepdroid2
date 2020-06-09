@@ -26,7 +26,7 @@
 
         />
 
-    <com.example.rodrigo.sgame.PlayerNew.GamePlayNew
+    <com.kyagamy.step.game.newplayer.GamePlayNew
         android:id="@+id/gamePlay"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -48,7 +48,7 @@
         android:id="@+id/bg_pad"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:contentDescription="@string/todo"
+        android:contentDescription="asd"
         android:scaleType="fitXY"
         android:src="@drawable/no_banner"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -64,7 +64,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:text=""
-        android:textColor="@color/com_facebook_button_background_color_focused"
+        android:textColor="@color/cancel_color"
         android:textSize="30sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@+id/bgVideoView2"

@@ -1,11 +1,10 @@
-package com.kyagamy.step.Common.step
+package com.kyagamy.step.common.step
 
 import android.util.Log
 import game.GameRow
 import game.Note
 import java.lang.Exception
 import java.util.*
-import kotlin.ConcurrentModificationException
 import kotlin.collections.ArrayList
 
 public class CommonSteps {

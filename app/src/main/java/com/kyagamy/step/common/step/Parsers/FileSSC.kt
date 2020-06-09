@@ -1,10 +1,12 @@
-package parsers
+package com.kyagamy.step.common.step.Parsers
 
 
-import com.kyagamy.step.Common.step.CommonSteps
+import com.kyagamy.step.common.step.CommonSteps
+import com.kyagamy.step.room.entities.Level
 import game.GameRow
 import game.Note
 import game.StepObject
+import parsers.StepFile
 import java.lang.Exception
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
@@ -15,7 +17,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
     override fun writeFile(path: String) {
     }
 
-    override fun parseData(): StepObject {
+    override fun parseData(fastMode: Boolean): StepObject {
         //var stringData = StepFile.UtilsSteps.pathToString(pathFile)
         var stringData = pathFile
         val songMetaData: HashMap<String, String> = HashMap()
@@ -25,9 +27,15 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         stepObject.levelMetada = HashMap()
         var steps: ArrayList<GameRow> = arrayListOf()
 
+        //new variables tos save room orm
+        var listLevels = ArrayList<Level>()
+        var auxIndexToSaveORM = 0;
+
+
         //Se limpian los comen
         // tarios
-        stringData = stringData.replace(Regex("(\\s+//-([^;]+)\\s)|(//[\\s+]measure\\s[0-9]+\\s)"), "")
+        stringData =
+            stringData.replace(Regex("(\\s+//-([^;]+)\\s)|(//[\\s+]measure\\s[0-9]+\\s)"), "")
 
         //Se crea el matcher Para Seccionar el Regex
         val matcher = Pattern.compile("#([^;]+);").matcher(stringData)
@@ -41,24 +49,50 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
             if (key == "NOTEDATA") {
                 indexLevel++
             }//next step
-            when (indexLevel) {
-                indexStep -> when (key) {
-                    "NOTES" -> steps = processNotes(value)
-                    "STEPSTYPE" -> stepObject.stepType = value
-                    "BPMS", "STOPS", "DELAYS", "WARPS", "TIMESIGNATURES", "TICKCOUNTS", "COMBOS", "SPEEDS", "SCROLLS" -> {
-                        if (value != "") modifiers[key] = fillModifiers(value)
-                    }
-                    else -> {
-                        levelMetaData[key] = value
-                    }
-                }
-                -1 -> {
-                    when (key) {//Si se tienen effectos globales
-                        "BPMS", "STOPS", "DELAYS", "WARPS", "TIMESIGNATURES", "TICKCOUNTS", "COMBOS", "SPEEDS", "SCROLLS" ->
+            if (!fastMode) {
+                when (indexLevel) {
+                    indexStep -> when (key) {
+                        "NOTES" -> steps = processNotes(value)
+                        "STEPSTYPE" -> stepObject.stepType = value
+                        "BPMS", "STOPS", "DELAYS", "WARPS", "TIMESIGNATURES", "TICKCOUNTS", "COMBOS", "SPEEDS", "SCROLLS" -> {
                             if (value != "") modifiers[key] = fillModifiers(value)
-                        else -> songMetaData[key] = value
+                        }
+                        else -> {
+                            levelMetaData[key] = value
+                        }
+                    }
+                    -1 -> {
+                        when (key) {//Si se tienen effectos globales
+                            "BPMS", "STOPS", "DELAYS", "WARPS", "TIMESIGNATURES", "TICKCOUNTS", "COMBOS", "SPEEDS", "SCROLLS" ->
+                                if (value != "") modifiers[key] = fillModifiers(value)
+                            else -> songMetaData[key] = value
+                        }
                     }
                 }
+            } else {
+                if (indexLevel != -1) {//means not LEVEL TAG
+                    if (auxIndexToSaveORM != indexLevel) {//when change level
+                        listLevels.add(
+                            Level(
+                                0,
+                                auxIndexToSaveORM,
+                                levelMetaData["METER"] ?: "",
+                                levelMetaData["CREDIT"] ?: "",
+                                levelMetaData["STEPSTYPE"] ?: "",
+                                levelMetaData["DESCRIPTION"] ?: "",
+                                -1,
+                                null
+                            )
+                        )
+                        auxIndexToSaveORM++
+                    } else {
+                        levelMetaData[key] = value
+
+                    }
+
+                } else
+                    songMetaData[key] = value
+
             }
         }
         /**End Parsing */
@@ -71,7 +105,12 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                         println("processing " + modifier.key)
                         val beat = values[0]
                         val element =
-                                steps.firstOrNull { row -> CommonSteps.almostEqual(row.currentBeat, beat) }
+                            steps.firstOrNull { row ->
+                                CommonSteps.almostEqual(
+                                    row.currentBeat,
+                                    beat
+                                )
+                            }
                         val index = (steps.indexOf(element))
                         if (index != -1) {
                             if (steps[index].modifiers == null) {
@@ -92,7 +131,10 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         }
 
         //se ordernan
-        CommonSteps.applyLongNotes(steps, CommonSteps.lengthByStepType(stepObject.stepType))//Se aplican los longs
+        CommonSteps.applyLongNotes(
+            steps,
+            CommonSteps.lengthByStepType(stepObject.stepType)
+        )//Se aplican los longs
 
         CommonSteps.stopsToScroll(steps)//Se aplican los stops
         CommonSteps.orderByBeat(steps)
@@ -101,6 +143,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         /**End Apply effects*/
         stepObject.songMetada = songMetaData
         stepObject.levelMetada = levelMetaData
+        stepObject.levelList =listLevels
         //stepObject.steps.forEach { x -> println(x) }
         return stepObject
     }

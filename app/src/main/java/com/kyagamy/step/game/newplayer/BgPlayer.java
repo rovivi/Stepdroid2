@@ -1,18 +1,18 @@
-package com.example.rodrigo.sgame.PlayerNew;
+package com.kyagamy.step.game.newplayer;
 
 import android.content.Context;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.media.MediaPlayer;
+import android.content.SharedPreferences;
 import android.widget.VideoView;
-import com.example.rodrigo.sgame.CommonGame.Common;
-import com.example.rodrigo.sgame.R;
+
+import com.kyagamy.step.R;
+import com.kyagamy.step.common.Common;
+
 import java.util.ArrayList;
 
 public class BgPlayer {
     private VideoView player;
     private int currentBg = 0;
-    public ArrayList<bgChange> BGList = new ArrayList<>();
+    private ArrayList<bgChange> BGList = new ArrayList<>();
     private Context context;
     boolean changeVideo = false, isRunning = false;
     private String path;
@@ -40,6 +40,10 @@ public class BgPlayer {
             if (changeVideo && bg.beat <= beat) {
 
                 try {
+                    SharedPreferences sharedPref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
+                    String basePath = sharedPref.getString(context.getString(R.string.base_path), "Error path");
+
+
                     if (bg.fileName.contains(".")){
                     String ext = bg.fileName.substring(bg.fileName.lastIndexOf("."));
                     ext = ext.toLowerCase();
@@ -52,12 +56,12 @@ public class BgPlayer {
                         case ".mpeg":
                         case ".mpg":
                         case ".flv":
-                            String bgaDir = Common.checkBGADir(path, bg.fileName, context);
+                            String bgaDir = Common.Companion.checkBGADir(path, bg.fileName, basePath);
                             player.setBackground(null);
                             if (bgaDir != null) {
                                 player.setVideoPath(bgaDir);
                                 if (bg.beat<0)
-                                    player.seekTo((int) Math.abs(Common.beat2Second(bg.beat,BPM)*1000  +100));
+                                    player.seekTo((int) Math.abs(Common.Companion.beat2Second(bg.beat,BPM)*1000  +100));
                                 player.start();
                             }
                             else
@@ -68,10 +72,11 @@ public class BgPlayer {
                         case ".jpg":
                         case ".bpm":
                         case ".tiff":
-                            bgaDir = Common.checkBGADir(path, bg.fileName, context);
-                            if (bgaDir != null) {
-                                player.setBackground(new BitmapDrawable(BitmapFactory.decodeFile(bgaDir)));
-                            } else
+//                            bgaDir = Common.checkBGADir(path, bg.fileName, context);
+//                            if (bgaDir != null) {
+//                                player.setBackground(new BitmapDrawable(BitmapFactory.decodeFile(bgaDir)));
+//                            } else
+                            //no se utilizo owo
                                 playBgaOff();
                             break;
                         default:
@@ -118,16 +123,21 @@ public class BgPlayer {
                     beat = Float.parseFloat(info[0]);
                     fileName = info[1];
                     prop1 = Float.parseFloat(info[2]);
-                    prop2 = Byte.parseByte(info[3]);
-                    prop3 = Byte.parseByte(info[4]);
-                    prop4 = Byte.parseByte(info[5]);
+                    //prop2 = Byte.parseByte(info[3]);
+                    //prop3 = Byte.parseByte(info[4]);
+                    //prop4 = Byte.parseByte(info[5]);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             } else {
-                beat = -1;
-                if (info[0] != null && info[0] != "") {
-                    fileName = info[0];
+                try {
+                    beat = -1;
+                    if (info[0] != null && info[0] != "") {
+                        fileName = info[0];
+                    }
+                }
+                catch (Exception ex){
+                    ex.printStackTrace();
                 }
             }
         }

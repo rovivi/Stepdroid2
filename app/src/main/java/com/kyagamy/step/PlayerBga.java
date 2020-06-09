@@ -1,4 +1,4 @@
-package com.example.rodrigo.sgame;
+package com.kyagamy.step;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,11 +9,8 @@ import android.graphics.Point;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
-import android.os.Handler;
-import androidx.annotation.RequiresApi;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.Guideline;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,17 +21,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.crashlytics.android.Crashlytics;
-import com.example.rodrigo.sgame.CommonGame.Common;
-import com.example.rodrigo.sgame.CommonGame.ParamsSong;
-import com.example.rodrigo.sgame.PlayerNew.GamePlayNew;
-import com.example.rodrigo.sgame.PlayerNew.MainThreadNew;
+import androidx.annotation.RequiresApi;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.Guideline;
+
+import com.kyagamy.step.common.Common;
+import com.kyagamy.step.common.step.CommonGame.ParamsSong;
+import com.kyagamy.step.common.step.Parsers.FileSSC;
+import com.kyagamy.step.game.newplayer.GamePlayNew;
+import com.kyagamy.step.game.newplayer.MainThreadNew;
+import com.squareup.picasso.Picasso;
 
 import java.io.FileInputStream;
 
 import game.StepObject;
-import io.fabric.sdk.android.Fabric;
-import parsers.FileSSC;
 
 public class PlayerBga extends Activity {
     GamePlayNew gpo;
@@ -62,7 +62,7 @@ public class PlayerBga extends Activity {
                 indexMsj++;
             } else {
                 tvMsj.setText("");
-                Common.AnimateFactor = 0;
+                Common.Companion.setAnimateFactor(0);
                 bgPad.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_in));
                 tvMsj.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), android.R.anim.slide_out_right));
                 startGamePlay();
@@ -74,27 +74,11 @@ public class PlayerBga extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        i = new Intent(this, EvaluationActivity.class);
-        try {
-            //this.getSupportActionBar().hide();
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            getWindow().getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE);
-        } catch (NullPointerException e) {
-
-        }
 
         setContentView(R.layout.activity_playerbga);
         tvMsj = findViewById(R.id.gamemsg);
         audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        //evaluationIntet = new Intent(this, EvaluationActivity.class);
+
         bg = findViewById(R.id.bgVideoView2);
         gl = findViewById(R.id.guideline);
 
@@ -103,30 +87,23 @@ public class PlayerBga extends Activity {
         bgPad = findViewById(R.id.bg_pad);
         hilo = gpo.mainTread;
         String pathImg = getIntent().getExtras().getString("pathDisc", null);
-        if (pathImg != null) {
-            bgPad.setImageBitmap(BitmapFactory.decodeFile(pathImg));
-        }
+        if (pathImg != null)
+            Picasso.get().load(R.drawable.caution).into(bgPad);
 
         bg.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 mp.setLooping(true);
-                mp.setVolume(0,0);
+                mp.setVolume(0, 0);
             }
         });
-
-
     }
 
 
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
-
-
         return super.dispatchGenericMotionEvent(ev);
     }
-
-
 
     @Override
     public void onPause() {
@@ -139,12 +116,9 @@ public class PlayerBga extends Activity {
         super.onResume();
     }
 
-
     public void setVideoPath(String uri) {
-        if (uri != null) {
+        if (uri != null)
             bg.setVideoPath(uri);
-        }
-
     }
 
     public void startVideo() {
@@ -152,7 +126,7 @@ public class PlayerBga extends Activity {
             mediaPlayer.setLooping(true);
             mediaPlayer.setVolume(0, 0);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(ParamsSong.rush));// Esto será para el rush
+                //mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(ParamsSong.getRush));// Esto será para el rush
             }
         });
         bg.start();
@@ -176,21 +150,10 @@ public class PlayerBga extends Activity {
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        final Fabric fabric = new Fabric.Builder(this)
-                .kits(new Crashlytics())
-                .debuggable(true)           // Enables Crashlytics debugger
-                .build();
-        Fabric.with(fabric);
-
-        if (Common.ANIM_AT_START){
-            textAnimator.run();
-        }
-        else {
-            startGamePlay();
-        }
+        startGamePlay();
     }
 
-    public Point getresolution() {
+    public Point getResolution() {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int height = displayMetrics.heightPixels;
@@ -202,16 +165,16 @@ public class PlayerBga extends Activity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void startGamePlay() {
         try {
-
             gpo.setTop(0);
-            String rawscc = getIntent().getExtras().getString("ssc");
+
+            String rawSSC = getIntent().getExtras().getString("ssc");
             String path = getIntent().getExtras().getString("path");
-            String s = Common.convertStreamToString(new FileInputStream(rawscc));
+            String s = Common.Companion.convertStreamToString(new FileInputStream(rawSSC));
             try {
-                StepObject step = new FileSSC(s,nchar).parseData();
+                StepObject step = new FileSSC(s, nchar).parseData(false);
                 step.setPath(path);
 //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
-                gpo.build1Object(bg,step);
+                gpo.build1Object(bg, step);
             } catch (Exception e) {
                 e.printStackTrace();
                 gamePlayError = true;
@@ -235,12 +198,9 @@ public class PlayerBga extends Activity {
             return true;
         });
 
-        if (!gamePlayError && gpo != null) {
+        if (!gamePlayError && gpo != null)
             gpo.startGame();
-        } else {
+        else
             finish();
-        }
     }
-
-
 }

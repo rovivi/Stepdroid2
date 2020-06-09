@@ -31,4 +31,17 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
     fun insert(song: Song) = viewModelScope.launch(Dispatchers.IO) {
         repository.insert(song)
     }
+
+    fun deleteAll() = viewModelScope.launch(Dispatchers.IO) {
+        repository.deleteAll()
+    }
+
+     fun  categorySong (nameCategory: String):LiveData<List<Song>> {
+        return  repository.categorySong(nameCategory)
+    }
+
+     fun songById (id: Int):LiveData<List<Song>> {
+        return  repository.idSong(id)
+    }
+
 }

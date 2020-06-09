@@ -19,4 +19,6 @@ class CategoryRepository(private val cateDao: CategoryDao) {
     suspend fun deleteAll() {
         cateDao.deleteAll()
     }
+
+
 }

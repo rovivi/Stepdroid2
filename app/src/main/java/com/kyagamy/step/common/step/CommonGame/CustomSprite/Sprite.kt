@@ -1,4 +1,4 @@
-package com.kyagamy.step.Common.step.CommonGame.CustomSprite
+package com.kyagamy.step.common.step.CommonGame.CustomSprite
 
 import android.content.Context
 import android.graphics.Canvas

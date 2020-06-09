@@ -9,6 +9,6 @@ class Category (
     val name:String,
     val path:String,
     val banner:String?,
-    val music:String?
+    val music_category:String?
 
 )

@@ -1,28 +1,35 @@
-package com.kyagamy.step.Common
+package com.kyagamy.step.common
 
-import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.graphics.Point
-import android.os.AsyncTask
-import android.os.Environment
-import android.provider.Settings.Global.getString
 import android.util.DisplayMetrics
 import android.view.WindowManager
-import com.kyagamy.step.R
 import java.io.*
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.*
-import java.util.concurrent.ExecutionException
 
-class Common {
+
+public class Common {
     companion object {
-        private val commonTime = 41.6f
+        var WIDTH: Double = 720.0
+        var HEIGHT = 1080
+
+        fun getSize (context: Context):Point{
+            val d =(context.getSystemService(Context.WINDOW_SERVICE) as WindowManager?)!!.defaultDisplay
+            val width = d.width
+            val height = d.height
+            return  Point(width,height)
+
+        }
+
+
+
+        val commonTime = 41.6f
 
         var HIDE_PAD = false
-        var WIDTH = 0
-        var HEIGHT = 0
+
+        //var WIDTH = 0
+
         var OFFSET = 0
         var HIDENAVBAR = false
         var AnimateFactor = 100
@@ -52,6 +59,24 @@ class Common {
             arrayOf(JudgeSJ, JudgeEJ, JudgeNJ, JudgeHJ, JudgeVJ, JudgeXJ, JudgeUJ)
 
 
+        fun checkBGADir(
+            currentpath: String,
+            bganame: String,
+            basePath: String
+        ): String? {
+            var directory: String? = null
+            if (File("$currentpath/$bganame").exists()) {
+                directory = "$currentpath/$bganame"
+            } else if (File(
+                    "$basePath/stepdroid/songmovies/$bganame"
+                ).exists()
+            ) {
+                directory = File(
+                    "$basePath/stepdroid/songmovies/$bganame"
+                ).path
+            }
+            return directory
+        }
 
 
         fun getRandomNumberInRange(min: Int, max: Int): Int {
@@ -59,8 +84,6 @@ class Common {
             val r = Random()
             return r.nextInt(max - min + 1) + min
         }
-
-
 
 
         @Throws(Exception::class)
@@ -124,46 +147,6 @@ class Common {
             return result.toString("UTF-8")
         }
 
-
-//    fun bgaExist(url: String?): Boolean {
-//        return try {
-//            checkBga().execute(url).get()
-//        } catch (e: InterruptedException) {
-//            e.printStackTrace()
-//            false
-//        } catch (e: ExecutionException) {
-//            e.printStackTrace()
-//            false
-//        }
-//    }
-////
-////
-//    class checkBga :  AsyncTask<String?, Void?, Boolean>() {
-//        override fun onPreExecute() {}
-//        protected override fun doInBackground(vararg params: String): Boolean {
-//            return try {
-//                HttpURLConnection.setFollowRedirects(false)
-//                val con =
-//                    URL(params[0]).openConnection() as HttpURLConnection
-//                con.requestMethod = "HEAD"
-//                println(con.responseCode)
-//                con.responseCode == HttpURLConnection.HTTP_OK
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//                false
-//            }
-//        }
-//
-//        override fun onPostExecute(result: Boolean) {
-//            if (result == true) {
-//                //Toast.makeText(MainActivity.this, "File exists!", Toast.LENGTH_SHORT).show();
-//            } else {
-//                //Toast.makeText(MainActivity.this, "File does not exist!", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-
-
         fun compareRecords(
             context: Context,
             nameSongs: String?,
@@ -174,7 +157,6 @@ class Common {
             val oldRecord = sharedPref.getFloat(nameSongs, 0f)
             return oldRecord <= percent
         }
-
 
         fun writeRecord(
             context: Context,
@@ -195,8 +177,6 @@ class Common {
             val result = sharedPref.getFloat(nameSongs, -1f)
             return if (result != -1f) result.toString() + "" else "N/A"
         }
-
-
 
     }
 

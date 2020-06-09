@@ -1,22 +1,22 @@
-package com.example.rodrigo.sgame.PlayerNew;
+package com.kyagamy.step.game.newplayer;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
-import androidx.annotation.RequiresApi;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.VideoView;
 
-import com.example.rodrigo.sgame.CommonGame.Common;
-import com.example.rodrigo.sgame.CommonGame.ParamsSong;
+import androidx.annotation.RequiresApi;
+import com.kyagamy.step.common.Common;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,6 +72,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             gameState = new GameState(stepData);
             gameState.reset();
             mpMusic = new MediaPlayer();
+
             mainTread = new MainThreadNew(getHolder(), this);
             mainTread.setRunning(true);
 
@@ -82,15 +83,16 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             paint = new Paint();
             paint.setTextSize(30);
             //-- Metrics of player
-            playerSizeX = Common.WIDTH;
-            playerSizeY = Common.HEIGHT;
+            Point size = Common.Companion.getSize(getContext());
+            playerSizeX =size.x;
+            playerSizeY = (int) (size.x/0.5625d);
 
 
             paint.setColor(Color.WHITE);
             try {
                 mpMusic.setDataSource(stepData.getMusicPath());
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    mpMusic.setPlaybackParams(mpMusic.getPlaybackParams().setSpeed(ParamsSong.rush));// Esto será para el rush
+                 //   mpMusic.setPlaybackParams(mpMusic.getPlaybackParams().setSpeed(ParamsSong.rush));// Esto será para el rush
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -127,7 +129,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                         gameState.isRunning = true;
                     });
                     bgPlayer.start(gameState.currentBeat);
-                    mpMusic.prepare();
+                   mpMusic.prepare();
                 }
             } else
                 mainTread.sulrfaceHolder = this.getHolder();
@@ -150,7 +152,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         try {
-            int speed = (int) (50 * ParamsSong.speed);
+            int speed = (int) (50 * 7);
             double lastScrollAux = gameState.lastScroll;
             double lastBeat = this.gameState.currentBeat + 0;
             double lastPosition = 100;

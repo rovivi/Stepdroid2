@@ -1,6 +1,8 @@
 package game
 
+import com.kyagamy.step.room.entities.Level
 import java.util.*
+import kotlin.collections.ArrayList
 
 class StepObject {
     /**Game Data*/
@@ -16,6 +18,10 @@ class StepObject {
     var path: String = ""
     var songFileName: String = ""
     var bgImageFileName: String = ""
+
+    /**ORM UTIL */
+    var levelList : ArrayList<Level>? =null
+
 
 
     //Functions

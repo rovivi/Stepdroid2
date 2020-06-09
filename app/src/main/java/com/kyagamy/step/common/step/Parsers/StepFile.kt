@@ -8,7 +8,7 @@ import java.io.FileNotFoundException
 interface StepFile {
     var pathFile:String
     var indexStep:Int
-    fun parseData (): StepObject
+    fun parseData (fastMode:Boolean): StepObject
     fun writeFile (path :String)
 
     class UtilsSteps {

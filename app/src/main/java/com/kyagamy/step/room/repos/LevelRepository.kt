@@ -1,24 +1,22 @@
 package com.kyagamy.step.room.repos
-
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import com.kyagamy.step.room.entities.Song
-import com.kyagamy.step.room.entities.SongDao
+import com.kyagamy.step.room.entities.Level
+import com.kyagamy.step.room.entities.LevelDao
 
-class SongRepository(private val songDao: SongDao) {
+class LevelRepository(private val levelDao: LevelDao) {
 
     // Room executes all queries on a separate thread.
     // Observed LiveData will notify the observer when the data has changed.
-    val allSong: LiveData<List<Song>> = songDao.getAll()
-    fun  categorySong (nameCategory: String):LiveData<List<Song>> {
-        return  songDao.getCategory(nameCategory)
+    val alllevel: LiveData<List<Level>> = levelDao.getAll()
+    fun  getLevelBySongId (levelId :Int):LiveData<List<Level>> {
+        return  levelDao.getLevelBySongId(levelId)
     }
 
     fun  deleteAll (){
-        songDao.deleteAll()
+        levelDao.deleteAll()
     }
 
-    suspend fun insert(song: Song) {
-        songDao.insert(song)
+    suspend fun insert(level: Level) {
+        levelDao.insert(level)
     }
 }

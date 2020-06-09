@@ -5,23 +5,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.kyagamy.step.room.entities.Category
-import com.kyagamy.step.room.entities.CategoryDao
-import com.kyagamy.step.room.entities.Song
-import com.kyagamy.step.room.entities.SongDao
+import com.kyagamy.step.room.entities.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Song::class, Category::class],
-    version = 3,
+    entities = [Song::class, Category::class, Level::class],
+    version = 12    ,
     exportSchema = false
 )
  abstract class SDDatabase : RoomDatabase() {
 
+    var nameDatabase="sd_database"
     abstract fun songsDao(): SongDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun levelDao(): LevelDao
 
     companion object {
         // Singleton prevents multiple instances of database opening at the
@@ -34,12 +33,28 @@ import kotlinx.coroutines.launch
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     SDDatabase::class.java,
-                    "word_database"
+                    "sd_database"
                 )
                     // Wipes and rebuilds instead of migrating if no Migration object.
                     // Migration is not part of this codelab.
                     .fallbackToDestructiveMigration()
                     .addCallback(SDDatabaseCallback(scope))
+                    .build()
+                INSTANCE = instance
+                // return instance
+                instance
+            }
+        }
+        fun getRedeableDatabase (context: Context):SDDatabase{
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    SDDatabase::class.java,
+                    "sd_database"
+                )
+                    // Wipes and rebuilds instead of migrating if no Migration object.
+                    // Migration is not part of this codelab.
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 // return instance
