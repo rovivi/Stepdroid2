@@ -2,8 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="60dp"
+    android:layout_height="60dp"
     android:layout_margin="0sp"
     android:layout_marginStart="0sp"
     android:layout_marginLeft="0sp"
@@ -49,30 +49,34 @@
         android:layout_height="0dp"
         android:contentDescription="@string/todo"
         android:scaleType="fitXY"
-        app:layout_constraintBottom_toBottomOf="@+id/item_level_text"
-        app:layout_constraintEnd_toEndOf="@+id/level_item_staticBG"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/level_item_staticBG"
-        app:layout_constraintTop_toTopOf="@+id/level_item_staticBG"
-        app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@drawable/level_glow" />
-
-    <TextView
-        android:id="@+id/item_level_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/karma_light"
-        android:letterSpacing="20"
-        android:text="01"
-        android:textColor="@color/colorPrimaryDark"
-        android:textSize="50sp"
-        android:translationZ="50sp"
         app:layout_constraintBottom_toBottomOf="@+id/level_item_staticBG"
         app:layout_constraintEnd_toEndOf="@+id/level_item_staticBG"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/level_glow" />
 
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/level_item_staticBG"
-        app:layout_constraintTop_toTopOf="@+id/level_item_staticBG"
-        app:layout_constraintVertical_bias="0.7" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.63">
+
+        <TextView
+            android:id="@+id/item_level_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fontFamily="@font/karma_light"
+            android:text="01"
+            android:textAlignment="center"
+            android:textColor="@color/cardview_light_background"
+            android:textSize="32sp"
+
+            android:textStyle="bold"
+            android:translationZ="26sp" />
+    </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

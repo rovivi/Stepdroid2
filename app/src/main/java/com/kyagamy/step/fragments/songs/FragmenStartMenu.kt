@@ -14,6 +14,7 @@ import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
@@ -29,6 +30,7 @@ import com.kyagamy.step.common.RecyclerItemClickListener
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.viewModels.LevelViewModel
 import com.kyagamy.step.viewModels.SongViewModel
+import kotlinx.android.synthetic.main.fragment_fragment__start_menu.view.*
 import java.util.*
 
 private const val songId = "song"
@@ -85,6 +87,8 @@ class FragmenStartMenu : DialogFragment() {
         //percent = view.findViewById(R.id.percent_text_fragment)
         loading = view.findViewById(R.id.loading_text_dialog)
         exit = view.findViewById(R.id.tv_damiss)
+
+
 
         exit.setOnClickListener(View.OnClickListener { v: View? -> dismiss() })
         startImage = view.findViewById(R.id.start_image)
@@ -143,7 +147,11 @@ class FragmenStartMenu : DialogFragment() {
         val levelAdapter = LevelAdapter(activity!!.applicationContext)
 
         levelRecyclerView = view.findViewById(R.id.recycler_levels)
-        levelRecyclerView.layoutManager = LinearLayoutManager(activity!!.applicationContext,LinearLayoutManager.HORIZONTAL,false)
+        levelRecyclerView.layoutManager = LinearLayoutManager(
+            activity!!.applicationContext,
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
 //        levelRecyclerView.layoutManager = LinearLayoutManager(activity!!.applicationContext)
         levelRecyclerView.adapter = levelAdapter
 
@@ -196,6 +204,20 @@ class FragmenStartMenu : DialogFragment() {
             .observe(viewLifecycleOwner, androidx.lifecycle.Observer { level ->
                 level?.let { levelAdapter.setLevels(it) }
             })
+
+        //animaciones
+        view.image_arrow_l.startAnimation(
+            AnimationUtils.loadAnimation(
+                context,
+                R.anim.translate_left
+            )
+        )
+        view.image_arrow_r.startAnimation(
+            AnimationUtils.loadAnimation(
+                context,
+                R.anim.translate_right
+            )
+        )
 
 
         return view
