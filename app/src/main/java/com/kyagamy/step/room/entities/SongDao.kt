@@ -6,8 +6,20 @@ import androidx.room.*
 
 @Dao
 interface SongDao {
-    @Query("SELECT * FROM Song")
+    @Query("SELECT * FROM Song order  By TITLE asc")
     fun getAll(): LiveData<List<Song>>
+
+
+    @Query("SELECT * FROM Song where SONGCATEGORY like:filter order  By TITLE asc")
+    fun getByCategory(filter:String): LiveData<List<Song>>
+
+
+    @Query("SELECT * FROM Song where GENRE like:filter order  By TITLE asc")
+    fun getByGenre(filter:String): LiveData<List<Song>>
+
+    @Query("SELECT * FROM Song where SONGTYPE like:filter order  By TITLE asc")
+    fun getBySongType(filter:String): LiveData<List<Song>>
+
 
     @Query("SELECT * FROM Song where catecatecate like :categoryName order By TITLE asc")
     fun getCategory(categoryName: String ): LiveData<List<Song>>

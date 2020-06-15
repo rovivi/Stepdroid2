@@ -13,11 +13,12 @@ import kotlinx.coroutines.launch
 class SongViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: SongRepository
+
     // Using LiveData and caching what getAlphabetizedsongs returns has several benefits:
     // - We can put an observer on the data (instead of polling for changes) and only update the
     //   the UI when the data actually changes.
     // - Repository is completely separated from the UI through the ViewModel.
-    public  val allSong: LiveData<List<Song>>
+    public val allSong: LiveData<List<Song>>
 
     init {
         val songsDao = SDDatabase.getDatabase(application, viewModelScope).songsDao()
@@ -36,12 +37,24 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
         repository.deleteAll()
     }
 
-     fun  categorySong (nameCategory: String):LiveData<List<Song>> {
-        return  repository.categorySong(nameCategory)
+    fun categorySong(nameCategory: String): LiveData<List<Song>> {
+        return repository.categorySong(nameCategory)
     }
 
-     fun songById (id: Int):LiveData<List<Song>> {
-        return  repository.idSong(id)
+    fun songByCategory(nameCategory: String): LiveData<List<Song>> {
+        return repository.songByCategory(nameCategory)
+    }
+
+    fun songByGenre(nameCategory: String): LiveData<List<Song>> {
+        return repository.songByGenre(nameCategory)
+    }
+
+    fun songBySongType(nameCategory: String): LiveData<List<Song>> {
+        return repository.songBySongType(nameCategory)
+    }
+
+    fun songById(id: Int): LiveData<List<Song>> {
+        return repository.idSong(id)
     }
 
 }

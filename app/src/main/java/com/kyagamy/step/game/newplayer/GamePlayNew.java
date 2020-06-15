@@ -176,6 +176,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 }
                 stepsDrawer.draw(canvas,list);
             }
+            canvas.drawPoint(playerSizeX,playerSizeY,paint);
         } catch (Exception e) {
             e.printStackTrace();
         }

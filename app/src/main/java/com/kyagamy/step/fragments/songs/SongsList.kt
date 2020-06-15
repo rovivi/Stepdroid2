@@ -90,22 +90,15 @@ class SongsList : Fragment() {
         val view = inflater.inflate(R.layout.fragment_songs_list, container, false)
         songsRecyclerView = view.findViewById(R.id.songs_recyclerView)
 
-
-
         preview = view.findViewById(R.id.videoView3)
 
         songsRecyclerView.layoutManager = LinearLayoutManager(activity!!.applicationContext)
-
 
         songsRecyclerView.adapter = songAdapter
         songsModel.categorySong(param1 ?: "").observe(viewLifecycleOwner, Observer { words ->
 //        songsModel.allSong.observe(viewLifecycleOwner, Observer { words ->
             words?.let { songAdapter.setSongs(it) }
         })
-
-
-
-
 
         songsRecyclerView.addOnItemTouchListener(
                 RecyclerItemClickListener(activity,
@@ -116,11 +109,6 @@ class SongsList : Fragment() {
                                 try {
                                     changeSong(songAdapter.getSong(position))
                                     currentSong = songAdapter.getSong(position)
-//                                    levelModel.get(songAdapter.getSong(position).song_id).observe(viewLifecycleOwner, Observer { level->
-////        levelModel.allLevel.observe(viewLifecycleOwner, Observer { level->
-//                                        level?.let{levelAdapter.setLevels(it)}
-//
-//                                    })
                                      showStartSongFragment(false)
                                 }
                                 catch (ex:java.lang.Exception){
@@ -212,10 +200,6 @@ class SongsList : Fragment() {
 
     fun showStartSongFragment(type: Boolean) {
         val newFragment = FragmenStartMenu.newInstance(currentSong!!.song_id)
-        //val newFragment = FragmenStartMenu()
-//        currentDF = newFragment
-//        newFragment.setSongList(this)
-//        newFragment.loadingScreen = type
         activity?.supportFragmentManager?.let { newFragment.show(it, "Notice") }
         // playSoundPool(spOpenWindow);
     }

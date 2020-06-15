@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -14,7 +13,6 @@ import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -26,13 +24,13 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Guideline;
 
 import com.kyagamy.step.common.Common;
-import com.kyagamy.step.common.step.CommonGame.ParamsSong;
 import com.kyagamy.step.common.step.Parsers.FileSSC;
 import com.kyagamy.step.game.newplayer.GamePlayNew;
 import com.kyagamy.step.game.newplayer.MainThreadNew;
 import com.squareup.picasso.Picasso;
 
 import java.io.FileInputStream;
+import java.util.Objects;
 
 import game.StepObject;
 
@@ -82,7 +80,7 @@ public class PlayerBga extends Activity {
         bg = findViewById(R.id.bgVideoView2);
         gl = findViewById(R.id.guideline);
 
-        nchar = getIntent().getExtras().getInt("nchar");
+        nchar = Objects.requireNonNull(getIntent().getExtras()).getInt("nchar");
         gpo = findViewById(R.id.gamePlay);
         bgPad = findViewById(R.id.bg_pad);
         hilo = gpo.mainTread;
@@ -90,12 +88,9 @@ public class PlayerBga extends Activity {
         if (pathImg != null)
             Picasso.get().load(R.drawable.caution).into(bgPad);
 
-        bg.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mp.setLooping(true);
-                mp.setVolume(0, 0);
-            }
+        bg.setOnPreparedListener(mp -> {
+            mp.setLooping(true);
+            mp.setVolume(0, 0);
         });
     }
 
@@ -125,9 +120,7 @@ public class PlayerBga extends Activity {
         bg.setOnPreparedListener(mediaPlayer -> {
             mediaPlayer.setLooping(true);
             mediaPlayer.setVolume(0, 0);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                //mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(ParamsSong.getRush));// Esto será para el rush
-            }
+            //mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(ParamsSong.getRush));// Esto será para el rush
         });
         bg.start();
     }
@@ -167,12 +160,12 @@ public class PlayerBga extends Activity {
         try {
             gpo.setTop(0);
 
-            String rawSSC = getIntent().getExtras().getString("ssc");
+            String rawSSC = Objects.requireNonNull(getIntent().getExtras()).getString("ssc");
             String path = getIntent().getExtras().getString("path");
-            String s = Common.Companion.convertStreamToString(new FileInputStream(rawSSC));
+            String s = Common.Companion.convertStreamToString(new FileInputStream(Objects.requireNonNull(rawSSC)));
             try {
-                StepObject step = new FileSSC(s, nchar).parseData(false);
-                step.setPath(path);
+                StepObject step = new FileSSC(Objects.requireNonNull(s), nchar).parseData(false);
+                step.setPath(Objects.requireNonNull(path));
 //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
                 gpo.build1Object(bg, step);
             } catch (Exception e) {
@@ -188,7 +181,7 @@ public class PlayerBga extends Activity {
             params.guidePercent = 1f;
             gl.setLayoutParams(params);
         } else {
-            params.guidePercent = 0.65f;
+            params.guidePercent = 0.5625f;
             gl.setLayoutParams(params);
         }
         bg.setOnErrorListener((mp, what, extra) -> {

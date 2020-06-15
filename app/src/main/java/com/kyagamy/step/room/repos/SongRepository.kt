@@ -14,6 +14,19 @@ class SongRepository(private val songDao: SongDao) {
         return  songDao.getCategory(nameCategory)
     }
 
+    fun  songByCategory (nameCategory: String):LiveData<List<Song>> {
+        return  songDao.getByCategory(nameCategory)
+    }
+
+
+    fun  songByGenre (nameCategory: String):LiveData<List<Song>> {
+        return  songDao.getByGenre(nameCategory)
+    }
+
+    fun  songBySongType(nameCategory: String):LiveData<List<Song>> {
+        return  songDao.getBySongType(nameCategory)
+    }
+
 
     fun  idSong (id:Int):LiveData<List<Song>> {
         return  songDao.loadAllByIds(id)

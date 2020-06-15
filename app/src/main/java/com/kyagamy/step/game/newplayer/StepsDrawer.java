@@ -53,7 +53,7 @@ public class StepsDrawer {
         //que tipo de tablero y nivel es aqui se tiene que calcular las medidas necesarias
 
 
-        posInitialX = (int) (Common.Companion.getWIDTH() * 0.1);
+        posInitialX = (int) (Common.Companion.getSize(context).x * 0.1);
         longInfo[1] = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
@@ -65,14 +65,14 @@ public class StepsDrawer {
                 noteSkins[ROUTINE1_SKIN] = new NoteSkin(context, gameMode, "routine2");
                 noteSkins[ROUTINE2_SKIN] = new NoteSkin(context, gameMode, "routine3");
                 noteSkins[ROUTINE3_SKIN] = new NoteSkin(context, gameMode, "soccer");
-                sizeNote = (int) ((Common.Companion.getWIDTH() * 0.8) / 10);
+                sizeNote = (int) ((Common.Companion.getSize(context).x * 0.8) / 10);
                 break;
             case "pump-double":
-                sizeNote = (int) ((Common.Companion.getWIDTH() * 0.8) / 10);
+                sizeNote = (int) ((Common.Companion.getSize(context).x * 0.8) / 10);
                 noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, "prime");
                 break;
             case "pump-single":
-                sizeNote = (int) ((Common.Companion.getWIDTH() * 0.7) / 5);
+                sizeNote = (int) ((Common.Companion.getSize(context).x * 0.7) / 5);
                 noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, "prime");
                 break;
             case "pump-halfdouble":
@@ -110,21 +110,21 @@ public class StepsDrawer {
                                 int distance = gameRow.getPosY() - note.getRowOrigin().getPosY()+sizeNote;
                                 if (distance > sizeNote) {
                                     noteSkins[SELECTED_SKIN]
-                                            .longs[count].draw(canvas, new Rect(posInitialX + sizeNote * count - 20, note.getRowOrigin().getPosY() + ((int) (sizeNote * 0.35)), posInitialX + sizeNote * count + sizeNote, gameRow.getPosY() + sizeNote/3));
+                                            .longs[count].draw(canvas, new Rect(posInitialX + sizeNote * count , note.getRowOrigin().getPosY() + ((int) (sizeNote * 0.35)), posInitialX + sizeNote * count + sizeNote, gameRow.getPosY() + sizeNote/3));
                                 }
                                 noteSkins[SELECTED_SKIN].tails[count]
-                                        .draw(canvas, new Rect(posInitialX + sizeNote * count - 20, gameRow.getPosY(), posInitialX + sizeNote * count + sizeNote, gameRow.getPosY() + sizeNote));
+                                        .draw(canvas, new Rect(posInitialX + sizeNote * count , gameRow.getPosY(), posInitialX + sizeNote * count + sizeNote, gameRow.getPosY() + sizeNote));
                                 noteSkins[SELECTED_SKIN].arrows[count]
-                                        .draw(canvas, new Rect(posInitialX + sizeNote * count - 20, note.getRowOrigin().getPosY(), posInitialX + sizeNote * count + sizeNote, note.getRowOrigin().getPosY() + sizeNote));
+                                        .draw(canvas, new Rect(posInitialX + sizeNote * count , note.getRowOrigin().getPosY(), posInitialX + sizeNote * count + sizeNote, note.getRowOrigin().getPosY() + sizeNote));
                             }
 
                             break;
                         case CommonSteps.NOTE_LONG_BODY:
                             if (gameRow == listRow.get(listRow.size() - 1) || gameRow == listRow.get(listRow.size() - 2)) {
                                 noteSkins[SELECTED_SKIN]
-                                        .longs[count].draw(canvas, new Rect(posInitialX + sizeNote * count - 20, note.getRowOrigin().getPosY() + ((int) (sizeNote * 0.75)), posInitialX + sizeNote * count + sizeNote, gameRow.getPosY() + sizeNote));
+                                        .longs[count].draw(canvas, new Rect(posInitialX + sizeNote * count , note.getRowOrigin().getPosY() + ((int) (sizeNote * 0.75)), posInitialX + sizeNote * count + sizeNote, gameRow.getPosY() + sizeNote));
                                 noteSkins[SELECTED_SKIN].arrows[count]
-                                        .draw(canvas, new Rect(posInitialX + sizeNote * count - 20, note.getRowOrigin().getPosY(), posInitialX + sizeNote * count + sizeNote, note.getRowOrigin().getPosY() + sizeNote));
+                                        .draw(canvas, new Rect(posInitialX + sizeNote * count , note.getRowOrigin().getPosY(), posInitialX + sizeNote * count + sizeNote, note.getRowOrigin().getPosY() + sizeNote));
                                 break;
                             } else
                                 continue;

@@ -131,11 +131,10 @@ class FragmenStartMenu : DialogFragment() {
             ex.printStackTrace()
         }
 
-
         //songs
 
         songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
-        levelModel = ViewModelProvider(this).get(LevelViewModel ::class.java)
+        levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
 
         i = Intent(activity!!, PlayerBga::class.java)
 
@@ -143,10 +142,9 @@ class FragmenStartMenu : DialogFragment() {
 
         val levelAdapter = LevelAdapter(activity!!.applicationContext)
 
-        levelRecyclerView =view.findViewById(R.id.recycler_levels)
-
-
-        levelRecyclerView.layoutManager = LinearLayoutManager(activity!!.applicationContext)
+        levelRecyclerView = view.findViewById(R.id.recycler_levels)
+        levelRecyclerView.layoutManager = LinearLayoutManager(activity!!.applicationContext,LinearLayoutManager.HORIZONTAL,false)
+//        levelRecyclerView.layoutManager = LinearLayoutManager(activity!!.applicationContext)
         levelRecyclerView.adapter = levelAdapter
 
         var currentSong: Song? = null
@@ -157,8 +155,6 @@ class FragmenStartMenu : DialogFragment() {
                     currentSong = it[0]
                 }
             })
-
-
 
         levelRecyclerView.addOnItemTouchListener(
             RecyclerItemClickListener(activity,
@@ -247,8 +243,6 @@ class FragmenStartMenu : DialogFragment() {
                 )
             )
         }
-
-
     }
 
 

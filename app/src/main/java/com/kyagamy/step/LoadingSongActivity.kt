@@ -69,6 +69,29 @@ class LoadingSongActivity : AppCompatActivity() {
         songsModel.deleteAll()
         levelModel.deleteAll()
 
+
+        //add default categorysogs hardCoded needed NO
+
+
+//        val category = Category(
+//            cate.name,
+//            cate.path,
+//            if (banner.exists()) banner.path else null,
+//            if (sound.exists()) sound.path else null
+//        )
+
+
+
+
+
+
+
+
+
+
+
+
+
         var songId = 1
 
 
