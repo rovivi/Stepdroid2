@@ -80,6 +80,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                                 levelMetaData["CREDIT"] ?: "",
                                 levelMetaData["STEPSTYPE"] ?: "",
                                 levelMetaData["DESCRIPTION"] ?: "",
+                                levelMetaData["CHARTNAME"] ?: "",
                                 -1,
                                 null
                             )
@@ -95,6 +96,23 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
 
             }
         }
+        try {//try to add last level
+            listLevels.add(
+                Level(
+                    0,
+                    auxIndexToSaveORM,
+                    levelMetaData["METER"] ?: "",
+                    levelMetaData["CREDIT"] ?: "",
+                    levelMetaData["STEPSTYPE"] ?: "",
+                    levelMetaData["DESCRIPTION"] ?: "",
+                    levelMetaData["CHARTNAME"] ?: "",
+                    -1,
+                    null
+                )
+            )
+        }
+        catch (ex:Exception){}
+
         /**End Parsing */
         /**Start Setting effects*/
         modifiers.forEach { modifier ->

@@ -1,6 +1,7 @@
 package com.kyagamy.step.game.newplayer;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -33,6 +34,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     //private Bitmap bgaBitmap;
     private MediaPlayer mpMusic;
     private int playerSizeX = 400, playerSizeY = 500;
+    private boolean isLandScape=false;
 
     private GameState gameState;
     public Double fps;
@@ -57,15 +59,18 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         }
     };
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public GamePlayNew(Context context, StepObject steps) {
-        super(context);
-        build1Object(null, steps);
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+//    public GamePlayNew(Context context, StepObject steps) {
+//        super(context);
+//        build1Object(null, steps,context,);
+//
+//    }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void build1Object(VideoView videoView, StepObject stepData) {
+    public void build1Object(VideoView videoView, StepObject stepData,Context context,Point sizeScreen) {
         try {
+            isLandScape =context.getResources().getConfiguration().orientation== Configuration.ORIENTATION_LANDSCAPE;
+
             this.setZOrderOnTop(true); //necessary
             getHolder().setFormat(PixelFormat.TRANSPARENT);
             getHolder().addCallback(this);
@@ -85,7 +90,13 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             //-- Metrics of player
             Point size = Common.Companion.getSize(getContext());
             playerSizeX =size.x;
-            playerSizeY = (int) (size.x/0.5625d);
+            //verify if landscape
+            //16:9
+            playerSizeY = (int) (size.x*0.5625d);
+            //4:3
+            playerSizeY = (int) (size.x*0.75d);
+
+
 
 
             paint.setColor(Color.WHITE);
@@ -98,7 +109,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 e.printStackTrace();
             }
             //steps
-            stepsDrawer = new StepsDrawer(getContext(), stepData.getStepType());
+            stepsDrawer = new StepsDrawer(getContext(), stepData.getStepType(),"16:9",isLandScape,sizeScreen);
             mpMusic.prepare();
             mpMusic.setOnCompletionListener(mp -> stop());
             mpMusic.setOnPreparedListener(mp -> startGame());

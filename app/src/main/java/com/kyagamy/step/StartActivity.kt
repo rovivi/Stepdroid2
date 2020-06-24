@@ -11,21 +11,27 @@ import androidx.lifecycle.lifecycleScope
 import com.codekidlabs.storagechooser.StorageChooser
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
+import kotlinx.android.synthetic.main.activity_start.*
 
 class StartActivity : AppCompatActivity() {
 
-    private lateinit var  buttonStart :Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
-        buttonStart = findViewById(R.id.button_start)
-        var intentSongList =  Intent(this,MainActivity::class.java)
 
-        buttonStart.setOnClickListener{
+        val intentSongList =  Intent(this,MainActivity::class.java)
+        val intent = Intent(this,LoadingSongActivity::class.java)
+        val intentDrag = Intent(this,DragStepActivity::class.java)
+
+        this.button_start.setOnClickListener{
             startActivity(intentSongList)
         }
+        this.dragStartButton.setOnClickListener{
+            startActivity(intentDrag)
+        }
 
-        val intent = Intent(this,LoadingSongActivity::class.java)
+
         //Se valida el permission
         val permissionListener: PermissionListener = object : PermissionListener {
             override fun onPermissionGranted() {
@@ -72,7 +78,7 @@ class StartActivity : AppCompatActivity() {
         }
         else {
             // Toast
-          //   startActivity(intent)
+           // startActivity(intent)
         }
     }
 }

@@ -14,6 +14,7 @@ class Level (
     val CREDIT:String,
     val STEPSTYPE:String,
     val DESCRIPTION:String,
+    val CHARTNAME:String,
     val song_fkid:Int,
     @Embedded
     val song:Song?

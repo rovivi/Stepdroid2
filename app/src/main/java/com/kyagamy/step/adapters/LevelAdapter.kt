@@ -65,11 +65,17 @@ class LevelAdapter internal constructor(
             else
                 Picasso.get().load(R.drawable.level_single).into(holder.typeLevel)
 
-        } else if (current.STEPSTYPE.toLowerCase(Locale.ROOT).contains("pump-double")) {
-            if (current.DESCRIPTION.toLowerCase(Locale.ROOT).contains("dp"))
-                Picasso.get().load(R.drawable.level_double_perf).into(holder.typeLevel)
-            else
-                Picasso.get().load(R.drawable.level_double).into(holder.typeLevel)
+        } else if (current.STEPSTYPE.toLowerCase(Locale.ROOT).contains("pump-double")||current.STEPSTYPE.toLowerCase(Locale.ROOT).contains("half-double")) {
+            //COOP
+            if (current.CHARTNAME.toLowerCase(Locale.ROOT).contains("coop")) {
+                Picasso.get().load(R.drawable.level_coop).into(holder.typeLevel)
+            } else {
+
+                if (current.DESCRIPTION.toLowerCase(Locale.ROOT).contains("dp"))
+                    Picasso.get().load(R.drawable.level_double_perf).into(holder.typeLevel)
+                else
+                    Picasso.get().load(R.drawable.level_double).into(holder.typeLevel)
+            }
         }
 
         setAnimation(holder.itemView, position)

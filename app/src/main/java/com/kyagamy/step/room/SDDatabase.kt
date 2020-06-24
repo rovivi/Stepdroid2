@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Song::class, Category::class, Level::class],
-    version = 12    ,
+    version = 13    ,
     exportSchema = false
 )
  abstract class SDDatabase : RoomDatabase() {

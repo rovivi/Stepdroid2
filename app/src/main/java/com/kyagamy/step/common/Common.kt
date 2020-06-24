@@ -15,10 +15,15 @@ public class Common {
         var HEIGHT = 1080
 
         fun getSize (context: Context):Point{
+
             val d =(context.getSystemService(Context.WINDOW_SERVICE) as WindowManager?)!!.defaultDisplay
             val width = d.width
             val height = d.height
             return  Point(width,height)
+
+
+
+
 
         }
 

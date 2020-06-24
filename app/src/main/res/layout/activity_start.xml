@@ -16,4 +16,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.72" />
+
+    <Button
+        android:id="@+id/dragStartButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Drag System"
+        tools:layout_editor_absoluteX="180dp"
+        tools:layout_editor_absoluteY="75dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 
 
@@ -27,11 +28,20 @@ public class StepsDrawer {
     private static byte ROUTINE1_SKIN = 3;
     private static byte ROUTINE2_SKIN = 4;
     private static byte ROUTINE3_SKIN = 5;
+    private static float NUMBER_OF_Y_STEPS = 9.3913f;
 
+
+
+    private int sizeX ;
+    private int sizeY;
 
     private int sizeNote;
+    private int offsetX=0;//game
+    private int offsetY=0;
+    private int sizeArrows=1;//alto de la pantalla entre 9.3913
+
     private int posInitialX;
-    private int sizeArrows;
+
 
     static private int[][] longInfo;
     static private int[] noteSkin = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -41,7 +51,7 @@ public class StepsDrawer {
         longInfo[1] = noteSkin;
     }
 
-    static NoteSkin[] noteSkins;
+    private static NoteSkin[] noteSkins;
 
     /**
      * Created the step
@@ -49,15 +59,38 @@ public class StepsDrawer {
      * @param context
      * @param gameMode
      */
-    StepsDrawer(Context context, String gameMode) {
+    StepsDrawer(Context context, String gameMode,String aspectRatio,boolean landScape,Point screenSize) {
         //que tipo de tablero y nivel es aqui se tiene que calcular las medidas necesarias
-
-
-        posInitialX = (int) (Common.Companion.getSize(context).x * 0.1);
+//        Point screenSize =Common.Companion.getSize(context);
+        posInitialX = (int) (screenSize.x * 0.1);
         longInfo[1] = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-
         noteSkins = new NoteSkin[1];
+
+
+
+        float relationAspectValue =  aspectRatio.contains("4:3") ?0.75f:0.5625f;
+
+        if (landScape){
+            sizeY=screenSize.y;
+            sizeX= (int) (screenSize.y*1.77777778d);
+            offsetX = (int) ((screenSize.x-sizeX)/2f);
+            if (sizeX>screenSize.x){
+                sizeY= (int) (screenSize.x/1.7777777f);
+                sizeX= (int) (sizeY*1.77777778d);
+                offsetX = Math.abs((int) ((screenSize.x-sizeX)/2f));
+                offsetY = (int) ((screenSize.y-sizeY)/2f);
+            }
+
+
+        }
+        else {
+            sizeY=screenSize.y/2;
+            sizeX= screenSize.x;
+
+        }
+        sizeNote = (int) (sizeY / NUMBER_OF_Y_STEPS);
+
+
         switch (gameMode) {
             case "pump-routine":
                 noteSkins = new NoteSkin[4];
@@ -65,14 +98,11 @@ public class StepsDrawer {
                 noteSkins[ROUTINE1_SKIN] = new NoteSkin(context, gameMode, "routine2");
                 noteSkins[ROUTINE2_SKIN] = new NoteSkin(context, gameMode, "routine3");
                 noteSkins[ROUTINE3_SKIN] = new NoteSkin(context, gameMode, "soccer");
-                sizeNote = (int) ((Common.Companion.getSize(context).x * 0.8) / 10);
                 break;
             case "pump-double":
-                sizeNote = (int) ((Common.Companion.getSize(context).x * 0.8) / 10);
                 noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, "prime");
                 break;
             case "pump-single":
-                sizeNote = (int) ((Common.Companion.getSize(context).x * 0.7) / 5);
                 noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, "prime");
                 break;
             case "pump-halfdouble":
@@ -140,6 +170,15 @@ public class StepsDrawer {
                 count++;
             }
         }
+        //test draw border
+
+        Paint myPaint = new Paint();
+        myPaint.setColor(Color.rgb(255, 0, 0));
+        myPaint.setStrokeWidth(5);
+        myPaint.setStyle(Paint.Style.STROKE);
+        canvas.drawRect(offsetX, offsetY, sizeX, sizeY, myPaint);
+
+
     }
 
     public void update() {
@@ -157,6 +196,26 @@ public class StepsDrawer {
             currentNote.mine.update();
         }
     }
+
+
+    private int getStepsByGameMode(String gameMode){
+        switch (gameMode) {
+            case "pump-routine":
+            case "pump-double":
+            case "pump-halfdouble":
+                return 10;
+            case "pump-single":
+                return 5;
+            case "dance-single":
+                return 4;
+            case "":
+                break;
+        }
+        return 0;
+
+    }
+
+
 
 }
 

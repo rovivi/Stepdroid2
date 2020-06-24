@@ -84,14 +84,6 @@ class LoadingSongActivity : AppCompatActivity() {
 
 
 
-
-
-
-
-
-
-
-
         var songId = 1
 
 
@@ -116,13 +108,15 @@ class LoadingSongActivity : AppCompatActivity() {
                 //No se añade si no tiene canciones
                 var hasSong = false
                 var count = 0
-                cate.listFiles()?.filter { x -> x.isDirectory }?.forEach { subFolder ->
+                val listFilesCategory =cate.listFiles()
+                listFilesCategory ?.filter { x -> x.isDirectory }?.forEach { subFolder ->
                     run {
                         text.text = subFolder.name
                         val fileSong = subFolder.listFiles()
                         val songFile = fileSong.filter { ssc ->
                             ssc.name.toLowerCase().endsWith("ssc")
                         }.firstOrNull()
+
                         if (songFile != null && songFile.isFile) {
                             hasSong = true
                             try {
@@ -165,6 +159,7 @@ class LoadingSongActivity : AppCompatActivity() {
                                             level.CREDIT,
                                             level.STEPSTYPE,
                                             level.DESCRIPTION,
+                                            level.CHARTNAME,
                                             song.song_id,
                                             song
                                         )
