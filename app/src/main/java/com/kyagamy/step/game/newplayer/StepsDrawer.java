@@ -32,12 +32,12 @@ public class StepsDrawer {
 
 
 
-    private int sizeX ;
-    private int sizeY;
+    protected int sizeX ;
+    protected int sizeY;
 
-    private int sizeNote;
-    private int offsetX=0;//game
-    private int offsetY=0;
+    protected int sizeNote;
+    protected int offsetX=0;//game
+    protected int offsetY=0;
     private int sizeArrows=1;//alto de la pantalla entre 9.3913
 
     private int posInitialX;
@@ -80,12 +80,16 @@ public class StepsDrawer {
                 offsetX = Math.abs((int) ((screenSize.x-sizeX)/2f));
                 offsetY = (int) ((screenSize.y-sizeY)/2f);
             }
-
-
+            sizeX+=offsetX/2 ;
+            sizeY+=offsetY;
         }
         else {
             sizeY=screenSize.y/2;
             sizeX= screenSize.x;
+            if ((int) (sizeY / NUMBER_OF_Y_STEPS)*getStepsByGameMode(gameMode)>sizeX){
+                sizeY= (int) (sizeX/( getStepsByGameMode(gameMode)+0.2) *NUMBER_OF_Y_STEPS);
+                offsetY= screenSize.y-sizeY;
+            }
 
         }
         sizeNote = (int) (sizeY / NUMBER_OF_Y_STEPS);
@@ -114,6 +118,10 @@ public class StepsDrawer {
             case "":
                 break;
         }
+
+        //calculate offset
+        posInitialX = (((sizeX)-(sizeNote*getStepsByGameMode(gameMode))))/2 +offsetX/2;
+
     }
 
 

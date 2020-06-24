@@ -8,12 +8,15 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
 import androidx.annotation.RequiresApi;
@@ -109,10 +112,18 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 e.printStackTrace();
             }
             //steps
-            stepsDrawer = new StepsDrawer(getContext(), stepData.getStepType(),"16:9",isLandScape,sizeScreen);
+
             mpMusic.prepare();
             mpMusic.setOnCompletionListener(mp -> stop());
             mpMusic.setOnPreparedListener(mp -> startGame());
+
+            stepsDrawer = new StepsDrawer(getContext(), stepData.getStepType(),"16:9",isLandScape,sizeScreen);
+
+            //match video whit stepDrawer
+            videoView.getLayoutParams().height=stepsDrawer.sizeY+stepsDrawer.offsetY;
+            videoView.getLayoutParams().width=stepsDrawer.sizeX;
+
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -174,7 +185,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
                     double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
                     lastPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
-                    if (lastPosition >= playerSizeY / 2)
+                    if (lastPosition >= stepsDrawer.sizeY+stepsDrawer.sizeNote/3)
                         break;
                     if (currentElemt.getNotes() != null){
 //                        stepsDrawer.draw(canvas, currentElemt.getNotes(), (int) lastPosition);
@@ -187,7 +198,13 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 }
                 stepsDrawer.draw(canvas,list);
             }
-            canvas.drawPoint(playerSizeX,playerSizeY,paint);
+            if (!isLandScape)
+            {
+                Paint clearPaint = new Paint();
+                clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+                canvas.drawRect(new Rect(0,stepsDrawer.sizeY,stepsDrawer.offsetX+stepsDrawer.sizeX,stepsDrawer.sizeY*2),clearPaint);
+                //canvas.drawRect(new Rect(0,0,500,500),clearPaint);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
