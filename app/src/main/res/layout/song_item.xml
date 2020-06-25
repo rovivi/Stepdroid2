@@ -59,14 +59,6 @@
             android:scaleType="fitXY"
             android:src="@mipmap/ic_launcher" />
 
-        <ImageView
-            android:id="@+id/banner22"
-            android:layout_width="10sp"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="0dp"
-
-            android:scaleType="centerCrop"
-            android:src="@drawable/red_tip" />
 
         <LinearLayout
             android:layout_width="match_parent"

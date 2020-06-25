@@ -40,11 +40,12 @@ public class StepsDrawer {
     protected int offsetY=0;
     private int sizeArrows=1;//alto de la pantalla entre 9.3913
 
-    private int posInitialX;
+    protected int posInitialX;
 
 
     static private int[][] longInfo;
     static private int[] noteSkin = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private String gameMode;
 
     static {
         longInfo = new int[2][10];
@@ -62,6 +63,7 @@ public class StepsDrawer {
     StepsDrawer(Context context, String gameMode,String aspectRatio,boolean landScape,Point screenSize) {
         //que tipo de tablero y nivel es aqui se tiene que calcular las medidas necesarias
 //        Point screenSize =Common.Companion.getSize(context);
+        this.gameMode=gameMode;
         posInitialX = (int) (screenSize.x * 0.1);
         longInfo[1] = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         noteSkins = new NoteSkin[1];
@@ -86,8 +88,8 @@ public class StepsDrawer {
         else {
             sizeY=screenSize.y/2;
             sizeX= screenSize.x;
-            if ((int) (sizeY / NUMBER_OF_Y_STEPS)*getStepsByGameMode(gameMode)>sizeX){
-                sizeY= (int) (sizeX/( getStepsByGameMode(gameMode)+0.2) *NUMBER_OF_Y_STEPS);
+            if ((int) (sizeY / NUMBER_OF_Y_STEPS)*getStepsByGameMode()>sizeX){
+                sizeY= (int) (sizeX/( getStepsByGameMode()+0.2) *NUMBER_OF_Y_STEPS);
                 offsetY= screenSize.y-sizeY;
             }
 
@@ -120,7 +122,7 @@ public class StepsDrawer {
         }
 
         //calculate offset
-        posInitialX = (((sizeX)-(sizeNote*getStepsByGameMode(gameMode))))/2 +offsetX/2;
+        posInitialX = (((sizeX)-(sizeNote*getStepsByGameMode())))/2 +offsetX/2;
 
     }
 
@@ -206,7 +208,7 @@ public class StepsDrawer {
     }
 
 
-    private int getStepsByGameMode(String gameMode){
+    public int getStepsByGameMode(){
         switch (gameMode) {
             case "pump-routine":
             case "pump-double":

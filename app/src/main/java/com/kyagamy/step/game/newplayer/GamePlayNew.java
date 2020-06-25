@@ -45,6 +45,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     private Paint paint;
     //////
     StepsDrawer stepsDrawer;
+    LifeBar bar;
     String msj;
     BgPlayer bgPlayer;
 
@@ -123,6 +124,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             videoView.getLayoutParams().height=stepsDrawer.sizeY+stepsDrawer.offsetY;
             videoView.getLayoutParams().width=stepsDrawer.sizeX;
 
+            //lifeBar
+            bar = new LifeBar(context,stepsDrawer);
 
 
         } catch (Exception e) {
@@ -198,6 +201,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 }
                 stepsDrawer.draw(canvas,list);
             }
+            bar.draw(canvas);
             if (!isLandScape)
             {
                 Paint clearPaint = new Paint();
@@ -215,6 +219,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         if (gameState.isRunning) {
             stepsDrawer.update();
             bgPlayer.update(gameState.currentBeat);
+            bar.updateLife(50);
         }
     }
 
