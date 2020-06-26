@@ -158,7 +158,7 @@ class LifeBar(
 
         this.sizeX = stepsDrawer.sizeNote * stepsDrawer.stepsByGameMode
         this.sizeY = ((stepsDrawer.sizeNote / 3) * 1.9f).toInt()
-        this.startX = stepsDrawer.posInitialX + stepsDrawer.offsetX
+        this.startX = stepsDrawer.posInitialX
         this.startY = stepsDrawer.sizeNote / 8
     }
 
