@@ -21,33 +21,33 @@ class LifeBar(
     var aumento = 0f
     var aumentLife = 0f
     var auxLife = 1f
+    private val bg: Bitmap
+    private val bgDanger: Bitmap
+
     private val tipBlue: Bitmap
+    private val tipRed: Bitmap
     private val glowBlue: Bitmap
     private val glueRed: Bitmap
     private val skin: Bitmap
-    private val barHot: Bitmap
-    private val resplandor: Bitmap
-    private val paint:Paint
+    private val lifeMeter: Bitmap
+    private val lightFull: Bitmap
+    private val paint: Paint
     var timeMark: Long
     fun draw(canvas: Canvas /*int x,int y*/) {
         //se calcula la pociocion del tip
         aumento++
         val percent = life / 100
-        val positionTip =startX+ (sizeX * percent).toInt()
-        val posBarBlue = sizeX * (percent + aumentLife / 100)
-        val currentHotBar = cutBitmap(barHot, life)
+        val positionTip =
+            startX + when {
+                life < 6 -> (sizeX * (0.005)).toInt()
+                life > 98 ->(sizeX * (0.94)).toInt()
+                else ->  (sizeX * (percent-0.05 )).toInt()
+            }
+        val positionBar = startX + if (life >= 98) (sizeX) else (sizeX * (percent - 0.1)).toInt()
+        val posBarBlue = sizeX * (percent - 0.06 + aumentLife / 100)
+        val currentHotBar = cutBitmap(lifeMeter, life)
 
-
-        if (life < AMAZING_VALUE) {
-            canvas.drawBitmap(
-                glowBlue,
-                null,
-                Rect(startX, startY, (startX + posBarBlue).toInt(), sizeY),
-                paint
-            )
-
-        }
-        if (life < DANGER_VALUE)  {
+        if (life < DANGER_VALUE) {
             canvas.drawBitmap(
                 glueRed,
                 null,
@@ -55,19 +55,35 @@ class LifeBar(
                 paint
             )
         }
+        //bg
+        if (life < 100)
+            canvas.drawBitmap(
+                if (life <= DANGER_VALUE) bgDanger else bg,
+                null,
+                Rect(startX, startY, startX + sizeX, sizeY),
+                paint
+            )
+
+        canvas.drawBitmap(
+            glowBlue,
+            null,
+            Rect(startX, startY, (startX + posBarBlue).toInt(), sizeY),
+            paint
+        )
+
 
 
         canvas.drawBitmap(
             currentHotBar,
             null,
-            Rect(startX, startY,  positionTip, sizeY),
+            Rect(startX, startY, positionBar, sizeY),
             paint
         )
 
-        if (life > AMAZING_VALUE ||life < DANGER_VALUE ) {
+        if (life > AMAZING_VALUE) {
             canvas.drawBitmap(
                 makeTransparent(
-                    resplandor ,
+                    lightFull,
                     (0 + aumentLife * 20).toInt()
                 ),
                 null,
@@ -75,9 +91,6 @@ class LifeBar(
                 paint
             )
         }
-
-
-
 
 
         //Skin
@@ -88,12 +101,12 @@ class LifeBar(
             paint
         )
         canvas.drawBitmap(
-            tipBlue,
+            if (life > DANGER_VALUE) tipBlue else tipRed,
             null,
             Rect(
-                + positionTip,
+                +positionTip,
                 startY,
-                ( positionTip + (sizeX*0.08f)).toInt(),
+                (positionTip + (sizeX * 0.08f)).toInt(),
                 sizeY
             ),
             paint
@@ -102,8 +115,8 @@ class LifeBar(
 
     fun updateLife(life: Float) {
 
-        if (System.nanoTime() - timeMark > 250) {
-            if (aumentLife > 5 || aumentLife < 0) {
+        if (System.nanoTime() - timeMark > 150) {
+            if (aumentLife > 6 || aumentLife < 0) {
                 auxLife *= -1f
             }
             aumentLife += auxLife
@@ -111,33 +124,42 @@ class LifeBar(
         }
 
 
-//        this.life +=0.089f
-////        this.life =0f
-//        if (this.life>=120){
-//            this.life=-1f;
-//        }
+        this.life += 0.089f
+//        this.life =0f
+        if (this.life >= 101) {
+            this.life = -1f;
+        }
 
     }
 
     init {
         val myOpt2 = BitmapFactory.Options()
-        myOpt2.inSampleSize = 2 * 1
-        tipBlue = BitmapFactory.decodeResource(context.resources, R.drawable.blue_tip, myOpt2)
-        glowBlue = BitmapFactory.decodeResource(context.resources, R.drawable.solid, myOpt2)
-        barHot =
-            BitmapFactory.decodeResource(context.resources, R.drawable.barhot_double, myOpt2)
-        skin = BitmapFactory.decodeResource(context.resources, R.drawable.lifeframe, myOpt2)
-        glueRed = BitmapFactory.decodeResource(context.resources, R.drawable.caution, myOpt2)
-        resplandor =
-            BitmapFactory.decodeResource(context.resources, R.drawable.resplandor, myOpt2)
+        myOpt2.inSampleSize = 0
+
+        bg = BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_bg, myOpt2)
+        bgDanger =
+            BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_bg_danger, myOpt2)
+
+        tipBlue =
+            BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_blue_tip, myOpt2)
+        tipRed = BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_red_tip, myOpt2)
+        glowBlue =
+            BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_back_tip, myOpt2)
+        lifeMeter =
+            BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_life, myOpt2)
+        skin = BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_skin, myOpt2)
+        glueRed =
+            BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_light_danger, myOpt2)
+        lightFull =
+            BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_light_full, myOpt2)
 
         timeMark = System.nanoTime()
-        paint= Paint()
+        paint = Paint()
 
         this.sizeX = stepsDrawer.sizeNote * stepsDrawer.stepsByGameMode
-        this.sizeY = (stepsDrawer.sizeNote / 3)*2
-        this.startX = stepsDrawer.posInitialX+stepsDrawer.offsetX
-        this.startY = stepsDrawer.sizeNote/3
+        this.sizeY = ((stepsDrawer.sizeNote / 3) * 1.9f).toInt()
+        this.startX = stepsDrawer.posInitialX + stepsDrawer.offsetX
+        this.startY = stepsDrawer.sizeNote / 8
     }
 
     companion object {

@@ -114,7 +114,7 @@ class TransformBitmap {
                 val backDrop = Bitmap.createBitmap(
                     (fullLengthBitmap.width * percent).toInt(),
                     fullLengthBitmap.height,
-                    Bitmap.Config.RGB_565
+                    Bitmap.Config.ARGB_8888
                 )
                 val can = Canvas(backDrop)
                 can.drawBitmap(fullLengthBitmap, 0f, 0f, null)
