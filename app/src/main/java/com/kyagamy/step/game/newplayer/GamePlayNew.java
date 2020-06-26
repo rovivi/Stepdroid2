@@ -42,10 +42,11 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     private GameState gameState;
     public Double fps;
     Handler handler1 = new Handler();
-    private Paint paint;
+    private Paint paint, clearPaint;
     //////
     StepsDrawer stepsDrawer;
     LifeBar bar;
+    Combo combo;
     String msj;
     BgPlayer bgPlayer;
 
@@ -81,6 +82,10 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             gameState = new GameState(stepData);
             gameState.reset();
             mpMusic = new MediaPlayer();
+
+            clearPaint = new Paint();
+            clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+
 
             mainTread = new MainThreadNew(getHolder(), this);
             mainTread.setRunning(true);
@@ -127,6 +132,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             //lifeBar
             bar = new LifeBar(context,stepsDrawer);
 
+            combo = new Combo(getContext(),stepsDrawer);
+            gameState.setCombo(combo);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -177,10 +184,12 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         try {
-            int speed = (int) (50 * 7);
+            //speed calc
+            double avAuxValue = (gameState.initialBPM); //example BPM 200 ;
+            int speed = (int) (stepsDrawer.sizeNote * 1.21/avAuxValue   *580) ;//580 av
             double lastScrollAux = gameState.lastScroll;
             double lastBeat = this.gameState.currentBeat + 0;
-            double lastPosition = 100;
+            double lastPosition = stepsDrawer.sizeNote;
             ArrayList<GameRow> list= new ArrayList<>();
             if (gameState.isRunning) {
                 drawStats(canvas);
@@ -202,13 +211,9 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 stepsDrawer.draw(canvas,list);
             }
             bar.draw(canvas);
+            combo.draw(canvas);
             if (!isLandScape)
-            {
-                Paint clearPaint = new Paint();
-                clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
                 canvas.drawRect(new Rect(0,stepsDrawer.sizeY,stepsDrawer.offsetX+stepsDrawer.sizeX,stepsDrawer.sizeY*2),clearPaint);
-                //canvas.drawRect(new Rect(0,0,500,500),clearPaint);
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -216,6 +221,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 
     public void update() {
         gameState.update();
+        combo.update();
         if (gameState.isRunning) {
             stepsDrawer.update();
             bgPlayer.update(gameState.currentBeat);

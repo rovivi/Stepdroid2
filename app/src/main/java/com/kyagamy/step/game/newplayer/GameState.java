@@ -25,11 +25,17 @@ public class GameState {
     double initialSpeedMod = 1;
     public float currentDurationFake = 0, offset;
     public boolean isRunning = true;
+    public double initialBPM ;
+
+
+    public  Combo combo;
 
 
     public GameState(StepObject stepData) {
         steps = stepData.steps;
         BPM = stepData.getInitialBPM();
+        initialBPM = stepData.getInitialBPM();
+
         offset = stepData.getSongOffset();
 
     }
@@ -42,11 +48,15 @@ public class GameState {
 
     void effects(HashMap<String, ArrayList<Double>> effects, double effectBeat) {
         if (effects.get("BPMS") != null) {
+
             ArrayList<Double> entry = effects.get("BPMS");
             double auxBPM = entry.get(1);
             double difBetweenBeats2 = currentBeat - effectBeat;//2.5
             currentBeat = effectBeat + (difBetweenBeats2 / (BPM / auxBPM));//
             BPM = auxBPM;
+            if (initialBPM==0){
+                initialBPM=auxBPM;
+            }
         }
         if (effects.get("SPEEDS") != null) {
             ArrayList<Double> entry = effects.get("SPEEDS");
@@ -69,8 +79,7 @@ public class GameState {
             currentBeat += entry.get(1);
             double metaBeat = effectBeat + entry.get(1);
             while (steps.get(currentElement).getCurrentBeat() < metaBeat) {
-                currentElement++;
-                checkEffects();
+                addCurrentElement();
                 if (CommonSteps.Companion.almostEqual(metaBeat, steps.get(currentElement).getCurrentBeat())) {
                 }
             }
@@ -89,8 +98,7 @@ public class GameState {
         currentDurationFake -= timeLapsedBeat / ((60 / BPM) * 1000 * 1000000);//reduce la duración de los fakes
         currentTempoBeat = System.nanoTime();
         while (steps.get(currentElement).getCurrentBeat() <= currentBeat) {
-            checkEffects();
-            currentElement++;
+          addCurrentElement();
         }
         isRunning = !(currentElement >= steps.size());
 
@@ -112,6 +120,10 @@ public class GameState {
         }
         if (currentSpeed != null)
             calculateCurrentSpeed();
+        //evaluate
+
+
+
     }
 
     void calculateCurrentSpeed() {
@@ -125,4 +137,88 @@ public class GameState {
         }
     }
 
+    void addCurrentElement (){
+        evaluate();
+
+        checkEffects();
+        currentElement++;
+
+    }
+
+
+    public void evaluate() {
+        if (true) {
+            if (true) {
+                if (Evaluator.Companion.containNoteType(steps.get(currentElement),CommonSteps.NOTE_TAP)){
+                    combo.setComboUpdate(Combo.VALUE_PERFECT);
+                }
+//                ObjectCombo.posjudge = 0;
+//                if (containTapNote(bufferSteps.get(posBuffer).rowStep)) {
+//                    playTick();
+//                    combopp();
+//                    currentLife += 0.5 * currentCombo;
+//                    ObjectCombo.show();
+//                    Note[] auxrow = bufferSteps.get(posBuffer).rowStep;
+//                    for (int w = 0; w < auxrow.length; w++) {//animations
+//                        int aux = auxrow[w].getNoteType();
+//                        if (aux == 1)
+//                            steps.noteSkins[0].explotions[w].play();
+//                        else if (aux == 2) {
+//                            steps.noteSkins[0].explotions[w].play();
+//                            steps.noteSkins[0].explotionTails[w].play();
+//                        } else if (aux == 0)
+//                            steps.noteSkins[0].explotionTails[w].stop();
+//                    }
+//                    bufferSteps.get(posBuffer).rowStep = pressedRow;
+//                } else if (containLongs(bufferSteps.get(posBuffer).rowStep)) {
+//                    residuoTick += ((double) currentTickCount / 48);
+//                    if (residuoTick >= 1) {
+//                        residuoTick -= 1;
+//                        ObjectCombo.show();
+//                        combopp();
+//                        currentLife += 0.5 * currentCombo;
+//                    }
+//                    bufferSteps.get(posBuffer).rowStep = pressedRow;
+//                }
+            } else {//juicio normal
+//                double[] currentJudge = Common.JUDMENT[ParamsSong.judgment];
+//                int posBack;
+//                //   int posNext;
+//                int backSteps;
+//                int rGreat = mil2BackSpaces((float) currentJudge[3]);
+//                int rGood = rGreat + mil2BackSpaces((float) currentJudge[2]);
+//                int rBad = rGood + mil2BackSpaces((float) currentJudge[1]);
+//                backSteps = rBad + 1;
+//
+//                posBack = -backSteps;
+//                if (backSteps >= posBuffer)
+//                    posBack = -posBuffer;
+//                //posNext = backSteps;
+//
+//                if (containTaps(bufferSteps.get(posBuffer + posBack).rowStep)) {//evaluate miss
+//                    comboLess();
+//                    bufferSteps.get(posBuffer + posBack).rowStep = pressedRow;
+//                    posBack++;
+//                }
+//                if (containsMine(bufferSteps.get(posBuffer + posBack).rowStep)) {//evaluate miss
+//                    bufferSteps.get(posBuffer + posBack).rowStep = pressedRow;
+//                    posBack++;
+//                }
+//                if (containLongs(bufferSteps.get(posBuffer + posBack).rowStep)) {
+//                    residuoTick += ((double) currentTickCount / 48);
+//                    if (residuoTick >= 1) {
+//                        residuoTick -= 1;
+//                        ObjectCombo.show();
+//                        comboLess();
+//                        currentLife += 0.5 * currentCombo;
+//                        miss += currentCombo;
+//                    }
+//                }
+            }
+        }
+    }
+
+    public void setCombo(Combo combo) {
+        this.combo = combo;
+    }
 }

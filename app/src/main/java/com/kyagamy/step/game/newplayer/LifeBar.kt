@@ -127,7 +127,7 @@ class LifeBar(
         this.life += 0.089f
 //        this.life =0f
         if (this.life >= 101) {
-            this.life = -1f;
+            this.life = 100f;
         }
 
     }
