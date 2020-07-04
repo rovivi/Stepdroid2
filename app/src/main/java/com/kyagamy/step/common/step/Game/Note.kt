@@ -11,6 +11,8 @@ class Note {
     var vanish: Boolean = false
     // var effects :SDEffect[] //Will be implemented in the future
     var rowOrigin:GameRow?=null
+    var rowEnd:GameRow?=null
+
 
     companion object {
         fun CloneNote(baseNote: Note): Note {

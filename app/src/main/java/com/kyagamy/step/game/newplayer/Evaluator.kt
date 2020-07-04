@@ -9,8 +9,13 @@ class Evaluator {
 
     companion object {
          fun containNoteType(row: GameRow, typeNote: Short): Boolean {
-//            for (x in row.notes!!) if (x.type == typeNote) return true
-            return true
+//
+             if (row.notes!=null)
+             {
+                 return true
+                 for (x in row.notes!!) if (x.type == typeNote) return true
+             }
+            return false
         }
 
 

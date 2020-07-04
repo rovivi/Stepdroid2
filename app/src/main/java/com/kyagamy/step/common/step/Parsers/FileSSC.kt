@@ -153,6 +153,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
             steps,
             CommonSteps.lengthByStepType(stepObject.stepType)
         )//Se aplican los longs
+        CommonSteps.orderByBeat(steps)
 
         CommonSteps.stopsToScroll(steps)//Se aplican los stops
         CommonSteps.orderByBeat(steps)
@@ -185,6 +186,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         val listGameRow = ArrayList<GameRow>()
         val blocks = data.split(",")
         var currentBeat = 0.0
+        val auxLongRow = arrayOfNulls<GameRow>(18) //aux to set row into
         blocks.forEach { block ->
             val rowsStep = block.split("\n").filter { x -> x != "" }
             val blockSize = rowsStep.size
@@ -192,6 +194,23 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                 if (!checkEmptyRow(row)) {
                     val gameRow = stringToGameRow(row)
                     gameRow.currentBeat = currentBeat
+
+                    //scan form game row
+                    gameRow.notes?.forEachIndexed { index,note ->
+                        run {
+                        if (note.type ==CommonSteps.NOTE_LONG_START){
+                            auxLongRow[index]=gameRow
+
+                        }
+                        else if (note.type ==CommonSteps.NOTE_LONG_END){
+                            //set first start note end
+                            auxLongRow[index]?.notes?.get(index)?.rowEnd =gameRow
+                            note.rowOrigin =auxLongRow[index]
+                            auxLongRow[index]=null
+                        }
+                    }}
+
+
                     listGameRow.add(gameRow)
                 }
                 currentBeat += 4.0 / blockSize

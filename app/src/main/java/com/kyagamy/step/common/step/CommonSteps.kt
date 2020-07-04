@@ -77,47 +77,68 @@ public class CommonSteps {
                     if (row.notes != null) {
                         for (j in 0 until row.notes!!.size) {
                             if (row.notes!![j].type == NOTE_LONG_START) {
+//                                var x = 0//find the end of the long note
+                                var beatLimit = row.notes!![j].rowEnd?.currentBeat
 
                                 var beatLong = row.currentBeat
-                                val newNote = Note.CloneNote(row.notes!![j])//Se crea una nueva nota que tiene los mismos parametros que la de entrada
+                                val newNote =
+                                    Note.CloneNote(row.notes!![j])//Se crea una nueva nota que tiene los mismos parametros que la de entrada
                                 newNote.type = NOTE_LONG_BODY
                                 newNote.rowOrigin = row
                                 var counTick = 0
+                                //se busca el limite de el log
+
+
                                 try {
-                                    while (true) {//prevent infinite loop
-                                        beatLong += (1.0 / 192)
+                                    while (beatLong <= beatLimit ?:0.0) {//prevent infinite loop
+                                        beatLong += (1.0 / currentTickCount)//currentTickCount
                                         //se debe de ir de 192 en 192 para que no sé
-                                        val newRowAux = steps.firstOrNull { findRow -> almostEqual(beatLong, findRow.currentBeat) }
+                                        val newRowAux = steps.firstOrNull { findRow ->
+                                            almostEqual(
+                                                beatLong,
+                                                findRow.currentBeat
+                                            )
+                                        }
                                         if (newRowAux == null) {
-                                            if ((48 / currentTickCount) <= counTick) {
-                                                val valaaa = currentTickCount / 48
-                                                val string = "$valaaa >$counTick"
-                                                println(string)
-                                                counTick = 0
-                                                val newRow = GameRow()
-                                                newRow.currentBeat = beatLong
-                                                newRow.notes = arrayListOf(Note())
-                                                for (cc in 0..len - 2)
-                                                    newRow.notes!!.add(Note())
-                                                newRow.notes!![j] = newNote
-                                                steps.add(newRow)
-                                            }
+//                                            if ((48 / currentTickCount) <= counTick) {
+//                                            val valaaa = currentTickCount / 192
+//                                            val string = "$valaaa >$counTick"
+//                                            println(string)
+                                            counTick = 0
+                                            val newRow = GameRow()
+                                            newRow.currentBeat = beatLong
+                                            newRow.notes = arrayListOf(Note())
+                                            for (cc in 0..len - 2)
+                                                newRow.notes!!.add(Note())
+                                            newRow.notes!![j] = newNote
+
+                                            newRow.notes!![j].type = NOTE_LONG_BODY
+                                            newRow.notes!![j].rowOrigin = row
+
+
+                                            steps.add(newRow)
+//
                                         } else {
-                                            if (newRowAux.modifiers?.get("TICKCOUNTS") != null)
-                                                currentTickCount = newRowAux.modifiers!!["TICKCOUNTS"]!![1]
-                                            if (newRowAux.notes != null && newRowAux.notes?.get(j)!!.type == NOTE_LONG_END){
+
+                                            if (newRowAux.modifiers?.get("TICKCOUNTS") != null) {
+                                                currentTickCount =
+                                                    newRowAux.modifiers!!["TICKCOUNTS"]!![1]
+                                            }
+                                            if (newRowAux.notes != null && newRowAux.notes?.get(j)!!.type == NOTE_LONG_END) {
                                                 newRowAux.notes!![j].rowOrigin = row
                                                 break
                                             }
+
                                             if (newRowAux.notes == null) {
                                                 newRowAux.notes = arrayListOf(Note())
                                                 for (cc in 0..len - 2)
                                                     newRowAux.notes!!.add(Note())
                                             }
-                                            if ((48 / currentTickCount) <= counTick) {
+
+                                            if (newRowAux.notes!![j].type != NOTE_LONG_END) {
                                                 newRowAux.notes!![j].type = NOTE_LONG_BODY
-                                                newRowAux.notes!![j].rowOrigin = row
                                             }
+                                            newRowAux.notes!![j].rowOrigin = row
                                         }
                                         counTick++
                                     }

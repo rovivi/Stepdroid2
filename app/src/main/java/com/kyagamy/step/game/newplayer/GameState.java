@@ -79,8 +79,11 @@ public class GameState {
             currentBeat += entry.get(1);
             double metaBeat = effectBeat + entry.get(1);
             while (steps.get(currentElement).getCurrentBeat() < metaBeat) {
-                addCurrentElement();
+                currentElement++;
+                checkEffects();
                 if (CommonSteps.Companion.almostEqual(metaBeat, steps.get(currentElement).getCurrentBeat())) {
+
+
                 }
             }
         }
@@ -98,7 +101,10 @@ public class GameState {
         currentDurationFake -= timeLapsedBeat / ((60 / BPM) * 1000 * 1000000);//reduce la duración de los fakes
         currentTempoBeat = System.nanoTime();
         while (steps.get(currentElement).getCurrentBeat() <= currentBeat) {
-          addCurrentElement();
+            checkEffects();
+            evaluate();
+
+            currentElement++;
         }
         isRunning = !(currentElement >= steps.size());
 
@@ -137,8 +143,11 @@ public class GameState {
         }
     }
 
-    void addCurrentElement (){
-        evaluate();
+    void addCurrentElement (boolean evaluate ){
+        if (evaluate){
+         //   evaluate();
+
+        }
 
         checkEffects();
         currentElement++;

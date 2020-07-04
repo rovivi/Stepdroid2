@@ -6,7 +6,8 @@ class GameRow {
     var notes :ArrayList<Note>? = null
     var currentBeat :Double = 0.0
     var modifiers : HashMap<String, ArrayList<Double>>?= null
-    var posY :Int=-9
+    private var posY :Int=-9
+
 
 
     override fun toString(): String {
@@ -19,11 +20,15 @@ class GameRow {
         return "GameRow(---notes=$noteStr,---- currentBeat=$currentBeat, modifiers=$modStr)"
     }
 
-//    fun getY():Int{
-//        var aux = posY+0
-//        posY=0
-//        return  aux
-//    }
+    fun getPosY():Int{
+        var aux = posY+0
+       // posY=-9
+        return  aux
+    }
+
+    fun setPosY(value : Int){
+        posY=value
+    }
 
 
 

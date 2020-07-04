@@ -31,14 +31,13 @@ public class StepsDrawer {
     private static float NUMBER_OF_Y_STEPS = 9.3913f;
 
 
-
-    protected int sizeX ;
+    protected int sizeX;
     protected int sizeY;
 
     protected int sizeNote;
-    protected int offsetX=0;//game
-    protected int offsetY=0;
-    private int sizeArrows=1;//alto de la pantalla entre 9.3913
+    protected int offsetX = 0;//game
+    protected int offsetY = 0;
+    private int sizeArrows = 1;//alto de la pantalla entre 9.3913
 
     protected int posInitialX;
 
@@ -60,37 +59,35 @@ public class StepsDrawer {
      * @param context
      * @param gameMode
      */
-    StepsDrawer(Context context, String gameMode,String aspectRatio,boolean landScape,Point screenSize) {
+    StepsDrawer(Context context, String gameMode, String aspectRatio, boolean landScape, Point screenSize) {
         //que tipo de tablero y nivel es aqui se tiene que calcular las medidas necesarias
 //        Point screenSize =Common.Companion.getSize(context);
-        this.gameMode=gameMode;
+        this.gameMode = gameMode;
         posInitialX = (int) (screenSize.x * 0.1);
         longInfo[1] = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         noteSkins = new NoteSkin[1];
 
 
+        float relationAspectValue = aspectRatio.contains("4:3") ? 0.75f : 0.5625f;
 
-        float relationAspectValue =  aspectRatio.contains("4:3") ?0.75f:0.5625f;
-
-        if (landScape){
-            sizeY=screenSize.y;
-            sizeX= (int) (screenSize.y*1.77777778d);
-            offsetX = (int) ((screenSize.x-sizeX)/2f);
-            if (sizeX>screenSize.x){
-                sizeY= (int) (screenSize.x/1.7777777f);
-                sizeX= (int) (sizeY*1.77777778d);
-                offsetX = Math.abs((int) ((screenSize.x-sizeX)/2f));
-                offsetY = (int) ((screenSize.y-sizeY)/2f);
+        if (landScape) {
+            sizeY = screenSize.y;
+            sizeX = (int) (screenSize.y * 1.77777778d);
+            offsetX = (int) ((screenSize.x - sizeX) / 2f);
+            if (sizeX > screenSize.x) {
+                sizeY = (int) (screenSize.x / 1.7777777f);
+                sizeX = (int) (sizeY * 1.77777778d);
+                offsetX = Math.abs((int) ((screenSize.x - sizeX) / 2f));
+                offsetY = (int) ((screenSize.y - sizeY) / 2f);
             }
-            sizeX+=offsetX/2 ;
-            sizeY+=offsetY;
-        }
-        else {
-            sizeY=screenSize.y/2;
-            sizeX= screenSize.x;
-            if ((int) (sizeY / NUMBER_OF_Y_STEPS)*getStepsByGameMode()>sizeX){
-                sizeY= (int) (sizeX/( getStepsByGameMode()+0.2) *NUMBER_OF_Y_STEPS);
-                offsetY= screenSize.y-sizeY;
+            sizeX += offsetX / 2;
+            sizeY += offsetY;
+        } else {
+            sizeY = screenSize.y / 2;
+            sizeX = screenSize.x;
+            if ((int) (sizeY / NUMBER_OF_Y_STEPS) * getStepsByGameMode() > sizeX) {
+                sizeY = (int) (sizeX / (getStepsByGameMode() + 0.2) * NUMBER_OF_Y_STEPS);
+                offsetY = screenSize.y - sizeY;
             }
 
         }
@@ -109,7 +106,7 @@ public class StepsDrawer {
             case "pump-halfdouble":
             case "pump-single":
                 noteSkins[SELECTED_SKIN] = new NoteSkin(context, gameMode, "missile");
-            //noteSkins[1] = new NoteSkin(context, gameMode, "routine2");
+                //noteSkins[1] = new NoteSkin(context, gameMode, "routine2");
             case "dance-single":
                 break;
             case "":
@@ -117,7 +114,7 @@ public class StepsDrawer {
         }
 
         //calculate offset
-        posInitialX = (((sizeX)-(sizeNote*getStepsByGameMode())))/2 +offsetX/2;
+        posInitialX = (((sizeX) - (sizeNote * getStepsByGameMode()))) / 2 + offsetX / 2;
 
     }
 
@@ -134,23 +131,23 @@ public class StepsDrawer {
                 if (note != null && note.getType() != CommonSteps.NOTE_EMPTY) {
                     SpriteReader currentArrow = null;
 
-                    int startNoteX =posInitialX + sizeNote * count;
-                    int sizeNote = (int) (this.sizeNote*1.245);
-                    int endNoteX= startNoteX+sizeNote;
+                    int startNoteX = posInitialX + sizeNote * count;
+                    int sizeNote = (int) (this.sizeNote * 1.245);
+                    int endNoteX = startNoteX + sizeNote;
 
 
                     switch (note.getType()) {
                         case CommonSteps.NOTE_TAP:
-//                        case CommonSteps.NOTE_LONG_START:
+
                         case CommonSteps.NOTE_FAKE:
                             currentArrow = noteSkins[SELECTED_SKIN].arrows[count];
                             break;
                         case CommonSteps.NOTE_LONG_END:
                             if (gameRow.getPosY() > note.getRowOrigin().getPosY()) {
-                                int distance = gameRow.getPosY() - note.getRowOrigin().getPosY()+sizeNote;
+                                int distance = gameRow.getPosY() - note.getRowOrigin().getPosY() + sizeNote;
                                 if (distance > sizeNote) {
                                     noteSkins[SELECTED_SKIN]
-                                            .longs[count].draw(canvas, new Rect(startNoteX, note.getRowOrigin().getPosY() + ((int) (sizeNote * 0.75)), endNoteX, gameRow.getPosY() + sizeNote/3));
+                                            .longs[count].draw(canvas, new Rect(startNoteX, note.getRowOrigin().getPosY() + ((int) (sizeNote * 0.75)), endNoteX, gameRow.getPosY() + sizeNote / 3));
                                 }
                                 noteSkins[SELECTED_SKIN].tails[count]
                                         .draw(canvas, new Rect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
@@ -165,16 +162,26 @@ public class StepsDrawer {
                                         .longs[count].draw(canvas, new Rect(startNoteX, note.getRowOrigin().getPosY() + ((int) (sizeNote * 0.75)), endNoteX, gameRow.getPosY() + sizeNote));
                                 noteSkins[SELECTED_SKIN].arrows[count]
                                         .draw(canvas, new Rect(startNoteX, note.getRowOrigin().getPosY(), endNoteX, note.getRowOrigin().getPosY() + sizeNote));
-                                break;
-                            } else
-                                continue;
 
+                            }
+                            break;
                         case CommonSteps.NOTE_MINE:
                             currentArrow = noteSkins[SELECTED_SKIN].mine;
                             break;
+                        case CommonSteps.NOTE_LONG_START:
+                            if ( note.getRowEnd().getPosY()<-8) {
+                                    noteSkins[SELECTED_SKIN]
+                                            .longs[count].draw(canvas, new Rect(startNoteX, gameRow.getPosY() + ((int) (sizeNote * 0.75)), endNoteX, sizeY + sizeNote / 3));
+                                noteSkins[SELECTED_SKIN].arrows[count]
+                                        .draw(canvas, new Rect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
+                            }
+
+
+
+
                     }
                     if (currentArrow != null)
-                        currentArrow.draw(canvas, new Rect(startNoteX , gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
+                        currentArrow.draw(canvas, new Rect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
 //                    canvas.drawText("awa", 0, gameRow.getPosY(), paint);
                 }
                 count++;
@@ -208,7 +215,7 @@ public class StepsDrawer {
     }
 
 
-    public int getStepsByGameMode(){
+    public int getStepsByGameMode() {
         switch (gameMode) {
             case "pump-routine":
             case "pump-double":
@@ -224,7 +231,6 @@ public class StepsDrawer {
         return 0;
 
     }
-
 
 
 }
