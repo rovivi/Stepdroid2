@@ -9,167 +9,155 @@ import android.graphics.Rect;
 
 import com.kyagamy.step.R;
 import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader;
-import com.kyagamy.step.common.step.CommonGame.TransformBitmap;
 
 
 public class Combo {
 
-    public  static final byte VALUE_PERFECT =0;
-    public  static final byte VALUE_GREAT = 1;
-    public  static final byte VALUE_GOOD = 2;
-    public  static final byte VALUE_BAD = 3;
-    public  static final byte VALUE_MISS = 4;
-    public  static final byte VALUE_MISSING = 1;
+    public static final byte VALUE_PERFECT = 0;
+    public static final byte VALUE_GREAT = 1;
+    public static final byte VALUE_GOOD = 2;
+    public static final byte VALUE_BAD = 3;
+    public static final byte VALUE_MISS = 4;
+    public static final byte VALUE_MISSING = 1;
+
+
+    //proportions Y
+    static private float COMBO_TEXT_RATIO_X = 0.14815f;
+    static private float COMBO_TEXT_RATIO_Y = 0.0363637f;
+
+    static private float COMBO_NUMBER_RATIO_X = 0.05555556f;
+    static private float COMBO_NUMBER_RATIO_Y = 0.06161616f;
+
+    static private float COMBO_LABEL_RATIO_X = 0.306f;
+    static private float COMBO_LABEL_RATIO_Y = 0.0555555556f;
+
+    static  private float RATIO_BIGGER_LABEL =0.6666666667f;
+
 
     Long timeMark;
     short auxLife = 1;
 
     private SpriteReader judgeSprite, numberCombo;
     private Bitmap comboImage, badCombo, currentBitMapCombo;
-    private float ratioStep, aument, ratioStepCombo, aumentLabel, tiemposcombo;
-    private int posIntY,x,y, posIntXCombo, posIntYCombo, posIntYNC, posIntX, combo = 0,aumentCombo = -220;
+
+    private int x;
+    private int y;
+
+    private int combo = 0;
+    private int aumentTip = -220;
+    private Paint paint = new Paint();
 
     public short positionJudge = 0;
-    float factor=1f;
 
-    public Combo(Context c,StepsDrawer stepsDrawer) {
-        this.x=stepsDrawer.sizeX;
-        this.y=stepsDrawer.sizeY;
+    public Combo(Context c, StepsDrawer stepsDrawer) {
+        this.x = stepsDrawer.sizeX+stepsDrawer.offsetX;
+        this.y = stepsDrawer.sizeY;
         BitmapFactory.Options myOpt2 = new BitmapFactory.Options();
         myOpt2.inSampleSize = 0;
-        numberCombo = new SpriteReader(BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_number, myOpt2),10 , 1, 1f);
-        judgeSprite = new SpriteReader( BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_judge, myOpt2), 1, 5, 1f);
+        numberCombo = new SpriteReader(BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_number, myOpt2), 10, 1, 1f);
+        judgeSprite = new SpriteReader(BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_judge, myOpt2), 1, 5, 1f);
         comboImage = BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo, myOpt2);
         badCombo = BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_bad, myOpt2);
-        // dibujante.setColor(Color.TRANSPARENT);
+
+//        aumentLabel = 1 * aument / 3;
+//        ratioStepCombo = 2 * ratioStep / 3;
 
 
-        ////////Medidades
-            /*
-            Perfect = (x=20%,y=6&) y max (x=30%,y=8.4&)
-            Combo   =   (x=10%,y=3.1&) y max (x=15%,y=5&)
-            1000    =  (x=5%,y=5&)
-            */
-        /////////
-        ratioStep = 0.66f;
-        aument = 0.0425f;
-        aumentLabel = 2 * aument / 3;
-        ratioStepCombo = 2 * ratioStep / 3;
 
 
-        posIntY = (int) (y / 2 - (y * 0.084) / 2);
 
 
-        posIntYNC = 0;
-
-    timeMark =System.currentTimeMillis();
+        timeMark = System.currentTimeMillis();
     }
 
 
-    public void start() {
-        tiemposcombo = System.currentTimeMillis();
-    }
+
 
     public void show() {
-
-        aumentCombo = 8;
-        if (combo >= 0) {
-            currentBitMapCombo = comboImage;
-        } else {
-            currentBitMapCombo = badCombo;
-        }
-
-
+        aumentTip = 20;
+        paint.setAlpha(255);
+        currentBitMapCombo=(combo >= 0)?comboImage:badCombo;
     }
 
     public void setComboUpdate(short typeTap) {
-        aumentCombo = 12;
-        positionJudge=typeTap;
-        switch (typeTap){
+        positionJudge = typeTap;
+        switch (typeTap) {
             case VALUE_PERFECT:
             case VALUE_GREAT:
                 combo++;
                 break;
             case VALUE_BAD:
             case VALUE_MISS:
-                combo = (combo >0)?0: combo--;
+                combo = (combo > 0) ? 0 : combo--;
         }
         show();
 
     }
 
-    public void update(){
-        if (System.nanoTime() - timeMark > 150) {
-//            if (aumentCombo > 6 || aumentCombo < 0) {
-//                auxLife *= -1;
-//            /}
-            aumentCombo -= 1;
+    public void update() {
+        if (System.nanoTime() - timeMark > 100) {
+            aumentTip -= 1;
             timeMark = System.nanoTime();
         }
-
-        //;
 
     }
 
 
-
     public void draw(Canvas canvas) {
-        posIntX = (int) (x / 2 - (x * 0.4 * (ratioStep + aument * aumentCombo)) / 2);
+        //setSizes
+        int numberSizeY = (int) (y * COMBO_NUMBER_RATIO_Y);
+        int numberSizeX = (int) (y * COMBO_NUMBER_RATIO_X);
 
+        int comboSizeY =(int) ((y * COMBO_TEXT_RATIO_Y));
+        int comboSizeX =(int) ((y * COMBO_TEXT_RATIO_X));
 
-        posIntXCombo = (int) (x / 2 - (x * 0.13) * (ratioStep + aument * aumentCombo) / 2);
+        int labelSizeY =(int) ((y * COMBO_LABEL_RATIO_Y));
+        int labelSizeX =(int) ((y * COMBO_LABEL_RATIO_X));
 
+        //initX For each type
 
-        posIntYCombo = (int) (posIntY + (y * 0.039) + (y * 0.084) * (ratioStepCombo + aumentLabel * aumentCombo) / 2);// (int) (y / 2 - (y * 0.05) / 2);
-
-
-        if (aumentCombo > -12) {
-            if (aumentCombo >= 0) {
-
-                canvas.drawBitmap(judgeSprite.frames[positionJudge], null, new Rect(posIntX, posIntY, posIntX + (int) ((x * 0.4) * (ratioStep + aument * aumentCombo)), posIntY + (int) ((y * 0.084*factor) * (ratioStep + aument * aumentCombo))), new Paint());
-                posIntYNC = posIntYCombo + (int) ((comboImage.getHeight()) * (ratioStepCombo + aumentLabel * aumentCombo) * 0.7);
-
-            } else if (aumentCombo < -6) {
-                posIntX = (int) (x / 2 - (x * 0.4 * (ratioStep)) / 2);
-                int opacidad = (100 + 5 * aumentCombo);
-                int xt = aumentCombo * -1;
-                int yt = aumentCombo;
-                canvas.drawBitmap(TransformBitmap.makeTransparent(judgeSprite.frames[positionJudge], opacidad), null, new Rect(posIntX, posIntY, posIntX + (int) (x * 0.4 * (ratioStep) * ((float) xt * 5 / 100)), 10 * aumentCombo + posIntY + (int) ((y *factor* 0.084) * (ratioStep + aument * aumentCombo) * ((float) yt * 5 / 100))), new Paint());
-
-            } else {
-                posIntX = (int) (x / 2 - (x * 0.4 * (ratioStep)) / 2);
-                canvas.drawBitmap(judgeSprite.frames[positionJudge], null, new Rect(posIntX, posIntY, posIntX + (int) (x * 0.4 * ratioStep), posIntY + (int) (y * 0.084 *factor* ratioStep)), new Paint());
-                // canvas.drawBitmap(currentBitMapCombo, null, new Rect(posIntXCombo, posIntYCombo, posIntXCombo + (int) ((x * 0.17) * (ratiostepcombo + aumentolabel)), posIntYCombo + (int) ((y * 0.053) * (ratiostepcombo + aumentolabel))), new Paint());
-            }
-
-            //draw
-            //canvas.drawText(""+Combo,x/2-50,y/2,dibujante);
-
-            posIntYNC = posIntYCombo + (int) ((y * 0.05) * (ratioStepCombo + aumentLabel * aumentCombo));
-            if (combo > 3 || combo < -3) {
-
-
-                canvas.drawBitmap(currentBitMapCombo, null, new Rect(posIntXCombo, posIntYCombo, posIntXCombo + (int) ((x * 0.17) * (ratioStepCombo + aumentLabel * aumentCombo)), posIntYCombo + (int) ((y * 0.053) * (ratioStepCombo + aumentLabel * aumentCombo))), new Paint());
-
-                ////
-
-                long lc = 100000000 + Math.abs(combo);
-                String sc = lc + "";
-                String sc2 = Math.abs(combo) + "";
-                int nveces = 4;//dice el numero de veces que tienes
-
-                if (sc2.length() > 3) {
-                    nveces = sc2.length() + 1;
-                }
-                for (int w = 1; w < nveces; w++) {
-                    int leng = (nveces - 1) * (int) (x * 0.05);
-                    int posxnc = (int) ((0.9 * (leng / 2) + x / 2) - x * 0.05 * w * 1.0);
-                    int n = Integer.parseInt(sc.charAt(sc.length() - w) + "");
-                    canvas.drawBitmap(numberCombo.frames[n], null, new Rect(posxnc, posIntYNC, posxnc + (int) (x * 0.05), posIntYNC + (int) (x * 0.05)), new Paint());
-                }
-            }
+        if (aumentTip>14 &&aumentTip<21)
+        {
+            float  relation = 1+  (aumentTip-15)*0.2f*RATIO_BIGGER_LABEL  ;
+            labelSizeY*=relation;
+            labelSizeX*=relation;
 
         }
 
+
+        int posLabelIntX = (int) ((x / 2f - labelSizeX / 2f)*1.008);
+        int posComboIntX = (int) (x / 2f - comboSizeX / 2f);
+
+        if (aumentTip<6){
+               paint.setAlpha(Math.abs(-(255/(5)*aumentTip)));
+
+        }
+
+
+        int posIntYCombo = (y / 2 - (numberSizeY + labelSizeY + comboSizeY) / 2);// (int) (y / 2 - (y * 0.05) / 2);
+
+        if (aumentTip > 0) {
+            canvas.drawBitmap(judgeSprite.frames[positionJudge], null, new Rect(posLabelIntX, posIntYCombo, posLabelIntX + labelSizeX, posIntYCombo + labelSizeY), paint);
+
+            posIntYCombo +=   labelSizeY*1.15;
+            if (combo > 3 || combo < -3) {
+                //show combo text
+                canvas.drawBitmap(currentBitMapCombo, null, new Rect(posComboIntX, posIntYCombo, posComboIntX + comboSizeX, posIntYCombo +comboSizeY) , paint);
+                posIntYCombo+=comboSizeY;
+                String stringComboAux = (100000000 + Math.abs(combo)) + "";
+                String stringCombo = Math.abs(combo) + "";
+
+                int drawTimes = 4;//number of types you need to draw number example combo 39 then 3 digits show 039
+                if (stringCombo.length() > 3)
+                    drawTimes = stringCombo.length() + 1;
+
+                for (int w = 1; w < drawTimes; w++) {
+                    int totalComboLength = (drawTimes - 1) *numberSizeX;
+                    int positionCurrentNumber = ((totalComboLength / 2) + x / 2) - numberSizeX * w;
+                    int n = Integer.parseInt(stringComboAux.charAt(stringComboAux.length() - w) + "");
+                    canvas.drawBitmap(numberCombo.frames[n], null, new Rect(positionCurrentNumber, posIntYCombo, positionCurrentNumber + numberSizeX, posIntYCombo + numberSizeY), paint);
+                }
+            }
+        }
     }
 }
