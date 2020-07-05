@@ -41,7 +41,7 @@ class PlayerBga : Activity() {
 
     var nchar = 0
     var indexMsj = 0
-    var pad = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    var inputs = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -118,7 +118,7 @@ class PlayerBga : Activity() {
 
                 val displayMetrics= DisplayMetrics()
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-                gamePlay!!.build1Object(videoViewBGA, step,baseContext,Point(displayMetrics.widthPixels,displayMetrics.heightPixels))
+                gamePlay!!.build1Object(videoViewBGA, step,baseContext,Point(displayMetrics.widthPixels,displayMetrics.heightPixels),inputs)
             } catch (e: Exception) {
                 e.printStackTrace()
                 gamePlayError = true

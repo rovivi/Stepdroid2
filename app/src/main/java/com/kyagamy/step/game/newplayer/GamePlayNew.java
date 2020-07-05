@@ -14,6 +14,7 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.RelativeLayout;
@@ -47,6 +48,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     StepsDrawer stepsDrawer;
     LifeBar bar;
     Combo combo;
+    private GamePad touchPad;
     String msj;
     BgPlayer bgPlayer;
 
@@ -64,22 +66,16 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         }
     };
 
-//    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-//    public GamePlayNew(Context context, StepObject steps) {
-//        super(context);
-//        build1Object(null, steps,context,);
-//
-//    }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void build1Object(VideoView videoView, StepObject stepData,Context context,Point sizeScreen) {
+    public void build1Object(VideoView videoView, StepObject stepData,Context context,Point sizeScreen,byte[] inputs ) {
         try {
             isLandScape =context.getResources().getConfiguration().orientation== Configuration.ORIENTATION_LANDSCAPE;
 
             this.setZOrderOnTop(true); //necessary
             getHolder().setFormat(PixelFormat.TRANSPARENT);
             getHolder().addCallback(this);
-            gameState = new GameState(stepData);
+            gameState = new GameState(stepData,inputs);
             gameState.reset();
             mpMusic = new MediaPlayer();
 
@@ -101,7 +97,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             playerSizeX =size.x;
             //verify if landscape
             //16:9
-            playerSizeY = (int) (size.x*0.5625d);
+            //playerSizeY = (int) (size.x*0.5625d);
             //4:3
             playerSizeY = (int) (size.x*0.75d);
 
@@ -133,6 +129,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             bar = new LifeBar(context,stepsDrawer);
 
             combo = new Combo(getContext(),stepsDrawer);
+            touchPad = new GamePad(context, stepData.getStepType(), gameState.inputs,sizeScreen.x,size.y);
+
             gameState.setCombo(combo);
 
         } catch (Exception e) {
@@ -186,10 +184,10 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         try {
             //speed calc
             double avAuxValue = (gameState.initialBPM); //example BPM 200 ;
-            int speed = (int) (stepsDrawer.sizeNote * 1.21/avAuxValue   *580) ;//580 av
+            int speed = (int) (stepsDrawer.sizeNote /avAuxValue   *580) ;//580 av
             double lastScrollAux = gameState.lastScroll;
             double lastBeat = this.gameState.currentBeat + 0;
-            double lastPosition = stepsDrawer.sizeNote;
+            double lastPosition = stepsDrawer.sizeNote*0.7;
             ArrayList<GameRow> list= new ArrayList<>();
             if (gameState.isRunning) {
                 drawStats(canvas);
@@ -212,8 +210,12 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             }
             bar.draw(canvas);
             combo.draw(canvas);
+
+
             if (!isLandScape)
                 canvas.drawRect(new Rect(0,stepsDrawer.sizeY,stepsDrawer.offsetX+stepsDrawer.sizeX,stepsDrawer.sizeY*2),clearPaint);
+
+           // touchPad.draw(canvas);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -227,6 +229,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             bgPlayer.update(gameState.currentBeat);
             bar.updateLife(50);
         }
+
     }
 
     public void drawStats(Canvas c) {
@@ -235,16 +238,16 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         c.drawPaint(paint);
         paint.setTextSize(25);
         paint.setColor(Color.WHITE);
-        c.drawText("::: " + msj, 0, 20, paint);
+      //  c.drawText("::: " + msj, 0, 20, paint);
         c.drawText("FPS: " + fps, 0, 250, paint);
-        c.drawText("Log: " + gameState.currentTickCount, 0, 100, paint);
-        c.drawText("event: " + testFloatNOTUSE, 0, playerSizeY - 200, paint);
-        c.drawText("C Seg: " + String.format(new Locale("es"), "%.3f", gameState.currentSecond), 0, playerSizeY - 300, paint);
+       // c.drawText("Log: " + gameState.currentTickCount, 0, 100, paint);
+        //c//.drawText("event: " + testFloatNOTUSE, 0, playerSizeY - 200, paint);
+        //c.drawText("C Seg: " + String.format(new Locale("es"), "%.3f", gameState.currentSecond), 0, playerSizeY - 300, paint);
         c.drawText("C Beat: " + String.format(new Locale("es"), "%.3f", gameState.currentBeat), 0, playerSizeY - 150, paint);
         c.drawText("C BPM: " + gameState.BPM, 0, playerSizeY - 250, paint);
         c.drawText("C Speed: " + gameState.currentSpeedMod, 0, playerSizeY - 100, paint);
         c.drawText("Scroll: " + gameState.lastScroll, 0, playerSizeY - 400, paint);
-        c.drawText("pad: ", playerSizeX - 250, playerSizeY - 20, paint);
+      //  c.drawText("pad: ", playerSizeX - 250, playerSizeY - 20, paint);
         //  paint.setColor(Color.BLACK);
         paint.setColor(Color.TRANSPARENT);
     }
@@ -278,4 +281,47 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             e.printStackTrace();
         }
     }
+
+    public boolean onTouchEvent(MotionEvent event) {
+        try {
+            int maskedAction = event.getActionMasked();
+            int fingers = event.getPointerCount();
+            //this.fingersOnScreen = (byte) fingers;
+            int[][] inputsTouch = new int[fingers][2];
+            for (int i = 0; i < fingers; i++) {
+                inputsTouch[i][0] = (int) event.getX(i);
+                inputsTouch[i][1] = (int) event.getY(i);
+//                this.event += " " + i + ":(" + (int) event.getX(i) + "," + (int) event.getY(i) + ")";
+            }
+            switch (maskedAction) {
+                case MotionEvent.ACTION_POINTER_UP:
+                    int actionIndex = event.getPointerId(event.getActionIndex());
+                    this.touchPad.unpress(event.getX(actionIndex), event.getY(actionIndex));
+                    break;
+                case MotionEvent.ACTION_DOWN:
+                    if (event.getX() > playerSizeX / 2 && event.getY() < playerSizeY / 2){}
+                  //      currentSpeedMod += 150;
+                    else if (event.getX() < playerSizeX / 2 && event.getY() < playerSizeY / 2) {
+                    //    if (currentSpeedMod > 99)
+                      //      currentSpeedMod -= 150;
+                    } else if (event.getX() < playerSizeX / 2 && event.getY() > playerSizeY / 2 && event.getY() < playerSizeY) {
+                        //ParamsSong.autoplay = !ParamsSong.autoplay;
+                    } else if (event.getX() > playerSizeX / 2 && event.getY() > playerSizeY / 2 && event.getY() < playerSizeY) {
+                        //    steps.doMagic = !steps.doMagic;
+                    }
+                    touchPad.checkInputs(inputsTouch, true);
+                default:
+                 //   this.event = "numero" + maskedAction;
+                    this.touchPad.checkInputs(inputsTouch, false);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (fingers == 1)
+                        touchPad.clearPad();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
 }

@@ -17,6 +17,9 @@ class Note {
     companion object {
         fun CloneNote(baseNote: Note): Note {
             val newNote = Note()
+            newNote.rowOrigin=baseNote.rowOrigin
+            newNote.rowEnd=baseNote.rowEnd
+
             newNote.fake = baseNote.fake
             newNote.vanish = baseNote.vanish
             newNote.hidden = baseNote.hidden

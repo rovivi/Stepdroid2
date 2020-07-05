@@ -27,11 +27,16 @@ public class GameState {
     public boolean isRunning = true;
     public double initialBPM ;
 
+    public byte[] inputs;
+
+    private GamePad touchPad;
+
 
     public  Combo combo;
 
 
-    public GameState(StepObject stepData) {
+    public GameState(StepObject stepData,byte[] pad) {
+        this.inputs=pad;
         steps = stepData.steps;
         BPM = stepData.getInitialBPM();
         initialBPM = stepData.getInitialBPM();

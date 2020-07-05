@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-
 import com.kyagamy.step.R;
 import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader;
 
@@ -22,20 +21,18 @@ public class Combo {
 
 
     //proportions Y
-    static private float COMBO_TEXT_RATIO_X = 0.14815f;
-    static private float COMBO_TEXT_RATIO_Y = 0.0363637f;
+    static private float COMBO_TEXT_RATIO_X = 0.14815f*1.25f;
+    static private float COMBO_TEXT_RATIO_Y = 0.0363637f*1.25f;
 
-    static private float COMBO_NUMBER_RATIO_X = 0.05555556f;
-    static private float COMBO_NUMBER_RATIO_Y = 0.06161616f;
+    static private float COMBO_NUMBER_RATIO_X = 0.05555556f*1.15f;
+    static private float COMBO_NUMBER_RATIO_Y = 0.06141616f;
 
     static private float COMBO_LABEL_RATIO_X = 0.306f;
     static private float COMBO_LABEL_RATIO_Y = 0.0555555556f;
 
     static  private float RATIO_BIGGER_LABEL =0.6666666667f;
 
-
-    Long timeMark;
-    short auxLife = 1;
+    private Long timeMark;
 
     private SpriteReader judgeSprite, numberCombo;
     private Bitmap comboImage, badCombo, currentBitMapCombo;
@@ -58,20 +55,8 @@ public class Combo {
         judgeSprite = new SpriteReader(BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_judge, myOpt2), 1, 5, 1f);
         comboImage = BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo, myOpt2);
         badCombo = BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_bad, myOpt2);
-
-//        aumentLabel = 1 * aument / 3;
-//        ratioStepCombo = 2 * ratioStep / 3;
-
-
-
-
-
-
         timeMark = System.currentTimeMillis();
     }
-
-
-
 
     public void show() {
         aumentTip = 20;
@@ -99,13 +84,11 @@ public class Combo {
             aumentTip -= 1;
             timeMark = System.nanoTime();
         }
-
     }
-
 
     public void draw(Canvas canvas) {
         //setSizes
-        int numberSizeY = (int) (y * COMBO_NUMBER_RATIO_Y);
+        int numberSizeY = (int) (y * COMBO_NUMBER_RATIO_X);
         int numberSizeX = (int) (y * COMBO_NUMBER_RATIO_X);
 
         int comboSizeY =(int) ((y * COMBO_TEXT_RATIO_Y));
@@ -118,20 +101,18 @@ public class Combo {
 
         if (aumentTip>14 &&aumentTip<21)
         {
-            float  relation = 1+  (aumentTip-15)*0.2f*RATIO_BIGGER_LABEL  ;
+            float  relation = 1+  (aumentTip-15)*0.22f*RATIO_BIGGER_LABEL  ;
             labelSizeY*=relation;
             labelSizeX*=relation;
-
+            comboSizeX*=(relation-1)/3 +1;
+            comboSizeY*=(relation-1)/3 +1;
         }
-
 
         int posLabelIntX = (int) ((x / 2f - labelSizeX / 2f)*1.008);
         int posComboIntX = (int) (x / 2f - comboSizeX / 2f);
 
-        if (aumentTip<6){
+        if (aumentTip<6)
                paint.setAlpha(Math.abs(-(255/(5)*aumentTip)));
-
-        }
 
 
         int posIntYCombo = (y / 2 - (numberSizeY + labelSizeY + comboSizeY) / 2);// (int) (y / 2 - (y * 0.05) / 2);
@@ -139,7 +120,7 @@ public class Combo {
         if (aumentTip > 0) {
             canvas.drawBitmap(judgeSprite.frames[positionJudge], null, new Rect(posLabelIntX, posIntYCombo, posLabelIntX + labelSizeX, posIntYCombo + labelSizeY), paint);
 
-            posIntYCombo +=   labelSizeY*1.15;
+            posIntYCombo +=   labelSizeY*1.08;
             if (combo > 3 || combo < -3) {
                 //show combo text
                 canvas.drawBitmap(currentBitMapCombo, null, new Rect(posComboIntX, posIntYCombo, posComboIntX + comboSizeX, posIntYCombo +comboSizeY) , paint);
