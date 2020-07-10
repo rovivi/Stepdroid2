@@ -3,29 +3,20 @@ package com.kyagamy.step
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.media.MediaPlayer.OnPreparedListener
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.util.DisplayMetrics
-import android.view.MotionEvent
 import android.view.View
-import android.view.animation.AnimationUtils
 import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.annotation.RequiresApi
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.Guideline
-import com.kyagamy.step.common.Common.Companion.AnimateFactor
 import com.kyagamy.step.common.Common.Companion.convertStreamToString
+import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.common.step.Parsers.FileSSC
-import com.kyagamy.step.game.newplayer.GamePlayNew
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_playerbga.*
@@ -42,7 +33,7 @@ class PlayerBga : Activity() {
     var nchar = 0
     var indexMsj = 0
     var inputs = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
+    private val displayMetrics = DisplayMetrics()
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,11 +45,40 @@ class PlayerBga : Activity() {
 
 
         val pathImg = intent.extras!!.getString("pathDisc", null)
-        if (bg_pad!=null)
-            if (pathImg != null) Picasso.get().load (File(pathImg)).into(bg_pad)
-        videoViewBGA.setOnPreparedListener { mp: MediaPlayer ->
+        if (bg_pad != null)
+            if (pathImg != null) Picasso.get().load(File(pathImg)).into(bg_pad)
+             videoViewBGA.setOnPreparedListener { mp: MediaPlayer ->
             mp.isLooping = true
             mp.setVolume(0f, 0f)
+        }
+
+        try {
+            val inputsButton = arrayListOf(
+                image_0,
+                image_1,
+                image_2,
+                image_3,
+                image_4
+            )
+            val size_pad= displayMetrics.widthPixels/6
+            inputsButton.forEachIndexed { index, input ->
+                run {
+                    input.setOnTouchListener { _, event ->
+                        inputs[index] = event.action.toByte()
+                        false
+                    }
+                }
+            }
+            //guideline xd
+            guidelinecenter.setGuidelinePercent(0.5f)
+            guidelineVer1.setGuidelinePercent(0.3333333333334f)
+            guidelineVer3.setGuidelinePercent(0.6666666666667f)
+
+            guidelinehor2.setGuidelinePercent(0.6666666666667f)
+            guidelinehor3.setGuidelinePercent(0.8333333333334f)
+
+        } catch (ex: java.lang.Exception) {
+
         }
     }
 
@@ -82,8 +102,6 @@ class PlayerBga : Activity() {
         //set height  to bga
 
 
-
-
         startGamePlay()
     }
 
@@ -99,7 +117,7 @@ class PlayerBga : Activity() {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private fun startGamePlay() {
         try {
-            gamePlay!!.top = 0
+           // gamePlay!!.top = 0
             val rawSSC =
                 Objects.requireNonNull(intent.extras)?.getString("ssc")
             val path = intent.extras!!.getString("path")
@@ -116,9 +134,24 @@ class PlayerBga : Activity() {
                 step.path = Objects.requireNonNull(path).toString()
                 //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
 
-                val displayMetrics= DisplayMetrics()
+
+
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-                gamePlay!!.build1Object(videoViewBGA, step,baseContext,Point(displayMetrics.widthPixels,displayMetrics.heightPixels),inputs)
+
+                gamePlay!!.build1Object(
+                    videoViewBGA,
+                    step,
+                    baseContext,
+                    Point(displayMetrics.widthPixels, displayMetrics.heightPixels),
+                    inputs
+                )
+                val bgPad= BitmapFactory.decodeFile(step.path+File.separator+step.songMetada["BACKGROUND"])
+
+                if (bg_pad !=null && bgPad!= null){
+                    bg_pad.setImageBitmap(TransformBitmap.myblur(bgPad,this))
+                }
+
+
             } catch (e: Exception) {
                 e.printStackTrace()
                 gamePlayError = true
@@ -137,3 +170,5 @@ class PlayerBga : Activity() {
         if (!gamePlayError && gamePlay != null) gamePlay!!.startGame() else finish()
     }
 }
+
+

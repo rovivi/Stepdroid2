@@ -50,17 +50,17 @@ public class Common {
 
         val PIU_ARROW_NAMES =
             arrayOf("down_left_", "up_left_", "center_", "up_right_", "down_right_")
-        private val JudgeSJ = doubleArrayOf(41.6, 41.6, 41.6, 83.3 + commonTime)
-        private val JudgeEJ = doubleArrayOf(41.6, 41.6, 41.6, 58.3 + commonTime)
-        private val JudgeNJ = doubleArrayOf(41.6, 41.6, 41.6, 41.6 + commonTime)
-        private val JudgeHJ = doubleArrayOf(41.6, 41.6, 41.6, 25.5 + commonTime)
-        private val JudgeVJ = doubleArrayOf(33.3, 33.3, 33.3, 8.5 + commonTime)
-        private val JudgeXJ =
+         val JudgeSJ = doubleArrayOf(41.6, 41.6, 41.6, 83.3 + commonTime)
+         val JudgeEJ = doubleArrayOf(41.6, 41.6, 41.6, 58.3 + commonTime)
+         val JudgeNJ = doubleArrayOf(41.6, 41.6, 41.6, 41.6 + commonTime)
+         val JudgeHJ = doubleArrayOf(41.6, 41.6, 41.6, 25.5 + commonTime)
+         val JudgeVJ = doubleArrayOf(33.3, 33.3, 33.3, 8.5 + commonTime)
+         val JudgeXJ =
             doubleArrayOf(16.6, 16.6, 16.6, 16.6, 16.6 + commonTime)
         private val JudgeUJ = doubleArrayOf(
             8.3, 8.3, 8.3, 8.3, 8.3 + commonTime
         )
-        val JUDMENT =
+         val JUDMENT =
             arrayOf(JudgeSJ, JudgeEJ, JudgeNJ, JudgeHJ, JudgeVJ, JudgeXJ, JudgeUJ)
 
 

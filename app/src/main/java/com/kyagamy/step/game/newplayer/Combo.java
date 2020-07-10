@@ -47,6 +47,7 @@ public class Combo {
     public short positionJudge = 0;
 
     public Combo(Context c, StepsDrawer stepsDrawer) {
+        timeMark = System.currentTimeMillis();
         this.x = stepsDrawer.sizeX+stepsDrawer.offsetX;
         this.y = stepsDrawer.sizeY;
         BitmapFactory.Options myOpt2 = new BitmapFactory.Options();
@@ -55,7 +56,7 @@ public class Combo {
         judgeSprite = new SpriteReader(BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_judge, myOpt2), 1, 5, 1f);
         comboImage = BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo, myOpt2);
         badCombo = BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_bad, myOpt2);
-        timeMark = System.currentTimeMillis();
+
     }
 
     public void show() {

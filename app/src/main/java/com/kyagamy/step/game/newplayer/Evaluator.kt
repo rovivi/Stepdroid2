@@ -1,5 +1,11 @@
 package com.kyagamy.step.game.newplayer
 
+import com.kyagamy.step.common.step.CommonSteps
+import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_BODY
+import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_END
+import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_START
+import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_MINE
+import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_TAP
 import game.GameRow
 
 /***
@@ -8,17 +14,35 @@ import game.GameRow
 class Evaluator {
 
     companion object {
-         fun containNoteType(row: GameRow, typeNote: Short): Boolean {
+        fun containNoteType(row: GameRow, typeNote: Short): Boolean {
 //
-             if (row.notes!=null)
-             {
-                 return true
-                 for (x in row.notes!!) if (x.type == typeNote) return true
-             }
+            if (row.notes != null) {
+                for (x in row.notes!!) {
+                    if (x.type == typeNote && !x.fake)
+                        return true
+                }
+            }
             return false
         }
 
+        fun containsNoteTap(row: GameRow): Boolean {
+            return containNoteType(row, NOTE_TAP)
+        }
 
+        fun containsNoteMine(row: GameRow): Boolean {
+            return containNoteType(row, NOTE_MINE)
+        }
+
+        fun containNoteLong(row: GameRow): Boolean {
+//
+            if (row.notes != null) {
+                for (x in row.notes!!) {
+                    if ((x.type == NOTE_LONG_END||x.type == NOTE_LONG_START||x.type == NOTE_LONG_BODY) && !x.fake)
+                        return true
+                }
+            }
+            return false
+        }
 
 
     }

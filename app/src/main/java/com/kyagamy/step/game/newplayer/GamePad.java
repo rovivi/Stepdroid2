@@ -38,7 +38,7 @@ public class GamePad {
         int width = x;
         int height = y;
         BitmapFactory.Options myOpt2 = new BitmapFactory.Options();
-        myOpt2.inSampleSize = 18;
+        myOpt2.inSampleSize = 25;
         panel = BitmapFactory.decodeResource(context.getResources(), R.drawable.touch_controls);
         float starty1 = 0.76f;
         float starty2 = 0.51f;

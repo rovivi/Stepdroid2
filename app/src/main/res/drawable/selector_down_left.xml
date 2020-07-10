@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:enterFadeDuration="70"
+    android:exitFadeDuration="70">
+    <item android:state_enabled="false">
+        <layer-list>
+            <item android:drawable="@drawable/stomp1_off"
+                />
+            <item>
+                <shape>
+                    <gradient android:angle="270" android:endColor="@color/step_1_off" android:startColor="@color/step_1_off" />
+                    <stroke android:width="1dp" android:color="@color/step_1_on" />
+                    <corners android:radius="18dp" />
+                    <padding android:bottom="10dp" android:left="10dp" android:right="10dp" android:top="10dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <shape>
+                    <gradient android:angle="270" android:endColor="@color/step_1_on" android:startColor="@color/step_1_on" />
+                    <stroke android:width="1dp" android:color="@color/step_1_on" />
+                    <corners android:radius="18dp" />
+                    <padding android:bottom="10dp" android:left="10dp" android:right="10dp" android:top="10dp" />
+                </shape>
+            </item>
+            <item android:alpha="0.1" android:drawable="@drawable/stomp1_on" />
+        </layer-list>
+    </item>
+</selector>

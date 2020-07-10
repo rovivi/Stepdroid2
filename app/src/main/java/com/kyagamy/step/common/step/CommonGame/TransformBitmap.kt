@@ -65,7 +65,7 @@ class TransformBitmap {
                 return null
             }
             try {
-                val BITMAP_SCALE = 0.4f
+                val BITMAP_SCALE = 0.28f
                 val BLUR_RADIUS = 8.5f
                 val width = Math.round(image.width * BITMAP_SCALE)
                 val height = Math.round(image.height * BITMAP_SCALE)

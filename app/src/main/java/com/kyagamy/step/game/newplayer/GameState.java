@@ -1,6 +1,7 @@
 package com.kyagamy.step.game.newplayer;
 
 
+import com.kyagamy.step.common.Common;
 import com.kyagamy.step.common.step.CommonSteps;
 
 import java.util.ArrayList;
@@ -25,18 +26,18 @@ public class GameState {
     double initialSpeedMod = 1;
     public float currentDurationFake = 0, offset;
     public boolean isRunning = true;
-    public double initialBPM ;
+    public double initialBPM;
 
     public byte[] inputs;
 
     private GamePad touchPad;
 
 
-    public  Combo combo;
+    public Combo combo;
 
 
-    public GameState(StepObject stepData,byte[] pad) {
-        this.inputs=pad;
+    public GameState(StepObject stepData, byte[] pad) {
+        this.inputs = pad;
         steps = stepData.steps;
         BPM = stepData.getInitialBPM();
         initialBPM = stepData.getInitialBPM();
@@ -59,8 +60,8 @@ public class GameState {
             double difBetweenBeats2 = currentBeat - effectBeat;//2.5
             currentBeat = effectBeat + (difBetweenBeats2 / (BPM / auxBPM));//
             BPM = auxBPM;
-            if (initialBPM==0){
-                initialBPM=auxBPM;
+            if (initialBPM == 0) {
+                initialBPM = auxBPM;
             }
         }
         if (effects.get("SPEEDS") != null) {
@@ -134,7 +135,6 @@ public class GameState {
         //evaluate
 
 
-
     }
 
     void calculateCurrentSpeed() {
@@ -148,9 +148,9 @@ public class GameState {
         }
     }
 
-    void addCurrentElement (boolean evaluate ){
-        if (evaluate){
-         //   evaluate();
+    void addCurrentElement(boolean evaluate) {
+        if (evaluate) {
+            //   evaluate();
 
         }
 
@@ -163,76 +163,61 @@ public class GameState {
     public void evaluate() {
         if (true) {
             if (true) {
-                if (Evaluator.Companion.containNoteType(steps.get(currentElement),CommonSteps.NOTE_TAP)){
+                if (Evaluator.Companion.containNoteType(steps.get(currentElement), CommonSteps.NOTE_TAP)) {
                     combo.setComboUpdate(Combo.VALUE_PERFECT);
                 }
-//                ObjectCombo.posjudge = 0;
-//                if (containTapNote(bufferSteps.get(posBuffer).rowStep)) {
-//                    playTick();
-//                    combopp();
-//                    currentLife += 0.5 * currentCombo;
-//                    ObjectCombo.show();
-//                    Note[] auxrow = bufferSteps.get(posBuffer).rowStep;
-//                    for (int w = 0; w < auxrow.length; w++) {//animations
-//                        int aux = auxrow[w].getNoteType();
+                //ObjectCombo.posjudge = 0;
+                if (Evaluator.Companion.containsNoteTap(steps.get(currentElement))) {
+                    //  combopp();
+                    //currentLife += 0.5 * currentCombo;
+                    //ObjectCombo.show();
+                    GameRow  auxrow = steps.get(currentElement);
+                   for (int w = 0; auxrow.getNotes() !=null&&  w < auxrow.getNotes().size(); w++) {//animations
+                        //int aux = auxrow[w].getNoteType();
 //                        if (aux == 1)
 //                            steps.noteSkins[0].explotions[w].play();
 //                        else if (aux == 2) {
-//                            steps.noteSkins[0].explotions[w].play();
+//                           steps.noteSkins[0].explotions[w].play();
 //                            steps.noteSkins[0].explotionTails[w].play();
 //                        } else if (aux == 0)
 //                            steps.noteSkins[0].explotionTails[w].stop();
-//                    }
-//                    bufferSteps.get(posBuffer).rowStep = pressedRow;
-//                } else if (containLongs(bufferSteps.get(posBuffer).rowStep)) {
-//                    residuoTick += ((double) currentTickCount / 48);
-//                    if (residuoTick >= 1) {
-//                        residuoTick -= 1;
-//                        ObjectCombo.show();
-//                        combopp();
-//                        currentLife += 0.5 * currentCombo;
-//                    }
-//                    bufferSteps.get(posBuffer).rowStep = pressedRow;
-//                }
-            } else {//juicio normal
-//                double[] currentJudge = Common.JUDMENT[ParamsSong.judgment];
-//                int posBack;
-//                //   int posNext;
-//                int backSteps;
-//                int rGreat = mil2BackSpaces((float) currentJudge[3]);
-//                int rGood = rGreat + mil2BackSpaces((float) currentJudge[2]);
-//                int rBad = rGood + mil2BackSpaces((float) currentJudge[1]);
-//                backSteps = rBad + 1;
-//
-//                posBack = -backSteps;
-//                if (backSteps >= posBuffer)
-//                    posBack = -posBuffer;
-//                //posNext = backSteps;
-//
-//                if (containTaps(bufferSteps.get(posBuffer + posBack).rowStep)) {//evaluate miss
-//                    comboLess();
-//                    bufferSteps.get(posBuffer + posBack).rowStep = pressedRow;
-//                    posBack++;
-//                }
-//                if (containsMine(bufferSteps.get(posBuffer + posBack).rowStep)) {//evaluate miss
-//                    bufferSteps.get(posBuffer + posBack).rowStep = pressedRow;
-//                    posBack++;
-//                }
-//                if (containLongs(bufferSteps.get(posBuffer + posBack).rowStep)) {
-//                    residuoTick += ((double) currentTickCount / 48);
-//                    if (residuoTick >= 1) {
-//                        residuoTick -= 1;
-//                        ObjectCombo.show();
-//                        comboLess();
-//                        currentLife += 0.5 * currentCombo;
-//                        miss += currentCombo;
-//                    }
-//                }
+                }
+                steps.get(currentElement).setHasPressed(true);
+            } else if (Evaluator.Companion.containNoteLong(steps.get(currentElement))) {
+                    combo.setComboUpdate(Combo.VALUE_PERFECT);
             }
+            steps.get(currentElement).setHasPressed(true);
         }
-    }
+    } else
 
-    public void setCombo(Combo combo) {
-        this.combo = combo;
+    {//juicio normal
+        double[] currentJudge = Common.Companion.getJUDMENT()[3];//se busca el miss
+
+        int posBack;
+        //   int posNext;
+        int backSteps;
+        double rGreat =  currentJudge[3];
+        double rGood = rGreat + currentJudge[2];
+        double rBad = rGood +  currentJudge[1];
+
+
+        //posBack = -backSteps;Comentado pero es paal misss NOMAS
+//        if (backSteps >= currentElement)
+//            posBack = -currentElement;
+//        //posNext = backSteps;
+//
+//        if ((Evaluator.Companion.containsNoteTap(steps.get(currentElement + posBack)))) {//evaluate miss
+//            combo.setComboUpdate(Combo.VALUE_MISS);
+//            steps.get(currentElement + posBack).setHasPressed(true);
+//
+//        }
+
+
     }
 }
+
+
+public void setCombo(Combo combo){
+        this.combo=combo;
+        }
+        }

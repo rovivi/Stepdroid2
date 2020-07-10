@@ -192,7 +192,7 @@ public class StepsDrawer {
 //        myPaint.setStrokeWidth(5);
 //        myPaint.setStyle(Paint.Style.STROKE);
 //        canvas.drawRect(offsetX, offsetY, sizeX, sizeY, myPaint);
-
+//
 
     }
 
