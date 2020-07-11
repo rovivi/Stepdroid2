@@ -1,7 +1,7 @@
 package com.kyagamy.step.common.step
 
 import android.util.Log
-import game.GameRow
+import com.kyagamy.step.common.step.Game.GameRow
 import game.Note
 import java.lang.Exception
 import java.util.*
@@ -20,9 +20,9 @@ public class CommonSteps {
         const val NOTE_MINE_DEATH: Short = 6
         const val NOTE_POSION: Short = 7
         const val NOTE_LONG_BODY: Short = 8
-        const val NOTE_LONG_PRESED: Short = 9
+        const val NOTE_LONG_PRESSED: Short = 9
         const val NOTE_LONG_TOUCHABLE: Short = 10
-        const val NOTE_PRESED: Short = 127
+        const val NOTE_PRESSED: Short = 120
 
         /**PERFORMANCE*/
         const val PLAYER_0: Byte = 1
@@ -39,10 +39,10 @@ public class CommonSteps {
         }
 
         fun beatToSecond(value: Double, BPM: Double): Double {
-            return value / BPM / 60
+            return value / BPM*60
         }
 
-        private fun secondToBeat(value: Double, BPM: Double): Double {
+        fun secondToBeat(value: Double, BPM: Double): Double {
             return value * BPM / 60
         }
 

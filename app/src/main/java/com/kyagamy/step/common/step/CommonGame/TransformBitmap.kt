@@ -9,8 +9,66 @@ import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicBlur
 import androidx.annotation.RequiresApi
 
+
 class TransformBitmap {
     companion object {
+
+        @JvmStatic
+        public fun doBrightness(src: Bitmap, value: Int): Bitmap? {
+            // image size
+            val width = src.width
+            val height = src.height
+            // create output bitmap
+            val bmOut = Bitmap.createBitmap(width, height, src.config)
+            // color information
+            var A: Int
+            var R: Int
+            var G: Int
+            var B: Int
+            var pixel: Int
+
+            // scan through all pixels
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    // get pixel color
+                    pixel = src.getPixel(x, y)
+                    A = Color.alpha(pixel)
+                    R = Color.red(pixel)
+                    G = Color.green(pixel)
+                    B = Color.blue(pixel)
+
+                    // increase/decrease each channel
+                    R += value
+                    if (R > 255) {
+                        R = 255
+                    } else if (R < 0) {
+                        R = 0
+                    }
+                    G += value
+                    if (G > 255) {
+                        G = 255
+                    } else if (G < 0) {
+                        G = 0
+                    }
+                    B += value
+                    if (B > 255) {
+                        B = 255
+                    } else if (B < 0) {
+                        B = 0
+                    }
+
+                    // apply new pixel color to output bitmap
+                    bmOut.setPixel(x, y, Color.argb(A, R, G, B))
+                }
+            }
+
+            // return final image
+            return bmOut
+        }
+
+
+
+
         @JvmStatic
         public fun RotateBitmap(source: Bitmap, angle: Float): Bitmap {
             val matrix = Matrix()

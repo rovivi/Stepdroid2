@@ -1,5 +1,6 @@
 package com.kyagamy.step
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -10,12 +11,15 @@ import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.util.DisplayMetrics
+import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import com.kyagamy.step.common.Common.Companion.convertStreamToString
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
+import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.adjustedContrast
+import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.doBrightness
 import com.kyagamy.step.common.step.Parsers.FileSSC
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.squareup.picasso.Picasso
@@ -35,6 +39,7 @@ class PlayerBga : Activity() {
     var inputs = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     private val displayMetrics = DisplayMetrics()
 
+    @SuppressLint("ClickableViewAccessibility")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +52,7 @@ class PlayerBga : Activity() {
         val pathImg = intent.extras!!.getString("pathDisc", null)
         if (bg_pad != null)
             if (pathImg != null) Picasso.get().load(File(pathImg)).into(bg_pad)
-             videoViewBGA.setOnPreparedListener { mp: MediaPlayer ->
+        videoViewBGA.setOnPreparedListener { mp: MediaPlayer ->
             mp.isLooping = true
             mp.setVolume(0f, 0f)
         }
@@ -60,11 +65,21 @@ class PlayerBga : Activity() {
                 image_3,
                 image_4
             )
-            val size_pad= displayMetrics.widthPixels/6
+            val size_pad = displayMetrics.widthPixels / 6
             inputsButton.forEachIndexed { index, input ->
                 run {
                     input.setOnTouchListener { _, event ->
-                        inputs[index] = event.action.toByte()
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                                if (inputs[index] != 2.toByte()) {
+                                    inputs[index] = 1
+                                }
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                inputs[index] = 0
+                            }
+                        }
+
                         false
                     }
                 }
@@ -117,7 +132,7 @@ class PlayerBga : Activity() {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private fun startGamePlay() {
         try {
-           // gamePlay!!.top = 0
+            // gamePlay!!.top = 0
             val rawSSC =
                 Objects.requireNonNull(intent.extras)?.getString("ssc")
             val path = intent.extras!!.getString("path")
@@ -127,17 +142,13 @@ class PlayerBga : Activity() {
                 )
             )
             try {
-                val step =
-                    FileSSC(Objects.requireNonNull(s).toString(), nchar).parseData(
-                        false
-                    )
+                val step = FileSSC(Objects.requireNonNull(s).toString(), nchar).parseData(
+                    false
+                )
                 step.path = Objects.requireNonNull(path).toString()
                 //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
 
-
-
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-
                 gamePlay!!.build1Object(
                     videoViewBGA,
                     step,
@@ -145,13 +156,16 @@ class PlayerBga : Activity() {
                     Point(displayMetrics.widthPixels, displayMetrics.heightPixels),
                     inputs
                 )
-                val bgPad= BitmapFactory.decodeFile(step.path+File.separator+step.songMetada["BACKGROUND"])
+                val bgPad =
+                    BitmapFactory.decodeFile(step.path + File.separator + step.songMetada["BACKGROUND"])
 
-                if (bg_pad !=null && bgPad!= null){
-                    bg_pad.setImageBitmap(TransformBitmap.myblur(bgPad,this))
+                if (bg_pad != null && bgPad != null) {
+                    bg_pad.setImageBitmap(TransformBitmap.myblur(bgPad, this)?.let {
+                        doBrightness(
+                            it, -125
+                        )
+                    })
                 }
-
-
             } catch (e: Exception) {
                 e.printStackTrace()
                 gamePlayError = true
@@ -160,7 +174,6 @@ class PlayerBga : Activity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
         videoViewBGA!!.setOnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
             val path2 = "android.resource://" + packageName + "/" + R.raw.bgaoff
             videoViewBGA!!.setVideoPath(path2)

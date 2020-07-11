@@ -1,5 +1,6 @@
-package game
+package com.kyagamy.step.common.step.Game
 
+import game.Note
 import kotlin.collections.ArrayList
 
 class GameRow {

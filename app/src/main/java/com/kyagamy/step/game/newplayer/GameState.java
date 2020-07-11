@@ -8,8 +8,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
-import game.GameRow;
+import com.kyagamy.step.common.step.Game.GameRow;
+import game.Note;
 import game.StepObject;
+
+import static com.kyagamy.step.common.step.CommonSteps.NOTE_EMPTY;
+import static com.kyagamy.step.common.step.CommonSteps.NOTE_FAKE;
+import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_BODY;
+import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_END;
+import static com.kyagamy.step.common.step.CommonSteps.NOTE_PRESSED;
+import static com.kyagamy.step.common.step.CommonSteps.NOTE_TAP;
 
 public class GameState {
     ArrayList<GameRow> steps;
@@ -34,8 +42,9 @@ public class GameState {
 
 
     public Combo combo;
+    public StepsDrawer stepsDrawer;
 
-
+    public String eventAux ="";
     public GameState(StepObject stepData, byte[] pad) {
         this.inputs = pad;
         steps = stepData.steps;
@@ -108,12 +117,12 @@ public class GameState {
         currentTempoBeat = System.nanoTime();
         while (steps.get(currentElement).getCurrentBeat() <= currentBeat) {
             checkEffects();
-            evaluate();
+
 
             currentElement++;
         }
         isRunning = !(currentElement >= steps.size());
-
+        evaluate();
     }
 
     protected void reset() {
@@ -160,45 +169,117 @@ public class GameState {
     }
 
 
+    public void setStepsDrawer(StepsDrawer stepsDrawer) {
+        this.stepsDrawer = stepsDrawer;
+    }
+
     public void evaluate() {
-        if (true) {
-            if (true) {
-                if (Evaluator.Companion.containNoteType(steps.get(currentElement), CommonSteps.NOTE_TAP)) {
-                    combo.setComboUpdate(Combo.VALUE_PERFECT);
-                }
-                //ObjectCombo.posjudge = 0;
-                if (Evaluator.Companion.containsNoteTap(steps.get(currentElement))) {
-                    //  combopp();
-                    //currentLife += 0.5 * currentCombo;
-                    //ObjectCombo.show();
-                    GameRow  auxrow = steps.get(currentElement);
-                   for (int w = 0; auxrow.getNotes() !=null&&  w < auxrow.getNotes().size(); w++) {//animations
-                        //int aux = auxrow[w].getNoteType();
-//                        if (aux == 1)
-//                            steps.noteSkins[0].explotions[w].play();
-//                        else if (aux == 2) {
-//                           steps.noteSkins[0].explotions[w].play();
-//                            steps.noteSkins[0].explotionTails[w].play();
-//                        } else if (aux == 0)
-//                            steps.noteSkins[0].explotionTails[w].stop();
+
+
+        if (false) {
+            if (Evaluator.Companion.containNoteType(steps.get(currentElement), CommonSteps.NOTE_TAP)) {
+                combo.setComboUpdate(Combo.VALUE_PERFECT);
+            }
+            //ObjectCombo.posjudge = 0;
+            if (Evaluator.Companion.containsNoteTap(steps.get(currentElement))) {
+                //  combopp();
+                //currentLife += 0.5 * currentCombo;
+                //ObjectCombo.show();
+                GameRow auxrow = steps.get(currentElement);
+                for (int w = 0; auxrow.getNotes() != null && w < auxrow.getNotes().size(); w++) {//animations
+                    int aux = auxrow.getNotes().get(w).getType();
+                        if (aux == NOTE_TAP)
+                            stepsDrawer.noteSkins[0].explotions[w].play();
+                        else if (aux == NOTE_LONG_BODY) {
+                            stepsDrawer.noteSkins[0].explotions[w].play();
+                            stepsDrawer.noteSkins[0].explotionTails[w].play();
+                        } else if (aux == NOTE_EMPTY)
+                            stepsDrawer.noteSkins[0].explotionTails[w].stop();
                 }
                 steps.get(currentElement).setHasPressed(true);
             } else if (Evaluator.Companion.containNoteLong(steps.get(currentElement))) {
-                    combo.setComboUpdate(Combo.VALUE_PERFECT);
+                combo.setComboUpdate(Combo.VALUE_PERFECT);
             }
             steps.get(currentElement).setHasPressed(true);
+        } else {//juicio normal
+            double[] currentJudge = Common.Companion.getJUDMENT()[2];//se busca el miss
+
+            int posBack;
+
+            double rGreat = currentJudge[3];
+            double rGood = rGreat + currentJudge[2];
+            double rBad = rGood + currentJudge[1];
+
+            double addBeats = CommonSteps.Companion.secondToBeat(rBad / 1000d, BPM);
+            posBack = 0;
+            while ((currentElement + posBack) > 0 &&
+                    steps.get(currentElement+posBack).getCurrentBeat() >= (currentBeat - addBeats)) {
+                posBack--;
+            }
+
+
+            int posEvaluate = -1;
+            while ((currentElement + posBack) < steps.size() &&
+                    steps.get(currentElement+posBack).getCurrentBeat() <= (currentBeat + addBeats)) {
+                if ((steps.get(currentElement + posBack)).getNotes() != null) {
+                    boolean checkLong = true;
+                    //byte[] auxRow = (byte[]) steps.get(currentElement + posBack)[0];
+                    for (int w = 0; w < steps.get(currentElement + posBack).getNotes().size(); w++) {
+                        Note currentChar = steps.get(currentElement + posBack).getNotes().get(w);
+                        if (inputs[w] == 1 && currentChar.getType() ==NOTE_TAP) {// tap1
+                            stepsDrawer.noteSkins[0].explotions[w].play();
+                            steps.get(currentElement + posBack).getNotes().get(w).setType(NOTE_PRESSED);
+                            inputs[w] = 2;
+                            posEvaluate = currentElement + posBack;
+
+                            continue;
+
+                        }
+
+                        if (inputs[w] != 0 && (currentChar.getType() ==NOTE_LONG_BODY || currentChar.getType() ==NOTE_LONG_END) && posBack<2) {// tap1
+                            steps.get(currentElement + posBack).getNotes().get(w).setType(NOTE_PRESSED);
+                            combo.setComboUpdate(Combo.VALUE_PERFECT);
+                            stepsDrawer.noteSkins[0].explotionTails[w].play();
+                            //posEvaluate = currentElement + posBack;
+                            inputs[w] = 2;
+                        }
+
+                        if (inputs[w] == 0) {
+                                if (w < stepsDrawer.noteSkins[0].explotionTails.length) {
+                                    stepsDrawer.noteSkins[0].explotionTails[w].stop();
+                                }
+                        }
+                    }
+                }
+
+                if (posEvaluate != -1 ) {
+                    boolean  bol = !steps.get(posEvaluate).getHasPressed();
+                    if (Evaluator.Companion.containsNotePressed(steps.get(posEvaluate)) && bol  ) {//mejorar la condicion xdd
+                        steps.get(posEvaluate).setHasPressed(true);
+
+                        double auxRetro =Math.abs( CommonSteps.Companion.beatToSecond(currentBeat - steps.get(posEvaluate).getCurrentBeat(), BPM) )*1000;
+                        System.out.println(auxRetro+"NOTE"+posEvaluate);
+                        if (auxRetro < rGreat) {//perfetc
+                            combo.setComboUpdate(Combo.VALUE_PERFECT);
+                        } else if (auxRetro < rGood) {//great
+                            combo.setComboUpdate(Combo.VALUE_GREAT);
+                        } else if (auxRetro < rBad) {//good
+                            combo.setComboUpdate(Combo.VALUE_GOOD);
+                        } else {//bad
+                            combo.setComboUpdate(Combo.VALUE_BAD);
+                        }
+
+                        eventAux="add:"+addBeats+" positions to check:"+posBack+"beat eval:"+steps.get(posEvaluate).getCurrentBeat();
+                        continue;
+                    }
+
+                }
+
+                eventAux=currentBeat+":"+steps.get(posBack+currentElement).getCurrentBeat();
+                posBack++;
+
+            }
         }
-    } else
-
-    {//juicio normal
-        double[] currentJudge = Common.Companion.getJUDMENT()[3];//se busca el miss
-
-        int posBack;
-        //   int posNext;
-        int backSteps;
-        double rGreat =  currentJudge[3];
-        double rGood = rGreat + currentJudge[2];
-        double rBad = rGood +  currentJudge[1];
 
 
         //posBack = -backSteps;Comentado pero es paal misss NOMAS
@@ -214,10 +295,10 @@ public class GameState {
 
 
     }
+
+
+    public void setCombo(Combo combo) {
+        this.combo = combo;
+    }
+
 }
-
-
-public void setCombo(Combo combo){
-        this.combo=combo;
-        }
-        }

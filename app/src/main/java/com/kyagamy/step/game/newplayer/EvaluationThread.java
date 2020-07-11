@@ -1,14 +1,12 @@
 package com.kyagamy.step.game.newplayer;
 
 import com.kyagamy.step.common.Common;
-import com.kyagamy.step.common.step.CommonSteps;
 
 import java.util.ArrayList;
 
 import game.Note;
 
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_FAKE;
-import static com.kyagamy.step.common.step.CommonSteps.NOTE_PRESED;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_TAP;
 
 public class EvaluationThread extends Thread {
@@ -87,17 +85,17 @@ public class EvaluationThread extends Thread {
 //                                posEvaluate = gameState.currentElement + posBack;
 //                             //   gameState.soundPool.play(gameState.soundPullMine, 0.8f, 0.8f, 1, 0, 1f);
 //                              //  gameState.mineHideValue = 255;
-//                                gameState.currentLife -= 10;
+////                                gameState.currentLife -= 10;
 //                            }
 
 
-//                            if (gameState.inputs[w] == 0) {
+                            if (gameState.inputs[w] == 0) {
 //                                if (w < Steps.noteSkins[0].explotionTails.length) {
 //                                    Steps.noteSkins[0].explotionTails[w].stop();
 //                                }
-//                            }
+                            }
 
-                            //steps.get(currentElement + posBack)[0] = auxRow;
+
 
                         }
 //                    }

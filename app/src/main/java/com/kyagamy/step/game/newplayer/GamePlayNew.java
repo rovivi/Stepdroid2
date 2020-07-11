@@ -17,7 +17,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
 import androidx.annotation.RequiresApi;
@@ -29,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
 
-import game.GameRow;
+import com.kyagamy.step.common.step.Game.GameRow;
 import game.StepObject;
 
 public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
@@ -132,6 +131,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             touchPad = new GamePad(context, stepData.getStepType(), gameState.inputs, sizeScreen.x, size.y);
 
             gameState.setCombo(combo);
+            gameState.setStepsDrawer(stepsDrawer);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -184,13 +184,13 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         try {
             //speed calc
             double avAuxValue = (gameState.initialBPM); //example BPM 200 ;
-            speed = (int) (stepsDrawer.sizeNote / avAuxValue * 580);//580 av
+            speed = (int) (stepsDrawer.sizeNote / avAuxValue * 650);//580 av
             double lastScrollAux = gameState.lastScroll;
             double lastBeat = this.gameState.currentBeat + 0;
             double lastPosition = stepsDrawer.sizeNote * 0.7;
             ArrayList<GameRow> list = new ArrayList<>();
             if (gameState.isRunning) {
-                drawStats(canvas);
+                //drawStats(canvas);
                 for (int x = 0; (gameState.currentElement + x) < gameState.steps.size(); x++) {
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
                     double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
@@ -241,7 +241,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         //  c.drawText("::: " + msj, 0, 20, paint);
         c.drawText("FPS: " + fps, 0, 250, paint);
         // c.drawText("Log: " + gameState.currentTickCount, 0, 100, paint);
-        //c//.drawText("event: " + testFloatNOTUSE, 0, playerSizeY - 200, paint);
+       // c.drawText("event: " + gameState.eventAux, 0, playerSizeY - 200, paint);
         //c.drawText("C Seg: " + String.format(new Locale("es"), "%.3f", gameState.currentSecond), 0, playerSizeY - 300, paint);
         c.drawText("C Beat: " + String.format(new Locale("es"), "%.3f", gameState.currentBeat), 0, playerSizeY - 150, paint);
         c.drawText("C BPM: " + gameState.BPM, 0, playerSizeY - 250, paint);

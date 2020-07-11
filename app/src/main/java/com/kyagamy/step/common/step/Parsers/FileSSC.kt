@@ -3,7 +3,7 @@ package com.kyagamy.step.common.step.Parsers
 
 import com.kyagamy.step.common.step.CommonSteps
 import com.kyagamy.step.room.entities.Level
-import game.GameRow
+import com.kyagamy.step.common.step.Game.GameRow
 import game.Note
 import game.StepObject
 import parsers.StepFile

@@ -29,7 +29,7 @@ public class Common {
 
 
 
-        val commonTime = 41.6f
+        val commonTime = 41.6f/2
 
         var HIDE_PAD = false
 

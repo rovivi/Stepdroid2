@@ -1,12 +1,12 @@
 package com.kyagamy.step.game.newplayer
 
-import com.kyagamy.step.common.step.CommonSteps
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_BODY
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_END
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_START
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_MINE
+import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_TAP
-import game.GameRow
+import com.kyagamy.step.common.step.Game.GameRow
 
 /***
  * This class provide tools to evalate to suppuort the game state
@@ -28,6 +28,12 @@ class Evaluator {
         fun containsNoteTap(row: GameRow): Boolean {
             return containNoteType(row, NOTE_TAP)
         }
+
+
+        fun containsNotePressed(row: GameRow): Boolean {
+            return containNoteType(row, NOTE_PRESSED)
+        }
+
 
         fun containsNoteMine(row: GameRow): Boolean {
             return containNoteType(row, NOTE_MINE)

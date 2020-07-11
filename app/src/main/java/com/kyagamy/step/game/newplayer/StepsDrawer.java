@@ -8,14 +8,12 @@ import android.graphics.Point;
 import android.graphics.Rect;
 
 
-
 import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader;
-import com.kyagamy.step.common.step.CommonGame.ParamsSong;
 import com.kyagamy.step.common.step.CommonSteps;
 
 import java.util.ArrayList;
 
-import game.GameRow;
+import com.kyagamy.step.common.step.Game.GameRow;
 import game.Note;
 
 public class StepsDrawer {
@@ -50,7 +48,7 @@ public class StepsDrawer {
         longInfo[1] = noteSkin;
     }
 
-    private static NoteSkin[] noteSkins;
+    static NoteSkin[] noteSkins;
 
     /**
      * Created the step
@@ -119,12 +117,12 @@ public class StepsDrawer {
 
 
     public void draw(Canvas canvas, ArrayList<GameRow> listRow) {
-        int startValueY = (int) (sizeNote*0.7);
+        int startValueY = (int) (sizeNote * 0.7);
 
-        if (true){//FD{
+        if (true) {//FD{
             int sizeNote = (int) (this.sizeNote * 1.245);
             for (int j = 0; j < noteSkins[0].receptors.length; j++) {//se Dibujan receptores y effectos de las notas si los hay
-                noteSkins[0].receptors[j].draw(canvas, new Rect(posInitialX + this.sizeNote * j, startValueY, posInitialX + this.sizeNote * (j)  +sizeNote, startValueY + sizeNote));
+                noteSkins[0].receptors[j].draw(canvas, new Rect(posInitialX + this.sizeNote * j, startValueY, posInitialX + this.sizeNote * (j) + sizeNote, startValueY + sizeNote));
             }
         }
 
@@ -161,7 +159,7 @@ public class StepsDrawer {
                             }
                             break;
                         case CommonSteps.NOTE_LONG_BODY:
-                            if (gameRow == listRow.get(listRow.size() - 1) || gameRow == listRow.get(listRow.size() - 2) ) {
+                            if (gameRow == listRow.get(listRow.size() - 1) || gameRow == listRow.get(listRow.size() - 2)) {
                                 noteSkins[SELECTED_SKIN]
                                         .longs[count].draw(canvas, new Rect(startNoteX, sizeY + ((int) (sizeNote * 0.75)), endNoteX, gameRow.getPosY() + sizeNote));
                             }
@@ -184,6 +182,18 @@ public class StepsDrawer {
                 }
                 count++;
             }
+        }
+
+
+        for (int j = 0; j < noteSkins[0].arrows.length; j++) {//se Dibujan receptores y effectos de las notas si los hay
+
+            int startNoteX = posInitialX + sizeNote * j;
+            int sizeNote = (int) (this.sizeNote * 1.245);
+            int endNoteX = startNoteX + sizeNote;
+            noteSkins[0].explotions[j].staticDraw(canvas, new Rect(startNoteX, startValueY, endNoteX, startValueY + sizeNote));
+            noteSkins[0].explotionTails[j].draw(canvas, new Rect(startNoteX, startValueY, endNoteX, startValueY + sizeNote));
+            noteSkins[0].tapsEffect[j].staticDraw(canvas, new Rect(startNoteX, startValueY, endNoteX, startValueY + sizeNote));
+
         }
         //test draw border
 

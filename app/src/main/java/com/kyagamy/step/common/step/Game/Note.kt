@@ -1,5 +1,7 @@
 package game
 
+import com.kyagamy.step.common.step.Game.GameRow
+
 
 class Note {
     var type: Short = 0
@@ -10,8 +12,8 @@ class Note {
     var hidden: Boolean = false
     var vanish: Boolean = false
     // var effects :SDEffect[] //Will be implemented in the future
-    var rowOrigin:GameRow?=null
-    var rowEnd:GameRow?=null
+    var rowOrigin: GameRow?=null
+    var rowEnd: GameRow?=null
 
 
     companion object {

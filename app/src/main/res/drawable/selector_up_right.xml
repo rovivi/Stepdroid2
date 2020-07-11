@@ -4,8 +4,7 @@
     android:exitFadeDuration="70">
     <item android:state_enabled="false">
         <layer-list>
-            <item android:drawable="@drawable/stomp9_off"
-                />
+            <item android:drawable="@drawable/stomp9_off"/>
             <item>
                 <shape>
                     <gradient android:angle="270" android:endColor="@color/step_7_off" android:startColor="@color/step_7_off" />
