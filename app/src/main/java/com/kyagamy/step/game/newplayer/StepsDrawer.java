@@ -12,9 +12,14 @@ import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader;
 import com.kyagamy.step.common.step.CommonSteps;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import com.kyagamy.step.common.step.Game.GameRow;
+
 import game.Note;
+
+import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_PRESSED;
+import static com.kyagamy.step.common.step.Game.GameRowKt.NOT_DRAWABLE;
 
 public class StepsDrawer {
 
@@ -117,6 +122,11 @@ public class StepsDrawer {
 
 
     public void draw(Canvas canvas, ArrayList<GameRow> listRow) {
+
+        //List position
+        int[] lastPositionDraw = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+
         int startValueY = (int) (sizeNote * 0.7);
 
         if (true) {//FD{
@@ -133,10 +143,10 @@ public class StepsDrawer {
             paint.setStyle(Paint.Style.FILL);
             paint.setTextSize(20f);
             short count = 0;
+
             for (Note note : notes) {
                 if (note != null && note.getType() != CommonSteps.NOTE_EMPTY) {
                     SpriteReader currentArrow = null;
-
                     int startNoteX = posInitialX + sizeNote * count;
                     int sizeNote = (int) (this.sizeNote * 1.245);
                     int endNoteX = startNoteX + sizeNote;
@@ -145,40 +155,47 @@ public class StepsDrawer {
                         case CommonSteps.NOTE_FAKE:
                             currentArrow = noteSkins[SELECTED_SKIN].arrows[count];
                             break;
-                        case CommonSteps.NOTE_LONG_END:
-                            if (gameRow.getPosY() > note.getRowOrigin().getPosY()) {//se encuentra la long
-                                int distance = gameRow.getPosY() - note.getRowOrigin().getPosY() + sizeNote;
-                                if (distance > sizeNote) {
-                                    noteSkins[SELECTED_SKIN]
-                                            .longs[count].draw(canvas, new Rect(startNoteX, note.getRowOrigin().getPosY() + ((int) (sizeNote * 0.75)), endNoteX, gameRow.getPosY() + sizeNote / 3));
-                                }
+                        case CommonSteps.NOTE_LONG_START:
+                            //case CommonSteps.NOTE_LONG_BODY:
+                            //first calculate end of note
+                            int endY = (Objects.requireNonNull(note.getRowEnd()).getPosY() == NOT_DRAWABLE) ? sizeY : note.getRowEnd().getPosY();
+                            lastPositionDraw[count] = endY+sizeNote;
+                            noteSkins[SELECTED_SKIN]
+                                    .longs[count].draw(canvas, new Rect(startNoteX, gameRow.getPosY() + ((int) (sizeNote * 0.35)), endNoteX, endY + sizeNote / 3));
+                            noteSkins[SELECTED_SKIN].arrows[count]
+                                    .draw(canvas, new Rect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
+                            if (Objects.requireNonNull(note.getRowEnd()).getPosY() != NOT_DRAWABLE) {//not necessary when end not exist
                                 noteSkins[SELECTED_SKIN].tails[count]
-                                        .draw(canvas, new Rect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
-                                noteSkins[SELECTED_SKIN].arrows[count]
-                                        .draw(canvas, new Rect(startNoteX, note.getRowOrigin().getPosY(), endNoteX, note.getRowOrigin().getPosY() + sizeNote));
+                                        .draw(canvas, new Rect(startNoteX, endY, endNoteX, endY + sizeNote));
                             }
                             break;
                         case CommonSteps.NOTE_LONG_BODY:
-                            if (gameRow == listRow.get(listRow.size() - 1) || gameRow == listRow.get(listRow.size() - 2)) {
+                        case CommonSteps.NOTE_LONG_PRESSED:
+                            if (gameRow.getPosY() > lastPositionDraw[count]) {
+                                int startY = (gameRow.getPosY()>startValueY)?startValueY:gameRow.getPosY();
+                                if (note.getType()==CommonSteps.NOTE_LONG_PRESSED && startY<startValueY)
+                                    startY=startValueY;
+
+                                startY=gameRow.getPosY();
+                                endY = (Objects.requireNonNull(note.getRowEnd()).getPosY() == NOT_DRAWABLE) ? sizeY : note.getRowEnd().getPosY();
+                                lastPositionDraw[count] = endY;
                                 noteSkins[SELECTED_SKIN]
-                                        .longs[count].draw(canvas, new Rect(startNoteX, sizeY + ((int) (sizeNote * 0.75)), endNoteX, gameRow.getPosY() + sizeNote));
+                                        .longs[count].draw(canvas, new Rect(startNoteX, startY + ((int) (sizeNote * 0.35)), endNoteX, endY + sizeNote / 3));
+                                noteSkins[SELECTED_SKIN].arrows[count]
+                                        .draw(canvas, new Rect(startNoteX, startY, endNoteX, startY + sizeNote));
+                                if (Objects.requireNonNull(note.getRowEnd()).getPosY() != NOT_DRAWABLE) {//not necessary when end not exist
+                                    noteSkins[SELECTED_SKIN].tails[count]
+                                            .draw(canvas, new Rect(startNoteX, endY, endNoteX, endY + sizeNote));
+                                }
                             }
                             break;
                         case CommonSteps.NOTE_MINE:
                             currentArrow = noteSkins[SELECTED_SKIN].mine;
                             break;
-                        case CommonSteps.NOTE_LONG_START:
-                            if (note.getRowEnd().getPosY() < -8) {
-                                noteSkins[SELECTED_SKIN]
-                                        .longs[count].draw(canvas, new Rect(startNoteX, gameRow.getPosY() + ((int) (sizeNote * 0.75)), endNoteX, sizeY + sizeNote / 3));
-                                noteSkins[SELECTED_SKIN].arrows[count]
-                                        .draw(canvas, new Rect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
-                            }
-
                     }
                     if (currentArrow != null)
                         currentArrow.draw(canvas, new Rect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
-//                    canvas.drawText("awa", 0, gameRow.getPosY(), paint);
+                  //  canvas.drawText(note.getType()+"", startNoteX, gameRow.getPosY(), paint);
                 }
                 count++;
             }

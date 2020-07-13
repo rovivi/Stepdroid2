@@ -25,6 +25,24 @@ class Evaluator {
             return false
         }
 
+
+        fun containNoteToEvaluate(row: GameRow): Boolean {
+//
+            if (row.notes != null) {
+                for (x in row.notes!!) {
+                    if ((x.type == NOTE_LONG_BODY ||
+                        x.type == NOTE_LONG_START ||
+                        x.type == NOTE_LONG_END ||
+                        x.type == NOTE_TAP)
+                        && !x.fake
+                    )
+                        return true
+                }
+            }
+            return false
+        }
+
+
         fun containsNoteTap(row: GameRow): Boolean {
             return containNoteType(row, NOTE_TAP)
         }
@@ -43,7 +61,7 @@ class Evaluator {
 //
             if (row.notes != null) {
                 for (x in row.notes!!) {
-                    if ((x.type == NOTE_LONG_END||x.type == NOTE_LONG_START||x.type == NOTE_LONG_BODY) && !x.fake)
+                    if ((x.type == NOTE_LONG_END || x.type == NOTE_LONG_START || x.type == NOTE_LONG_BODY) && !x.fake)
                         return true
                 }
             }

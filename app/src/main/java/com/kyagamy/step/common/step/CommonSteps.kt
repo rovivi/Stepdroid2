@@ -68,58 +68,46 @@ public class CommonSteps {
 
         fun applyLongNotes(steps: ArrayList<GameRow>, len: Int) {
             try {
-                var currentTickCount = 0.0
+                var currentTickCount = 2.0
+                var intialTickCount=2.0
                 var i = 0
                 while (i < steps.size) {
                     val row = steps[i]
                     if (row.modifiers?.get("TICKCOUNTS") != null)
-                        currentTickCount = row.modifiers!!["TICKCOUNTS"]!![1]
+                        intialTickCount  = row.modifiers!!["TICKCOUNTS"]!![1]
                     if (row.notes != null) {
                         for (j in 0 until row.notes!!.size) {
+                            currentTickCount=intialTickCount+0.00000001
                             if (row.notes!![j].type == NOTE_LONG_START) {
-//                                var x = 0//find the end of the long note
-                                var beatLimit = row.notes!![j].rowEnd?.currentBeat
-
+                                val beatLimit = row.notes!![j].rowEnd?.currentBeat
                                 var beatLong = row.currentBeat
-                                val newNote =
-                                    Note.CloneNote(row.notes!![j])//Se crea una nueva nota que tiene los mismos parametros que la de entrada
-                                newNote.type = NOTE_LONG_BODY
-                                newNote.rowOrigin = row
-                                var counTick = 0
-                                //se busca el limite de el log
-
 
                                 try {
                                     while (beatLong <= beatLimit ?:0.0) {//prevent infinite loop
                                         beatLong += (1.0 / currentTickCount)//currentTickCount
-                                        //se debe de ir de 192 en 192 para que no sé
-                                        val newRowAux = steps.firstOrNull { findRow ->
+                                        val newRowAux = steps.firstOrNull { findRow ->//find row correspondent
                                             almostEqual(
                                                 beatLong,
                                                 findRow.currentBeat
                                             )
                                         }
-                                        if (newRowAux == null) {
-//                                            if ((48 / currentTickCount) <= counTick) {
-//                                            val valaaa = currentTickCount / 192
-//                                            val string = "$valaaa >$counTick"
-//                                            println(string)
-                                            counTick = 0
+                                        if (newRowAux == null) {//case does't exist row
+                                            val newNote =
+                                                Note.CloneNote(row.notes!![j])//Se crea una nueva nota que tiene los mismos parametros que la de entrada
+                                            newNote.type = NOTE_LONG_BODY
+                                            newNote.rowOrigin = row
                                             val newRow = GameRow()
                                             newRow.currentBeat = beatLong
                                             newRow.notes = arrayListOf(Note())
                                             for (cc in 0..len - 2)
                                                 newRow.notes!!.add(Note())
                                             newRow.notes!![j] = newNote
-
                                             newRow.notes!![j].type = NOTE_LONG_BODY
                                             newRow.notes!![j].rowOrigin = row
-
+                                            newRow.notes!![j].rowEnd = row.notes!![j].rowEnd
 
                                             steps.add(newRow)
-//
-                                        } else {
-
+                                        } else {//exist row
                                             if (newRowAux.modifiers?.get("TICKCOUNTS") != null) {
                                                 currentTickCount =
                                                     newRowAux.modifiers!!["TICKCOUNTS"]!![1]
@@ -128,19 +116,17 @@ public class CommonSteps {
                                                 newRowAux.notes!![j].rowOrigin = row
                                                 break
                                             }
-
                                             if (newRowAux.notes == null) {
                                                 newRowAux.notes = arrayListOf(Note())
                                                 for (cc in 0..len - 2)
                                                     newRowAux.notes!!.add(Note())
                                             }
-
                                             if (newRowAux.notes!![j].type != NOTE_LONG_END) {
                                                 newRowAux.notes!![j].type = NOTE_LONG_BODY
                                             }
                                             newRowAux.notes!![j].rowOrigin = row
+                                            newRowAux.notes!![j].rowEnd = row.notes!![j].rowEnd
                                         }
-                                        counTick++
                                     }
                                 } catch (ex: Exception) {
                                     ex.stackTrace

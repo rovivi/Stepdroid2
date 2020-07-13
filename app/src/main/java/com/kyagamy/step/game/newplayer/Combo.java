@@ -70,11 +70,11 @@ public class Combo {
         switch (typeTap) {
             case VALUE_PERFECT:
             case VALUE_GREAT:
-                combo++;
+                combo = (combo < 0) ? 1 : (combo+1);
                 break;
             case VALUE_BAD:
             case VALUE_MISS:
-                combo = (combo > 0) ? 0 : combo--;
+                combo = (combo > 0) ? 0 : (combo-1);
         }
         show();
 

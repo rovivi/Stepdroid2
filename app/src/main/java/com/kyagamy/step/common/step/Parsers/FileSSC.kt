@@ -200,7 +200,6 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                         run {
                         if (note.type ==CommonSteps.NOTE_LONG_START){
                             auxLongRow[index]=gameRow
-
                         }
                         else if (note.type ==CommonSteps.NOTE_LONG_END){
                             //set first start note end
@@ -209,8 +208,6 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                             auxLongRow[index]=null
                         }
                     }}
-
-
                     listGameRow.add(gameRow)
                 }
                 currentBeat += 4.0 / blockSize

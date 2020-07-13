@@ -29,6 +29,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 import com.kyagamy.step.common.step.Game.GameRow;
+
 import game.StepObject;
 
 public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
@@ -190,22 +191,26 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             double lastPosition = stepsDrawer.sizeNote * 0.7;
             ArrayList<GameRow> list = new ArrayList<>();
             if (gameState.isRunning) {
-                //drawStats(canvas);
-                for (int x = 0; (gameState.currentElement + x) < gameState.steps.size(); x++) {
+                drawStats(canvas);
+                for (int x = 0; (gameState.currentElement + x) < gameState.steps.size() &&
+                        (gameState.currentElement + x) >= 0; x++) {//after current beat
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
                     double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
                     lastPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
-                    if (lastPosition >= stepsDrawer.sizeY + stepsDrawer.sizeNote / 3)
-                        break;
+
                     if (currentElemt.getNotes() != null) {
-//                        stepsDrawer.draw(canvas, currentElemt.getNotes(), (int) lastPosition);
                         currentElemt.setPosY((int) lastPosition);
                         list.add(currentElemt);
                     }
+                    if (lastPosition >= stepsDrawer.sizeY + stepsDrawer.sizeNote)
+                        break;
                     if (currentElemt.getModifiers() != null && currentElemt.getModifiers().get("SCROLLS") != null)
                         lastScrollAux = Objects.requireNonNull(currentElemt.getModifiers().get("SCROLLS")).get(1);
                     lastBeat = currentElemt.getCurrentBeat();
+
                 }
+
+
                 stepsDrawer.draw(canvas, list);
             }
             bar.draw(canvas);
@@ -241,7 +246,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         //  c.drawText("::: " + msj, 0, 20, paint);
         c.drawText("FPS: " + fps, 0, 250, paint);
         // c.drawText("Log: " + gameState.currentTickCount, 0, 100, paint);
-       // c.drawText("event: " + gameState.eventAux, 0, playerSizeY - 200, paint);
+        // c.drawText("event: " + gameState.eventAux, 0, playerSizeY - 200, paint);
         //c.drawText("C Seg: " + String.format(new Locale("es"), "%.3f", gameState.currentSecond), 0, playerSizeY - 300, paint);
         c.drawText("C Beat: " + String.format(new Locale("es"), "%.3f", gameState.currentBeat), 0, playerSizeY - 150, paint);
         c.drawText("C BPM: " + gameState.BPM, 0, playerSizeY - 250, paint);
@@ -250,7 +255,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         StringBuilder st = new StringBuilder();
         for (int j = 0; j < 10; j++)
             st.append(gameState.inputs[j]);
-          c.drawText("pad: "+st, playerSizeX - 250, playerSizeY - 20, paint);
+        c.drawText("pad: " + st, playerSizeX - 250, playerSizeY - 20, paint);
         //  paint.setColor(Color.BLACK);
         paint.setColor(Color.TRANSPARENT);
     }
@@ -304,15 +309,14 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 case MotionEvent.ACTION_DOWN:
                     if (event.getX() > playerSizeX / 2 && event.getY() < playerSizeY / 2) {
                         speed += 10;
+                    } else if (event.getX() < playerSizeX / 2 && event.getY() < playerSizeY / 2) {
+                        if (speed > 99)
+                            speed += 10;
+                    } else if (event.getX() < playerSizeX / 2 && event.getY() > playerSizeY / 2 && event.getY() < playerSizeY) {
+                        //ParamsSong.autoplay = !ParamsSong.autoplay;
+                    } else if (event.getX() > playerSizeX / 2 && event.getY() > playerSizeY / 2 && event.getY() < playerSizeY) {
+                        //    steps.doMagic = !steps.doMagic;
                     }
-                    else if (event.getX() < playerSizeX / 2 && event.getY() < playerSizeY / 2) {
-                    if (speed > 99)
-                        speed += 10;
-                } else if (event.getX() < playerSizeX / 2 && event.getY() > playerSizeY / 2 && event.getY() < playerSizeY) {
-                    //ParamsSong.autoplay = !ParamsSong.autoplay;
-                } else if (event.getX() > playerSizeX / 2 && event.getY() > playerSizeY / 2 && event.getY() < playerSizeY) {
-                    //    steps.doMagic = !steps.doMagic;
-                }
                     touchPad.checkInputs(inputsTouch, true);
                 default:
                     //   this.event = "numero" + maskedAction;

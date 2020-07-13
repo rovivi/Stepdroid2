@@ -2,13 +2,15 @@ package com.kyagamy.step.common.step.Game
 
 import game.Note
 import kotlin.collections.ArrayList
+const val NOT_DRAWABLE=-99999
 
 class GameRow {
+
     var notes :ArrayList<Note>? = null
     var currentBeat :Double = 0.0
     var modifiers : HashMap<String, ArrayList<Double>>?= null
     var hasPressed :Boolean=false
-    private var posY :Int=-9
+    private var posY :Int=NOT_DRAWABLE
 
 
 
