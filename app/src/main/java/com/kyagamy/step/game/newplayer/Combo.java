@@ -81,10 +81,10 @@ public class Combo {
     }
 
     public void update() {
-        if (System.nanoTime() - timeMark > 100) {
+     //  if (System.nanoTime() - timeMark > 100) {
             aumentTip -= 1;
             timeMark = System.nanoTime();
-        }
+       // }
     }
 
     public void draw(Canvas canvas) {

@@ -23,7 +23,7 @@ import static com.kyagamy.step.common.step.Game.GameRowKt.NOT_DRAWABLE;
 
 public class StepsDrawer {
 
-
+private int NON_USE = -999;
     //Constantes de clases
     private static byte SELECTED_SKIN = 0;
     private static byte ROUTINE0_SKIN = 1;
@@ -124,7 +124,7 @@ public class StepsDrawer {
     public void draw(Canvas canvas, ArrayList<GameRow> listRow) {
 
         //List position
-        int[] lastPositionDraw = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        int[] lastPositionDraw = {NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE};
 
 
         int startValueY = (int) (sizeNote * 0.7);
@@ -170,13 +170,18 @@ public class StepsDrawer {
                             }
                             break;
                         case CommonSteps.NOTE_LONG_BODY:
-                        case CommonSteps.NOTE_LONG_PRESSED:
-                            if (gameRow.getPosY() > lastPositionDraw[count]) {
-                                int startY = (gameRow.getPosY()>startValueY)?startValueY:gameRow.getPosY();
-                                if (note.getType()==CommonSteps.NOTE_LONG_PRESSED && startY<startValueY)
-                                    startY=startValueY;
 
-                                startY=gameRow.getPosY();
+                            if (gameRow.getPosY() > lastPositionDraw[count]) {//VALIDAMOS que la flecha no se haya dinukjando antes
+//                                int startY = (gameRow.getPosY()>startValueY)?startValueY:gameRow.getPosY();
+//                                if (note.getType()==CommonSteps.NOTE_LONG_PRESSED && startY<startValueY)
+//                                    startY=startValueY;
+                                int startY= gameRow.getPosY();
+
+                                if(gameRow.getPosY()>startValueY && gameRow.getPosY()<sizeY){
+                                    startY=startValueY;
+                                }
+
+
                                 endY = (Objects.requireNonNull(note.getRowEnd()).getPosY() == NOT_DRAWABLE) ? sizeY : note.getRowEnd().getPosY();
                                 lastPositionDraw[count] = endY;
                                 noteSkins[SELECTED_SKIN]
@@ -195,7 +200,7 @@ public class StepsDrawer {
                     }
                     if (currentArrow != null)
                         currentArrow.draw(canvas, new Rect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + sizeNote));
-                  //  canvas.drawText(note.getType()+"", startNoteX, gameRow.getPosY(), paint);
+                    //canvas.drawText(gameRow.getPosY()+"", startNoteX, gameRow.getPosY(), paint);
                 }
                 count++;
             }

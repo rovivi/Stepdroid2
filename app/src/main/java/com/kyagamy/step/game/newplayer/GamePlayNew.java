@@ -190,9 +190,23 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             double lastBeat = this.gameState.currentBeat + 0;
             double lastPosition = stepsDrawer.sizeNote * 0.7;
             ArrayList<GameRow> list = new ArrayList<>();
+            int initialIndex=0;
             if (gameState.isRunning) {
                 drawStats(canvas);
-                for (int x = 0; (gameState.currentElement + x) < gameState.steps.size() &&
+                for (int x = 0; (gameState.currentElement + x) >=0  ; x--) {
+                    GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
+                    double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
+                    lastPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
+                    if (lastPosition < -stepsDrawer.sizeNote*2)
+                        break;
+                    lastBeat = currentElemt.getCurrentBeat();
+                    initialIndex=x;
+                }
+
+                 lastScrollAux = gameState.lastScroll;
+                 lastBeat = this.gameState.currentBeat + 0;
+                 lastPosition = stepsDrawer.sizeNote * 0.7;
+                for (int x = initialIndex; (gameState.currentElement + x) < gameState.steps.size() &&
                         (gameState.currentElement + x) >= 0; x++) {//after current beat
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
                     double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
@@ -207,19 +221,13 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                     if (currentElemt.getModifiers() != null && currentElemt.getModifiers().get("SCROLLS") != null)
                         lastScrollAux = Objects.requireNonNull(currentElemt.getModifiers().get("SCROLLS")).get(1);
                     lastBeat = currentElemt.getCurrentBeat();
-
                 }
-
-
                 stepsDrawer.draw(canvas, list);
             }
             bar.draw(canvas);
             combo.draw(canvas);
-
-
             if (!isLandScape)
                 canvas.drawRect(new Rect(0, stepsDrawer.sizeY, stepsDrawer.offsetX + stepsDrawer.sizeX, stepsDrawer.sizeY * 2), clearPaint);
-
             //touchPad.draw(canvas);
         } catch (Exception e) {
             e.printStackTrace();
