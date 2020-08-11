@@ -22,13 +22,12 @@ import android.widget.VideoView;
 import androidx.annotation.RequiresApi;
 
 import com.kyagamy.step.common.Common;
+import com.kyagamy.step.common.step.Game.GameRow;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
-
-import com.kyagamy.step.common.step.Game.GameRow;
 
 import game.StepObject;
 
@@ -80,16 +79,11 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             gameState = new GameState(stepData, inputs);
             gameState.reset();
             mpMusic = new MediaPlayer();
-
             clearPaint = new Paint();
             clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-
-
             mainTread = new MainThreadNew(getHolder(), this);
             mainTread.setRunning(true);
-
             bgPlayer = new BgPlayer(stepData.getPath(), stepData.getBgChanges(), videoView, getContext(), gameState.BPM);
-
             fps = 0d;
             setFocusable(true);
             paint = new Paint();
@@ -102,8 +96,6 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             //playerSizeY = (int) (size.x*0.5625d);
             //4:3
             playerSizeY = (int) (size.x * 0.75d);
-
-
             paint.setColor(Color.WHITE);
             try {
                 mpMusic.setDataSource(stepData.getMusicPath());
@@ -114,23 +106,18 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 e.printStackTrace();
             }
             //steps
-
             mpMusic.prepare();
             mpMusic.setOnCompletionListener(mp -> stop());
             mpMusic.setOnPreparedListener(mp -> startGame());
-
             stepsDrawer = new StepsDrawer(getContext(), stepData.getStepType(), "16:9", isLandScape, sizeScreen);
-
             //match video whit stepDrawer
             videoView.getLayoutParams().height = stepsDrawer.sizeY + stepsDrawer.offsetY;
             videoView.getLayoutParams().width = stepsDrawer.sizeX;
-
             //lifeBar
             bar = new LifeBar(context, stepsDrawer);
-
             combo = new Combo(getContext(), stepsDrawer);
             touchPad = new GamePad(context, stepData.getStepType(), gameState.inputs, sizeScreen.x, size.y);
-
+            combo.setLifeBar(bar);
             gameState.setCombo(combo);
             gameState.setStepsDrawer(stepsDrawer);
 
@@ -156,7 +143,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                 } else {
                     mpMusic.seekTo((int) Math.abs(gameState.offset * 1000));
                     mpMusic.setOnPreparedListener(mp -> {
-                        mpMusic.start();
+
+                       mpMusic.start();
                         gameState.isRunning = true;
                     });
                     bgPlayer.start(gameState.currentBeat);
@@ -192,8 +180,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             ArrayList<GameRow> list = new ArrayList<>();
             int initialIndex=0;
             if (gameState.isRunning) {
-                drawStats(canvas);
-                for (int x = 0; (gameState.currentElement + x) >=0  ; x--) {
+            //    drawStats(canvas);
+                for (int x = 0; (gameState.currentElement + x) >=0   && lastScrollAux!=0; x--) {
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
                     double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
                     lastPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
@@ -202,7 +190,6 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                     lastBeat = currentElemt.getCurrentBeat();
                     initialIndex=x;
                 }
-
                  lastScrollAux = gameState.lastScroll;
                  lastBeat = this.gameState.currentBeat + 0;
                  lastPosition = stepsDrawer.sizeNote * 0.7;
@@ -218,7 +205,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                     }
                     if (lastPosition >= stepsDrawer.sizeY + stepsDrawer.sizeNote)
                         break;
-                    if (currentElemt.getModifiers() != null && currentElemt.getModifiers().get("SCROLLS") != null)
+                    if (currentElemt.getModifiers() != null && currentElemt.getModifiers().get("SCROLLS") != null && x>=0)
                         lastScrollAux = Objects.requireNonNull(currentElemt.getModifiers().get("SCROLLS")).get(1);
                     lastBeat = currentElemt.getCurrentBeat();
                 }
@@ -240,7 +227,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         if (gameState.isRunning) {
             stepsDrawer.update();
             bgPlayer.update(gameState.currentBeat);
-            bar.updateLife(50);
+            bar.update();
         }
 
     }

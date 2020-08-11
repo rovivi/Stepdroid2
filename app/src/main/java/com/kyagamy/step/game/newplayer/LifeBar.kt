@@ -5,6 +5,7 @@ import android.graphics.*
 import com.kyagamy.step.R
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.cutBitmap
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.makeTransparent
+import kotlin.math.abs
 
 class LifeBar(
     context: Context,
@@ -70,16 +71,12 @@ class LifeBar(
             Rect(startX, startY, (startX + posBarBlue).toInt(), sizeY),
             paint
         )
-
-
-
         canvas.drawBitmap(
             currentHotBar,
             null,
             Rect(startX, startY, positionBar, sizeY),
             paint
         )
-
         if (life > AMAZING_VALUE) {
             canvas.drawBitmap(
                 makeTransparent(
@@ -91,8 +88,6 @@ class LifeBar(
                 paint
             )
         }
-
-
         //Skin
         canvas.drawBitmap(
             skin,
@@ -113,33 +108,32 @@ class LifeBar(
         )
     }
 
-    fun updateLife(life: Float) {
-
+    fun update() {
         if (System.nanoTime() - timeMark > 150) {
-            if (aumentLife > 6 || aumentLife < 0) {
-                auxLife *= -1f
-            }
+            if (aumentLife > 6 || aumentLife < 0)auxLife *= -1f
             aumentLife += auxLife
             timeMark = System.nanoTime()
         }
+    }
 
-
-        this.life += 0.089f
-//        this.life =0f
-        if (this.life >= 101) {
-            this.life = 100f;
+    fun updateLife(typeTap: Byte,combo: Int) {
+        when (typeTap) {
+            Combo.VALUE_PERFECT, Combo.VALUE_GREAT -> life+=1*abs(combo)
+            Combo.VALUE_BAD -> life-=0.3f*abs(combo)
+            Combo.VALUE_MISS -> life-=3* abs(combo)
         }
-
+        if (life>100)
+            life=100f
+        if (life <0)
+            life =0f
     }
 
     init {
         val myOpt2 = BitmapFactory.Options()
         myOpt2.inSampleSize = 0
-
         bg = BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_bg, myOpt2)
         bgDanger =
             BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_bg_danger, myOpt2)
-
         tipBlue =
             BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_blue_tip, myOpt2)
         tipRed = BitmapFactory.decodeResource(context.resources, R.drawable.lifebar_red_tip, myOpt2)

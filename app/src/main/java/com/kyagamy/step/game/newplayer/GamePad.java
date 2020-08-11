@@ -264,7 +264,7 @@ public class GamePad {
                 if (arrowsPosition2[j].contains(x, y)) {
                     if (pad[j] == 0  || (isDownMove&& pad[j]==2)) { //by this way confirm if the curret pad is off
                         pad[j] = 1;
-                        //Steps.noteSkins[0].tapsEffect[j].play();
+                        StepsDrawer.noteSkins[0].tapsEffect[j].play();
                     }
                     wasPressed = true;
                     break;

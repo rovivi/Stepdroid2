@@ -173,8 +173,6 @@ public class GameState {
     }
 
     public void evaluate() {
-
-
         if (false) {
             if (Evaluator.Companion.containNoteType(steps.get(currentElement), CommonSteps.NOTE_TAP)) {
                 combo.setComboUpdate(Combo.VALUE_PERFECT);
@@ -202,9 +200,7 @@ public class GameState {
             steps.get(currentElement).setHasPressed(true);
         } else {//juicio normal
             double[] currentJudge = Common.Companion.getJUDMENT()[2];//se busca el miss
-
             int posBack;
-
             double rGreat = currentJudge[3];
             double rGood = rGreat + currentJudge[2];
             double rBad = rGood + currentJudge[1];
@@ -224,7 +220,6 @@ public class GameState {
                 steps.get(currentElement + posBack - 1).setHasPressed(true);
             }
 
-
             int posEvaluate = -1;
             while ((currentElement + posBack) < steps.size() &&
                     steps.get(currentElement + posBack).getCurrentBeat() <= (currentBeat + addBeats)) {
@@ -238,19 +233,19 @@ public class GameState {
                             steps.get(currentElement + posBack).getNotes().get(w).setType(NOTE_PRESSED);
                             inputs[w] = 2;
                             posEvaluate = currentElement + posBack;
-
                             continue;
-
                         }
+                        if (inputs[w] != 0
+                                && (currentChar.getType() == NOTE_LONG_START || currentChar.getType() == NOTE_LONG_BODY || currentChar.getType() == NOTE_LONG_END)
+                                && posBack < 0
 
-                        if (inputs[w] != 0 && (currentChar.getType() == NOTE_LONG_START || currentChar.getType() == NOTE_LONG_BODY || currentChar.getType() == NOTE_LONG_END) && posBack <= 0) {// tap1
-                            steps.get(currentElement + posBack).getNotes().get(w).setType(currentChar.getType() == NOTE_LONG_END ? NOTE_PRESSED : NOTE_LONG_PRESSED);
+                        ) {// tap1
+                            steps.get(currentElement + posBack).getNotes().get(w).setType(NOTE_LONG_PRESSED);
+//                            steps.get(currentElement + posBack).getNotes().get(w).setType(currentChar.getType() == NOTE_LONG_END ? NOTE_PRESSED : NOTE_LONG_PRESSED);
                             combo.setComboUpdate(Combo.VALUE_PERFECT);
                             stepsDrawer.noteSkins[0].explotionTails[w].play();
-                            //posEvaluate = currentElement + posBack;
                             inputs[w] = 2;
                         }
-
                         if (inputs[w] == 0) {
                             if (w < stepsDrawer.noteSkins[0].explotionTails.length) {
                                 stepsDrawer.noteSkins[0].explotionTails[w].stop();
@@ -258,12 +253,10 @@ public class GameState {
                         }
                     }
                 }
-
                 if (posEvaluate != -1) {
                     boolean bol = !steps.get(posEvaluate).getHasPressed();
                     if (Evaluator.Companion.containsNotePressed(steps.get(posEvaluate)) && bol) {//mejorar la condicion xdd
                         steps.get(posEvaluate).setHasPressed(true);
-
                         double auxRetro = Math.abs(CommonSteps.Companion.beatToSecond(currentBeat - steps.get(posEvaluate).getCurrentBeat(), BPM)) * 1000;
                         System.out.println(auxRetro + "NOTE" + posEvaluate);
                         if (auxRetro < rGreat) {//perfetc
@@ -275,16 +268,12 @@ public class GameState {
                         } else {//bad
                             combo.setComboUpdate(Combo.VALUE_BAD);
                         }
-
                         eventAux = "add:" + addBeats + " positions to check:" + posBack + "beat eval:" + steps.get(posEvaluate).getCurrentBeat();
                         continue;
                     }
-
                 }
-
                 eventAux = currentBeat + ":" + steps.get(posBack + currentElement).getCurrentBeat();
                 posBack++;
-
             }
         }
 

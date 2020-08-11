@@ -53,7 +53,7 @@ private int NON_USE = -999;
         longInfo[1] = noteSkin;
     }
 
-    static NoteSkin[] noteSkins;
+   public  static NoteSkin[] noteSkins;
 
     /**
      * Created the step
@@ -172,11 +172,7 @@ private int NON_USE = -999;
                         case CommonSteps.NOTE_LONG_BODY:
 
                             if (gameRow.getPosY() > lastPositionDraw[count]) {//VALIDAMOS que la flecha no se haya dinukjando antes
-//                                int startY = (gameRow.getPosY()>startValueY)?startValueY:gameRow.getPosY();
-//                                if (note.getType()==CommonSteps.NOTE_LONG_PRESSED && startY<startValueY)
-//                                    startY=startValueY;
                                 int startY= gameRow.getPosY();
-
                                 if(gameRow.getPosY()>startValueY && gameRow.getPosY()<sizeY){
                                     startY=startValueY;
                                 }
@@ -208,14 +204,12 @@ private int NON_USE = -999;
 
 
         for (int j = 0; j < noteSkins[0].arrows.length; j++) {//se Dibujan receptores y effectos de las notas si los hay
-
             int startNoteX = posInitialX + sizeNote * j;
             int sizeNote = (int) (this.sizeNote * 1.245);
             int endNoteX = startNoteX + sizeNote;
             noteSkins[0].explotions[j].staticDraw(canvas, new Rect(startNoteX, startValueY, endNoteX, startValueY + sizeNote));
             noteSkins[0].explotionTails[j].draw(canvas, new Rect(startNoteX, startValueY, endNoteX, startValueY + sizeNote));
             noteSkins[0].tapsEffect[j].staticDraw(canvas, new Rect(startNoteX, startValueY, endNoteX, startValueY + sizeNote));
-
         }
         //test draw border
 

@@ -43,6 +43,9 @@ public class Combo {
     private int combo = 0;
     private int aumentTip = -220;
     private Paint paint = new Paint();
+    private LifeBar lifeBar;
+
+
 
     public short positionJudge = 0;
 
@@ -59,6 +62,10 @@ public class Combo {
 
     }
 
+    public void setLifeBar(LifeBar lifeBar){
+        this.lifeBar = lifeBar;
+
+    }
     public void show() {
         aumentTip = 20;
         paint.setAlpha(255);
@@ -73,9 +80,11 @@ public class Combo {
                 combo = (combo < 0) ? 1 : (combo+1);
                 break;
             case VALUE_BAD:
+                if (combo !=0)combo=0;
             case VALUE_MISS:
                 combo = (combo > 0) ? 0 : (combo-1);
         }
+        lifeBar.updateLife((byte) typeTap,1);
         show();
 
     }

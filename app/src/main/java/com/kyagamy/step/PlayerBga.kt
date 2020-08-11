@@ -13,15 +13,14 @@ import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.MotionEvent
 import android.view.View
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import com.kyagamy.step.common.Common.Companion.convertStreamToString
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
-import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.adjustedContrast
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.doBrightness
 import com.kyagamy.step.common.step.Parsers.FileSSC
 import com.kyagamy.step.game.newplayer.MainThreadNew
+import com.kyagamy.step.game.newplayer.StepsDrawer
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_playerbga.*
 import java.io.File
@@ -73,6 +72,7 @@ class PlayerBga : Activity() {
                             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                                 if (inputs[index] != 2.toByte()) {
                                     inputs[index] = 1
+                                    StepsDrawer.noteSkins[0].tapsEffect[index].play()
                                 }
                             }
                             MotionEvent.ACTION_UP -> {
@@ -88,7 +88,6 @@ class PlayerBga : Activity() {
             guidelinecenter.setGuidelinePercent(0.5f)
             guidelineVer1.setGuidelinePercent(0.3333333333334f)
             guidelineVer3.setGuidelinePercent(0.6666666666667f)
-
             guidelinehor2.setGuidelinePercent(0.6666666666667f)
             guidelinehor3.setGuidelinePercent(0.8333333333334f)
 
@@ -96,15 +95,6 @@ class PlayerBga : Activity() {
 
         }
     }
-
-    fun startEvaluation(params: IntArray?) {
-        i!!.putExtra("evaluation", params)
-        i!!.putExtra("pathbg", "")
-        i!!.putExtra("name", "Noame")
-        i!!.putExtra("nchar", nchar)
-        startActivity(i)
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     override fun onStart() {
         super.onStart()
@@ -115,11 +105,8 @@ class PlayerBga : Activity() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
         //set height  to bga
-
-
         startGamePlay()
     }
-
     val resolution: Point
         get() {
             val displayMetrics = DisplayMetrics()
@@ -147,7 +134,6 @@ class PlayerBga : Activity() {
                 )
                 step.path = Objects.requireNonNull(path).toString()
                 //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
-
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
                 gamePlay!!.build1Object(
                     videoViewBGA,
@@ -158,7 +144,6 @@ class PlayerBga : Activity() {
                 )
                 val bgPad =
                     BitmapFactory.decodeFile(step.path + File.separator + step.songMetada["BACKGROUND"])
-
                 if (bg_pad != null && bgPad != null) {
                     bg_pad.setImageBitmap(TransformBitmap.myblur(bgPad, this)?.let {
                         doBrightness(
@@ -183,5 +168,3 @@ class PlayerBga : Activity() {
         if (!gamePlayError && gamePlay != null) gamePlay!!.startGame() else finish()
     }
 }
-
-
