@@ -1,15 +1,13 @@
 package com.kyagamy.step.game.newplayer;
-
+import android.media.AudioManager;
+import android.media.SoundPool;
 
 import com.kyagamy.step.common.Common;
 import com.kyagamy.step.common.step.CommonSteps;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
-
 import com.kyagamy.step.common.step.Game.GameRow;
-
 import game.Note;
 import game.StepObject;
 
@@ -21,32 +19,25 @@ import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_PRESSED;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_START;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_PRESSED;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_TAP;
-
 public class GameState {
-    ArrayList<GameRow> steps;
 
+    ArrayList<GameRow> steps;
     protected Double currentSpeedMod = 1D;
     protected Double lastScroll = 1D;
     public double currentBeat = 0d;
     public int currentTickCount = 0, currentElement = 0;
     public Double BPM;
     public Long currentTempoBeat = 0L, currentTempo = 0L, startTime = 0L, timeLapsedBeat;
-
     public double currentSecond = 0, lostBeatByWarp = 0;
     ArrayList<Double> currentSpeed = null;
     double initialSpeedMod = 1;
     public float currentDurationFake = 0, offset;
     public boolean isRunning = true;
     public double initialBPM;
-
     public byte[] inputs;
-
     private GamePad touchPad;
-
-
     public Combo combo;
     public StepsDrawer stepsDrawer;
-
     public String eventAux = "";
 
     public GameState(StepObject stepData, byte[] pad) {
@@ -54,7 +45,6 @@ public class GameState {
         steps = stepData.steps;
         BPM = stepData.getInitialBPM();
         initialBPM = stepData.getInitialBPM();
-
         offset = stepData.getSongOffset();
 
     }
@@ -101,8 +91,6 @@ public class GameState {
                 currentElement++;
                 checkEffects();
                 if (CommonSteps.Companion.almostEqual(metaBeat, steps.get(currentElement).getCurrentBeat())) {
-
-
                 }
             }
         }
@@ -122,6 +110,9 @@ public class GameState {
         while (steps.get(currentElement).getCurrentBeat() <= currentBeat) {
             checkEffects();
             currentElement++;
+//            if (Evaluator.Companion.containsNoteTap(steps.get(currentElement))||Evaluator.Companion.containNoteType(steps.get(currentElement), NOTE_LONG_START)){
+//              //  GamePlayNew.soundPool.play(GamePlayNew.soundPullBeat,1,1,1,0,1);
+//            }
         }
         isRunning = !(currentElement >= steps.size());
         evaluate();
@@ -159,14 +150,10 @@ public class GameState {
     void addCurrentElement(boolean evaluate) {
         if (evaluate) {
             //   evaluate();
-
         }
-
         checkEffects();
         currentElement++;
-
     }
-
 
     public void setStepsDrawer(StepsDrawer stepsDrawer) {
         this.stepsDrawer = stepsDrawer;
@@ -212,7 +199,7 @@ public class GameState {
                 posBack--;
             }
 
-            if ((currentElement + posBack - 1) > 0 &&
+            if ((currentElement + posBack ) > 0 &&
                     !steps.get(currentElement + posBack - 1).getHasPressed() &&
                     Evaluator.Companion.containNoteToEvaluate(steps.get(currentElement + posBack - 1))
             ) {

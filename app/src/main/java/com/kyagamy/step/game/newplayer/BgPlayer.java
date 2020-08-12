@@ -2,6 +2,8 @@ package com.kyagamy.step.game.newplayer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.widget.VideoView;
 
 import com.kyagamy.step.R;
@@ -38,11 +40,9 @@ public class BgPlayer {
         if (isRunning && BGList.size() > currentBg) {
             bgChange bg = BGList.get(currentBg);
             if (changeVideo && bg.beat <= beat) {
-
                 try {
                     SharedPreferences sharedPref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
                     String basePath = sharedPref.getString(context.getString(R.string.base_path), "Error path");
-
 
                     if (bg.fileName.contains(".")){
                     String ext = bg.fileName.substring(bg.fileName.lastIndexOf("."));
@@ -72,11 +72,12 @@ public class BgPlayer {
                         case ".jpg":
                         case ".bpm":
                         case ".tiff":
-//                            bgaDir = Common.checkBGADir(path, bg.fileName, context);
-//                            if (bgaDir != null) {
-//                                player.setBackground(new BitmapDrawable(BitmapFactory.decodeFile(bgaDir)));
-//                            } else
+                            bgaDir = Common.Companion.checkBGADir(path, bg.fileName, basePath);
+                            if (bgaDir != null) {
+                                player.setBackground(new BitmapDrawable(BitmapFactory.decodeFile(bgaDir)));
+                            } else
                             //no se utilizo owo
+
                                 playBgaOff();
                             break;
                         default:

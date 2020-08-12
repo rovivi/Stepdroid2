@@ -10,7 +10,9 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.SoundPool;
 import android.os.Build;
 import android.os.Handler;
 import android.util.AttributeSet;
@@ -21,6 +23,7 @@ import android.widget.VideoView;
 
 import androidx.annotation.RequiresApi;
 
+import com.kyagamy.step.R;
 import com.kyagamy.step.common.Common;
 import com.kyagamy.step.common.step.Game.GameRow;
 
@@ -52,6 +55,9 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     String msj;
     BgPlayer bgPlayer;
     private int speed;
+    public static SoundPool soundPool;
+    public static  int soundPullBeat;
+    public static  int soundPullMine;
 
     public GamePlayNew(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -121,6 +127,18 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             gameState.setCombo(combo);
             gameState.setStepsDrawer(stepsDrawer);
 
+
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                soundPool = new SoundPool.Builder()
+                        .setMaxStreams(25)
+                        .build();
+            } else {
+                soundPool = new SoundPool(25, AudioManager.STREAM_MUSIC, 50);
+            }
+            //sound pool
+            soundPullBeat = soundPool.load(this.getContext(), R.raw.beat2, 1);
+            soundPullMine = soundPool.load(this.getContext(), R.raw.mine, 1);
         } catch (Exception e) {
             e.printStackTrace();
         }
