@@ -40,6 +40,7 @@ public class GameState {
     public StepsDrawer stepsDrawer;
     public String eventAux = "";
 
+
     public GameState(StepObject stepData, byte[] pad) {
         this.inputs = pad;
         steps = stepData.steps;

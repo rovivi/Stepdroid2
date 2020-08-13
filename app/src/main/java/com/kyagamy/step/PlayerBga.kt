@@ -19,6 +19,7 @@ import com.kyagamy.step.common.Common.Companion.convertStreamToString
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.doBrightness
 import com.kyagamy.step.common.step.Parsers.FileSSC
+import com.kyagamy.step.game.newplayer.EvaluationActivity
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.kyagamy.step.game.newplayer.StepsDrawer
 import com.squareup.picasso.Picasso
@@ -46,6 +47,7 @@ class PlayerBga : Activity() {
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
         hilo = this.gamePlay?.mainTread
+        i = Intent(this, EvaluationActivity::class.java)
 
 
         val pathImg = intent.extras!!.getString("pathDisc", null)
@@ -140,6 +142,7 @@ class PlayerBga : Activity() {
                     step,
                     baseContext,
                     Point(displayMetrics.widthPixels, displayMetrics.heightPixels),
+                    this,
                     inputs
                 )
                 val bgPad =
@@ -166,5 +169,9 @@ class PlayerBga : Activity() {
             true
         }
         if (!gamePlayError && gamePlay != null) gamePlay!!.startGame() else finish()
+    }
+
+    fun startEvaluation() {
+        startActivity(i)
     }
 }

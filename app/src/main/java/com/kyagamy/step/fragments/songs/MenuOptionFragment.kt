@@ -55,7 +55,7 @@ class MenuOptionFragment : Fragment() {
         fView.tv_10L .setOnClickListener { changeVelocity(-10) }
         fView.tv_100L .setOnClickListener { changeVelocity(-100) }
 
-        skins = NoteSkin.arraySkin(context)
+        //skins = NoteSkin.arraySkin(context)
         settingsGameGetter= SettingsGameGetter(activity!!.applicationContext)
         indexNS = ParamsSong.skinIndex
 

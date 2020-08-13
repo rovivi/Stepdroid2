@@ -23,6 +23,7 @@ import android.widget.VideoView;
 
 import androidx.annotation.RequiresApi;
 
+import com.kyagamy.step.PlayerBga;
 import com.kyagamy.step.R;
 import com.kyagamy.step.common.Common;
 import com.kyagamy.step.common.step.Game.GameRow;
@@ -58,6 +59,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     public static SoundPool soundPool;
     public static  int soundPullBeat;
     public static  int soundPullMine;
+//    private Context ctx;
+    public PlayerBga playerBga;
 
     public GamePlayNew(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -75,8 +78,9 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void build1Object(VideoView videoView, StepObject stepData, Context context, Point sizeScreen, byte[] inputs) {
+    public void build1Object(VideoView videoView, StepObject stepData, Context context, Point sizeScreen,PlayerBga playerBga, byte[] inputs) {
         try {
+            this.playerBga=playerBga;
             isLandScape = context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 
             this.setZOrderOnTop(true); //necessary
@@ -126,9 +130,6 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             combo.setLifeBar(bar);
             gameState.setCombo(combo);
             gameState.setStepsDrawer(stepsDrawer);
-
-
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 soundPool = new SoundPool.Builder()
                         .setMaxStreams(25)
@@ -228,6 +229,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                     lastBeat = currentElemt.getCurrentBeat();
                 }
                 stepsDrawer.draw(canvas, list);
+                if (gameState.currentElement+1==gameState.steps.size()) startEvaluation();
             }
             bar.draw(canvas);
             combo.draw(canvas);
@@ -249,6 +251,14 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         }
 
     }
+
+    private void startEvaluation() {
+        stop();
+        playerBga.startEvaluation();
+        playerBga.finish();
+      //  ctx.startActivity(new Intent(ctx,EvaluationActivity.class));
+    }
+
 
     public void drawStats(Canvas c) {
         paint.setTextSize(20);
@@ -272,8 +282,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         //  paint.setColor(Color.BLACK);
         paint.setColor(Color.TRANSPARENT);
     }
-
-
+    
     public void stop() {
         boolean retry = true;
         if (mainTread != null)

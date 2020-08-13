@@ -213,6 +213,10 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                 currentBeat += 4.0 / blockSize
             }
         }
+        //se añadie un ultimo row para que finalize
+        var lastRow = GameRow()
+        lastRow.currentBeat=currentBeat+5
+        listGameRow.add(lastRow)
         return listGameRow
     }
 

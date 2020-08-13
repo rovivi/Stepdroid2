@@ -28,7 +28,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".DragStepActivity"></activity>
+        <activity android:name=".game.newplayer.EvaluationActivity">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+        <activity android:name=".DragStepActivity" />
         <activity
             android:name=".LoadingSongActivity"
             android:label="@string/title_activity_loading_song"
@@ -39,12 +48,12 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".StartActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+<!--                <action android:name="android.intent.action.MAIN" />-->
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity"></activity>
+        <activity android:name=".MainActivity" />
         <activity
             android:name=".PlayerBga"
             android:keepScreenOn="true"

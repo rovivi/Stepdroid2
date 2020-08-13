@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+android:theme="@style/AppTheme.NoActionBar"
+    tools:context=".game.newplayer.EvaluationActivity">
+
+    <TextView
+        android:id="@+id/title_evaluation2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/name_bg"
+        android:gravity="center"
+        android:text="song title"
+        android:textColor="@color/black_overlay"
+        android:textSize="30sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/img_dance_grade" />
+
+    <ImageView
+        android:id="@+id/img_perfect"
+        android:layout_width="496dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="32dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title_evaluation2"
+        app:srcCompat="@drawable/grade_perfect" />
+
+    <ImageView
+        android:id="@+id/img_great"
+        android:layout_width="496dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="3dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="@+id/img_perfect"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/img_perfect"
+        app:layout_constraintTop_toBottomOf="@+id/img_perfect"
+        app:srcCompat="@drawable/grade_great" />
+
+    <ImageView
+        android:id="@+id/img_good"
+        android:layout_width="496dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="3dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="@+id/img_perfect"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/img_perfect"
+        app:layout_constraintTop_toBottomOf="@+id/img_great"
+        app:srcCompat="@drawable/grade_good" />
+
+    <ImageView
+        android:id="@+id/img_bad"
+        android:layout_width="496dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="3dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="@+id/img_perfect"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/img_perfect"
+        app:layout_constraintTop_toBottomOf="@+id/img_good"
+        app:srcCompat="@drawable/grade_bad" />
+
+    <ImageView
+        android:id="@+id/img_miss"
+        android:layout_width="496dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="3dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="@+id/img_perfect"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/img_perfect"
+        app:layout_constraintTop_toBottomOf="@+id/img_bad"
+        app:srcCompat="@drawable/grade_miss" />
+
+    <ImageView
+        android:id="@+id/img_max_combo"
+        android:layout_width="496dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="3dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="@+id/img_perfect"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/img_perfect"
+        app:layout_constraintTop_toBottomOf="@+id/img_miss"
+        app:srcCompat="@drawable/grade_max_combo" />
+
+    <ImageView
+        android:id="@+id/img_total_score"
+        android:layout_width="496dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="3dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="@+id/img_perfect"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/img_perfect"
+        app:layout_constraintTop_toBottomOf="@+id/img_max_combo"
+        app:srcCompat="@drawable/grade_total_score" />
+
+    <ImageView
+        android:id="@+id/img_dance_grade"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:scaleType="matrix"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/dance_grade_title" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,6 +14,13 @@ import com.kyagamy.step.common.step.Game.GameRow
 class Evaluator {
 
     companion object {
+        var PURRFECT =0;
+        var PERFECT =0;
+        var GREAT =0;
+        var GOOD =0;
+        var BAD =0;
+        var MISS =0;
+
         fun containNoteType(row: GameRow, typeNote: Short): Boolean {
 //
             if (row.notes != null) {
