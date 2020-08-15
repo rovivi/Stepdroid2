@@ -140,6 +140,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             //sound pool
             soundPullBeat = soundPool.load(this.getContext(), R.raw.beat2, 1);
             soundPullMine = soundPool.load(this.getContext(), R.raw.mine, 1);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -153,6 +154,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void startGame() {
+        Evaluator.Companion.resetScore();
         gameState.start();
         try {
             if (mainTread.running) {

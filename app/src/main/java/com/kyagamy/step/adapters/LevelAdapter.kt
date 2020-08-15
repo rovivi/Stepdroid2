@@ -9,6 +9,7 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.kyagamy.step.R
 import com.kyagamy.step.room.entities.Level
@@ -22,6 +23,7 @@ class LevelAdapter internal constructor(
     private val inflater: LayoutInflater = LayoutInflater.from(context)
     private var levels = emptyList<Level>() // Cached copy of songs
     private var lastPosition = -1
+     var bigMode=false
     private lateinit var context: Context
 
     inner class songViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -29,6 +31,11 @@ class LevelAdapter internal constructor(
         val typeLevel: ImageView = itemView.findViewById(R.id.item_level_bg)
         val levelGlow: ImageView = itemView.findViewById(R.id.item_level_load_animate)
         val levelStaticGlow: ImageView = itemView.findViewById(R.id.level_item_staticBG)
+        val constraint :ConstraintLayout = itemView.findViewById(R.id.level_layout)
+        val custom_font = Typeface.createFromAsset(context.assets, "fonts/karnivol.ttf")
+
+
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): songViewHolder {
@@ -78,7 +85,21 @@ class LevelAdapter internal constructor(
             }
         }
 
-        setAnimation(holder.itemView, position)
+        if (bigMode){
+            val size = 200
+            holder.level.textSize= 60f
+            holder.levelGlow.layoutParams.height=size
+            holder.levelGlow.layoutParams.width=size
+            holder.levelStaticGlow.layoutParams.height=size
+            holder.levelStaticGlow.layoutParams.width=size
+            holder.typeLevel.layoutParams.height=size
+            holder.typeLevel.layoutParams.width=size
+            holder.constraint.layoutParams.width=size
+            holder.constraint.layoutParams.height=size
+            holder.level.setTypeface(holder.custom_font)
+        }
+        if(!bigMode)
+            setAnimation(holder.itemView, position)
     }
 
     internal fun setLevels(songs: List<Level>) {

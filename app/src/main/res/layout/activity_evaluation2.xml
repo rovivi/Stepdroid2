@@ -4,21 +4,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-android:theme="@style/AppTheme.NoActionBar"
+    android:background="@color/design_default_color_on_secondary"
+    android:textAlignment="textEnd"
+    android:theme="@style/AppTheme.NoActionBar"
     tools:context=".game.newplayer.EvaluationActivity">
+
+    <ImageView
+        android:id="@+id/bg_title_grade"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="fitXY"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.56"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/no_banner" />
 
     <TextView
         android:id="@+id/title_evaluation2"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="4dp"
         android:background="@drawable/name_bg"
         android:gravity="center"
         android:text="song title"
-        android:textColor="@color/black_overlay"
-        android:textSize="30sp"
+        android:textColor="@color/cardview_light_background"
+        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -33,7 +47,8 @@ android:theme="@style/AppTheme.NoActionBar"
         android:scaleType="fitCenter"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title_evaluation2"
-        app:srcCompat="@drawable/grade_perfect" />
+        app:srcCompat="@drawable/grade_perfect"
+        tools:visibility="invisible" />
 
     <ImageView
         android:id="@+id/img_great"
@@ -45,7 +60,8 @@ android:theme="@style/AppTheme.NoActionBar"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/img_perfect"
         app:layout_constraintTop_toBottomOf="@+id/img_perfect"
-        app:srcCompat="@drawable/grade_great" />
+        app:srcCompat="@drawable/grade_great"
+        tools:visibility="invisible" />
 
     <ImageView
         android:id="@+id/img_good"
@@ -57,7 +73,8 @@ android:theme="@style/AppTheme.NoActionBar"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/img_perfect"
         app:layout_constraintTop_toBottomOf="@+id/img_great"
-        app:srcCompat="@drawable/grade_good" />
+        app:srcCompat="@drawable/grade_good"
+        tools:visibility="invisible" />
 
     <ImageView
         android:id="@+id/img_bad"
@@ -69,7 +86,8 @@ android:theme="@style/AppTheme.NoActionBar"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/img_perfect"
         app:layout_constraintTop_toBottomOf="@+id/img_good"
-        app:srcCompat="@drawable/grade_bad" />
+        app:srcCompat="@drawable/grade_bad"
+        tools:visibility="invisible" />
 
     <ImageView
         android:id="@+id/img_miss"
@@ -81,7 +99,8 @@ android:theme="@style/AppTheme.NoActionBar"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/img_perfect"
         app:layout_constraintTop_toBottomOf="@+id/img_bad"
-        app:srcCompat="@drawable/grade_miss" />
+        app:srcCompat="@drawable/grade_miss"
+        tools:visibility="invisible" />
 
     <ImageView
         android:id="@+id/img_max_combo"
@@ -93,7 +112,8 @@ android:theme="@style/AppTheme.NoActionBar"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/img_perfect"
         app:layout_constraintTop_toBottomOf="@+id/img_miss"
-        app:srcCompat="@drawable/grade_max_combo" />
+        app:srcCompat="@drawable/grade_max_combo"
+        tools:visibility="invisible" />
 
     <ImageView
         android:id="@+id/img_total_score"
@@ -105,7 +125,8 @@ android:theme="@style/AppTheme.NoActionBar"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/img_perfect"
         app:layout_constraintTop_toBottomOf="@+id/img_max_combo"
-        app:srcCompat="@drawable/grade_total_score" />
+        app:srcCompat="@drawable/grade_total_score"
+        tools:visibility="invisible" />
 
     <ImageView
         android:id="@+id/img_dance_grade"
@@ -119,4 +140,125 @@ android:theme="@style/AppTheme.NoActionBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/dance_grade_title" />
+
+    <TextView
+        android:id="@+id/result_Perfect"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="3dp"
+        android:text=" "
+        android:textAlignment="textEnd"
+        android:textColor="@color/design_default_color_background"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_perfect"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_perfect" />
+
+    <TextView
+        android:id="@+id/result_Great"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="3dp"
+        android:text=" "
+        android:textAlignment="textEnd"
+        android:textColor="@color/design_default_color_background"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_great"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_great" />
+
+    <TextView
+        android:id="@+id/result_good"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="3dp"
+        android:text=" "
+        android:textAlignment="textEnd"
+        android:textColor="@color/design_default_color_background"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_good"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_good" />
+
+    <TextView
+        android:id="@+id/result_bad"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="3dp"
+        android:text=" "
+        android:textAlignment="textEnd"
+        android:textColor="@color/design_default_color_background"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_bad"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_bad" />
+
+    <TextView
+        android:id="@+id/result_miss"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="3dp"
+        android:text=" "
+        android:textAlignment="textEnd"
+        android:textColor="@color/design_default_color_background"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_miss"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_miss" />
+
+    <TextView
+        android:id="@+id/result_max_combo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="3dp"
+        android:text=" "
+        android:textAlignment="textEnd"
+        android:textColor="@color/design_default_color_background"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_max_combo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_max_combo" />
+
+    <TextView
+        android:id="@+id/result_total_score"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="3dp"
+        android:text=" "
+        android:textAlignment="textEnd"
+        android:textColor="@color/design_default_color_background"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_total_score"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_total_score" />
+
+    <ImageView
+        android:id="@+id/img_rank_grade"
+        android:layout_width="130sp"
+        android:layout_height="130sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_total_score"
+        app:layout_constraintEnd_toStartOf="@+id/result_bad"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_perfect"
+        app:layout_constraintVertical_bias="0.5"
+        tools:visibility="invisible" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/level_view_rank"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.19"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/img_total_score"
+        app:layout_constraintVertical_bias="0.110000014" />
 </androidx.constraintlayout.widget.ConstraintLayout>

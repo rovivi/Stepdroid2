@@ -77,6 +77,8 @@ public class Combo {
         switch (typeTap) {
             case VALUE_PERFECT:
                 Evaluator.Companion.setPERFECT(Evaluator.Companion.getPERFECT()+1);
+                combo = (combo < 0) ? 1 : (combo+1);
+                break;
             case VALUE_GREAT:
                 Evaluator.Companion.setGREAT(Evaluator.Companion.getGREAT()+1);
                 combo = (combo < 0) ? 1 : (combo+1);
@@ -84,14 +86,19 @@ public class Combo {
             case VALUE_GOOD:
                 Evaluator.Companion.setGOOD(Evaluator.Companion.getGOOD()+1);
                 if (combo <-4)combo=0;
+                break;
             case VALUE_BAD:
                 Evaluator.Companion.setBAD(Evaluator.Companion.getBAD()+1);
                 if (combo !=0)combo=0;
+                break;
             case VALUE_MISS:
                 Evaluator.Companion.setMISS(Evaluator.Companion.getMISS()+1);
                 combo = (combo > 0) ? 0 : (combo-1);
+                break;
         }
         lifeBar.updateLife((byte) typeTap,1);
+        if (combo>Evaluator.Companion.getMAX_COMBO())
+            Evaluator.Companion.setMAX_COMBO(combo);
         show();
 
     }

@@ -20,6 +20,7 @@ import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.doBrightness
 import com.kyagamy.step.common.step.Parsers.FileSSC
 import com.kyagamy.step.game.newplayer.EvaluationActivity
+import com.kyagamy.step.game.newplayer.Evaluator
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.kyagamy.step.game.newplayer.StepsDrawer
 import com.squareup.picasso.Picasso
@@ -145,9 +146,13 @@ class PlayerBga : Activity() {
                     this,
                     inputs
                 )
+
+                Evaluator.songName=step.songMetada["TITLE"].toString()
                 val bgPad =
                     BitmapFactory.decodeFile(step.path + File.separator + step.songMetada["BACKGROUND"])
                 if (bg_pad != null && bgPad != null) {
+                    Evaluator.imagePath=step.path + File.separator + step.songMetada["BACKGROUND"]
+                    Evaluator.bitmap = TransformBitmap.doBrightness(bgPad,-60)
                     bg_pad.setImageBitmap(TransformBitmap.myblur(bgPad, this)?.let {
                         doBrightness(
                             it, -125
