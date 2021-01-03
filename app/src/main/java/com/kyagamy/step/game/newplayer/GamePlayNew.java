@@ -10,7 +10,9 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.os.Build;
@@ -28,7 +30,13 @@ import com.kyagamy.step.R;
 import com.kyagamy.step.common.Common;
 import com.kyagamy.step.common.step.Game.GameRow;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
@@ -57,10 +65,20 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     BgPlayer bgPlayer;
     private int speed;
     public static SoundPool soundPool;
-    public static  int soundPullBeat;
-    public static  int soundPullMine;
-//    private Context ctx;
+    public static int soundPullBeat;
+    public static int soundPullMine;
+    //    private Context ctx;
     public PlayerBga playerBga;
+
+    //TEST
+
+     boolean mpUpdated=false;
+//    public InputStream IS;
+//    public BufferedInputStream BIS;
+//    public DataInputStream DIS;
+//    public AudioTrack AUDIOTRACK;
+//    short[] music;
+//    int musicLength;
 
     public GamePlayNew(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -78,9 +96,9 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void build1Object(VideoView videoView, StepObject stepData, Context context, Point sizeScreen,PlayerBga playerBga, byte[] inputs) {
+    public void build1Object(VideoView videoView, StepObject stepData, Context context, Point sizeScreen, PlayerBga playerBga, byte[] inputs) {
         try {
-            this.playerBga=playerBga;
+            this.playerBga = playerBga;
             isLandScape = context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 
             this.setZOrderOnTop(true); //necessary
@@ -141,6 +159,38 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             soundPullBeat = soundPool.load(this.getContext(), R.raw.beat2, 1);
             soundPullMine = soundPool.load(this.getContext(), R.raw.mine, 1);
 
+
+            //TEST
+
+//            File FILEAUDIO = new File(stepData.getMusicPath());
+//             musicLength = (int)(FILEAUDIO.length()/2)+1;
+//            music = new short[musicLength];
+//
+//            IS = new FileInputStream(FILEAUDIO);
+//            BIS = new BufferedInputStream(IS, musicLength);
+//            DIS = new DataInputStream(BIS);
+//            int i = 0;                                                          //  Read the file into the "music" array
+//            while (DIS.available() > 0 && i<musicLength)
+//            {
+//                music[i] = DIS.readShort();                                      //  This assignment does not reverse the order
+//                i++;
+//            }
+//
+//
+//
+//
+//            AUDIOTRACK = new AudioTrack(AudioManager.STREAM_MUSIC,
+//                    44100 ,
+//                    AudioFormat.CHANNEL_OUT_STEREO,
+//                    AudioFormat.ENCODING_PCM_16BIT,
+//                    musicLength,
+//                    AudioTrack.MODE_STREAM);
+//
+//
+//
+//            DIS .close();
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -165,11 +215,13 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                     mpMusic.seekTo((int) Math.abs(gameState.offset * 1000));
                     mpMusic.setOnPreparedListener(mp -> {
 
-                       mpMusic.start();
+//                        AUDIOTRACK.play();
+//                        AUDIOTRACK.write(music, 0, musicLength);
+                        mpMusic.start();
                         gameState.isRunning = true;
                     });
                     bgPlayer.start(gameState.currentBeat);
-                    mpMusic.prepare();
+                  //  mpMusic.prepare();
                 }
             } else
                 mainTread.sulrfaceHolder = this.getHolder();
@@ -199,21 +251,21 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             double lastBeat = this.gameState.currentBeat + 0;
             double lastPosition = stepsDrawer.sizeNote * 0.7;
             ArrayList<GameRow> list = new ArrayList<>();
-            int initialIndex=0;
+            int initialIndex = 0;
             if (gameState.isRunning) {
-            //    drawStats(canvas);
-                for (int x = 0; (gameState.currentElement + x) >=0   && lastScrollAux!=0; x--) {
+                    drawStats(canvas);
+                for (int x = 0; (gameState.currentElement + x) >= 0 && lastScrollAux != 0; x--) {
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
                     double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
                     lastPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
-                    if (lastPosition < -stepsDrawer.sizeNote*2)
+                    if (lastPosition < -stepsDrawer.sizeNote * 2)
                         break;
                     lastBeat = currentElemt.getCurrentBeat();
-                    initialIndex=x;
+                    initialIndex = x;
                 }
-                 lastScrollAux = gameState.lastScroll;
-                 lastBeat = this.gameState.currentBeat + 0;
-                 lastPosition = stepsDrawer.sizeNote * 0.7;
+                lastScrollAux = gameState.lastScroll;
+                lastBeat = this.gameState.currentBeat + 0;
+                lastPosition = stepsDrawer.sizeNote * 0.7;
                 for (int x = initialIndex; (gameState.currentElement + x) < gameState.steps.size() &&
                         (gameState.currentElement + x) >= 0; x++) {//after current beat
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
@@ -226,12 +278,12 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                     }
                     if (lastPosition >= stepsDrawer.sizeY + stepsDrawer.sizeNote)
                         break;
-                    if (currentElemt.getModifiers() != null && currentElemt.getModifiers().get("SCROLLS") != null && x>=0)
+                    if (currentElemt.getModifiers() != null && currentElemt.getModifiers().get("SCROLLS") != null && x >= 0)
                         lastScrollAux = Objects.requireNonNull(currentElemt.getModifiers().get("SCROLLS")).get(1);
                     lastBeat = currentElemt.getCurrentBeat();
                 }
                 stepsDrawer.draw(canvas, list);
-                if (gameState.currentElement+1==gameState.steps.size()) startEvaluation();
+                if (gameState.currentElement + 1 == gameState.steps.size()) startEvaluation();
             }
             bar.draw(canvas);
             combo.draw(canvas);
@@ -252,13 +304,21 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             bar.update();
         }
 
+        //se va actualizar una vez el audio
+        double diff = ((gameState.currentSecond/100d)-gameState.offset-mpMusic.getCurrentPosition()/1000d);
+        if (diff>=Math.abs(0.04d) && !mpUpdated &&gameState.isRunning && mpMusic.isPlaying()){
+            gameState.currentBeat-=Common.Companion.second2Beat(diff,gameState.BPM);
+            gameState.currentSecond-=diff*100;
+            mpUpdated=true;
+        }
+
     }
 
     private void startEvaluation() {
         stop();
         playerBga.startEvaluation();
         playerBga.finish();
-      //  ctx.startActivity(new Intent(ctx,EvaluationActivity.class));
+        //  ctx.startActivity(new Intent(ctx,EvaluationActivity.class));
     }
 
 
@@ -272,11 +332,16 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         c.drawText("FPS: " + fps, 0, 250, paint);
         // c.drawText("Log: " + gameState.currentTickCount, 0, 100, paint);
         // c.drawText("event: " + gameState.eventAux, 0, playerSizeY - 200, paint);
-        //c.drawText("C Seg: " + String.format(new Locale("es"), "%.3f", gameState.currentSecond), 0, playerSizeY - 300, paint);
+        c.drawText("C Seg: " + String.format(new Locale("es"), "%.5f", (gameState.currentSecond/100d)-gameState.offset), 0, playerSizeY +40, paint);
+        c.drawText("offset: " +mpUpdated, 0, playerSizeY +90, paint);
+        c.drawText("diff: " +String.format(new Locale("es"), "%.5f", (gameState.currentSecond/100d)-gameState.offset-mpMusic.getCurrentPosition()/1000d), 0, playerSizeY +110, paint);
+        c.drawText("MP ms: " + mpMusic.getCurrentPosition()/1000d, 0, playerSizeY +70, paint);
         c.drawText("C Beat: " + String.format(new Locale("es"), "%.3f", gameState.currentBeat), 0, playerSizeY - 150, paint);
         c.drawText("C BPM: " + gameState.BPM, 0, playerSizeY - 250, paint);
         c.drawText("C Speed: " + gameState.currentSpeedMod, 0, playerSizeY - 100, paint);
-        c.drawText("Scroll: " + gameState.lastScroll, 0, playerSizeY - 400, paint);
+        c.drawText("Scroll: " + gameState.lastScroll, 0, playerSizeY , paint);
+
+
         StringBuilder st = new StringBuilder();
         for (int j = 0; j < 10; j++)
             st.append(gameState.inputs[j]);
@@ -284,7 +349,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         //  paint.setColor(Color.BLACK);
         paint.setColor(Color.TRANSPARENT);
     }
-    
+
     public void stop() {
         boolean retry = true;
         if (mainTread != null)

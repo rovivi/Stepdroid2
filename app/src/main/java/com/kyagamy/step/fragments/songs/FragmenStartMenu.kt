@@ -140,15 +140,15 @@ class FragmenStartMenu : DialogFragment() {
         songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
         levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
 
-        i = Intent(activity!!, PlayerBga::class.java)
+        i = Intent(requireActivity(), PlayerBga::class.java)
 
         levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
 
-        val levelAdapter = LevelAdapter(activity!!.applicationContext)
+        val levelAdapter = LevelAdapter(requireActivity().applicationContext)
 
         levelRecyclerView = view.findViewById(R.id.recycler_levels)
         levelRecyclerView.layoutManager = LinearLayoutManager(
-            activity!!.applicationContext,
+            requireActivity().applicationContext,
             LinearLayoutManager.HORIZONTAL,
             false
         )
@@ -172,7 +172,7 @@ class FragmenStartMenu : DialogFragment() {
                         lifecycleScope.run {
                             try {
                                 // root.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_out));
-
+                                
                                 i!!.putExtra("ssc", currentSong?.PATH_File)
                                 i!!.putExtra("nchar", levelAdapter.getLevel(position).index)
                                 i!!.putExtra("path", currentSong?.PATH_SONG)

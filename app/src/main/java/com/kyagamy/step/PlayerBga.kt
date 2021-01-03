@@ -11,11 +11,13 @@ import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.util.DisplayMetrics
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import com.kyagamy.step.common.Common.Companion.convertStreamToString
+import com.kyagamy.step.common.step.CommonGame.ParamsSong
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.doBrightness
 import com.kyagamy.step.common.step.Parsers.FileSSC
@@ -28,6 +30,7 @@ import kotlinx.android.synthetic.main.activity_playerbga.*
 import java.io.File
 import java.io.FileInputStream
 import java.util.*
+
 
 class PlayerBga : Activity() {
     var hilo: MainThreadNew? = null
@@ -176,6 +179,94 @@ class PlayerBga : Activity() {
         if (!gamePlayError && gamePlay != null) gamePlay!!.startGame() else finish()
     }
 
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (!gamePlayError && gamePlay != null) {
+                gamePlay.stop()
+            }
+            super.onBackPressed()
+        }
+        when (keyCode) {
+            KeyEvent.KEYCODE_BUTTON_1 -> inputs[7] =1
+            KeyEvent.KEYCODE_BUTTON_2 ->inputs[9] = 1
+            KeyEvent.KEYCODE_BUTTON_3 ->inputs[6] = 1
+            KeyEvent.KEYCODE_BUTTON_4 ->inputs[8] = 1
+            KeyEvent.KEYCODE_BUTTON_5 ->inputs[0] = 1
+            KeyEvent.KEYCODE_BUTTON_6 ->inputs[2] = 1
+            KeyEvent.KEYCODE_BUTTON_7 ->inputs[3] = 1
+            KeyEvent.KEYCODE_BUTTON_8 ->inputs[1] = 1
+            KeyEvent.KEYCODE_BUTTON_9 ->inputs[4] = 1
+            KeyEvent.KEYCODE_BUTTON_10 ->inputs[5] = 1
+            145, 288 ->inputs[5] = 1
+            157, 293 ->inputs[6] = 1
+            149, 295 ->inputs[7] = 1
+            153 ->inputs[8] = 1
+            147 ->inputs[9] = 1
+            KeyEvent.KEYCODE_Z, 290 ->inputs[0] = 1
+            KeyEvent.KEYCODE_Q, 296 ->inputs[1] = 1
+            KeyEvent.KEYCODE_S, 292 ->inputs[2] = 1
+            KeyEvent.KEYCODE_E, KeyEvent.KEYCODE_DPAD_DOWN_LEFT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT ->inputs[
+                3
+            ] = 1
+            KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_DPAD_DOWN -> {
+               inputs[4] = 1
+
+               // startEvaluation()
+            }
+            KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN ->startEvaluation()
+            KeyEvent.KEYCODE_F8 -> ParamsSong.autoplay = !ParamsSong.autoplay
+            KeyEvent.KEYCODE_VOLUME_UP -> {
+                audio!!.adjustStreamVolume(
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI
+                )
+                return true
+            }
+            KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                audio!!.adjustStreamVolume(
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI
+                )
+                return true
+            }
+            else -> {
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+
+        // Toast.makeText(getApplicationContext(),""+keyCode,Toast.LENGTH_LONG).show();
+        when (keyCode) {
+            KeyEvent.KEYCODE_BUTTON_1 ->inputs[7] = 0
+            KeyEvent.KEYCODE_BUTTON_2 ->inputs[9] = 0
+            KeyEvent.KEYCODE_BUTTON_3 ->inputs[6] = 0
+            KeyEvent.KEYCODE_BUTTON_4 ->inputs[8] = 0
+            KeyEvent.KEYCODE_BUTTON_5 ->inputs[0] = 0
+            KeyEvent.KEYCODE_BUTTON_6 ->inputs[2] = 0
+            KeyEvent.KEYCODE_BUTTON_7 ->inputs[3] = 0
+            KeyEvent.KEYCODE_BUTTON_8 ->inputs[1] = 0
+            KeyEvent.KEYCODE_BUTTON_9 ->inputs[4] = 0
+            KeyEvent.KEYCODE_BUTTON_10 ->inputs[5] = 0
+            145 ->inputs[5] = 0
+            157 ->inputs[6] = 0
+            149 ->inputs[7] = 0
+            153 ->inputs[8] = 0
+            147 ->inputs[9] = 0
+            KeyEvent.KEYCODE_Z ->inputs[0] = 0
+            KeyEvent.KEYCODE_Q ->inputs[1] = 0
+            KeyEvent.KEYCODE_S ->inputs[2] = 0
+            KeyEvent.KEYCODE_E ->inputs[3] = 0
+            KeyEvent.KEYCODE_C ->inputs[4] = 0
+            else -> {
+            }
+        }
+        return true
+    }
+    
+    
     fun startEvaluation() {
         startActivity(i)
     }

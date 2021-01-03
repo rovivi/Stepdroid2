@@ -184,7 +184,7 @@ class SongsList : Fragment() {
         super.onDestroyView()
     }
 
-    private fun releaseMediaPlayer() {
+    fun releaseMediaPlayer() {
         try {
             while (mediaPlayer != null) {
                 //preview?.suspend()

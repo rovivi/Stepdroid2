@@ -15,5 +15,6 @@
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="title_activity_loading_song">LoadingSongActivity</string>
     <string name="todo">TODO</string>
+    <string name="singleArrowsPos">singlearrowspos</string>
 
 </resources>
