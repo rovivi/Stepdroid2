@@ -37,14 +37,11 @@ class DragStepActivity : AppCompatActivity() {
         val sharedPref = this.getSharedPreferences(
             getString(R.string.singleArrowsPos), Context.MODE_PRIVATE
         )
-
         super.onCreate(savedInstanceState)
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN)
         setContentView(R.layout.activity_drag_step)
-
-
 
         sizeBar.max = 200
         sizeBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -75,8 +72,8 @@ class DragStepActivity : AppCompatActivity() {
                 apply()
             }
             Toast.makeText(this,"Saved success!",Toast.LENGTH_SHORT).show()
-
         }
+
         drawArrows(false)
         val saveGson = sharedPref.getString(getString(R.string.singleArrowsPos), "")
         if (saveGson!=""){
@@ -130,9 +127,6 @@ class DragStepActivity : AppCompatActivity() {
             s5lp.leftMargin =2*size
             arrows[4].layoutParams = s5lp
             sizeBar.progress = pxToDp(size)
-
-            sizeBar.progress = pxToDp(size)
-
         }
 
     }
