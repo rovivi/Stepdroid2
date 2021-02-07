@@ -1,7 +1,6 @@
 package com.kyagamy.step
 
 import android.content.DialogInterface
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.Window
@@ -9,13 +8,10 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.kyagamy.step.fragments.CategoryFragament
 import com.kyagamy.step.fragments.songs.SongsList
-import kotlinx.android.synthetic.main.activity_playerbga.*
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,7 +25,6 @@ class MainActivity : AppCompatActivity() {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE)
         window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN)
         setContentView(R.layout.activity_main)
-
         showFragmentCategory()
     }
 
@@ -46,10 +41,7 @@ class MainActivity : AppCompatActivity() {
                 .setNegativeButton("No", null)
                 .show()
         }
-
     }
-
-
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
@@ -70,8 +62,6 @@ class MainActivity : AppCompatActivity() {
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_FULLSCREEN)
     }
-
-
 
     private fun showFragmentCategory (){
         val transaction = manager.beginTransaction()
@@ -96,5 +86,4 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "value:${category}",Toast.LENGTH_SHORT).show()
         showFragmentTwo(category)
     }
-
 }

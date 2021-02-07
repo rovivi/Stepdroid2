@@ -44,5 +44,10 @@
         <item name="android:shadowRadius">2</item>
     </style>
 
+    <style name="HiddenTitleTheme" parent="AppTheme">
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+
 
 </resources>

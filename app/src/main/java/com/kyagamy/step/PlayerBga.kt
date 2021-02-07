@@ -11,12 +11,17 @@ import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.util.DisplayMetrics
+import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.widget.ImageView
+import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import com.google.gson.Gson
 import com.kyagamy.step.common.Common.Companion.convertStreamToString
+import com.kyagamy.step.common.step.CommonGame.ArrowsPositionPlace
 import com.kyagamy.step.common.step.CommonGame.ParamsSong
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.doBrightness
@@ -26,6 +31,7 @@ import com.kyagamy.step.game.newplayer.Evaluator
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.kyagamy.step.game.newplayer.StepsDrawer
 import com.squareup.picasso.Picasso
+import kotlinx.android.synthetic.main.activity_drag_step.*
 import kotlinx.android.synthetic.main.activity_playerbga.*
 import java.io.File
 import java.io.FileInputStream
@@ -37,9 +43,16 @@ class PlayerBga : Activity() {
     var i: Intent? = null
     var audio: AudioManager? = null
     var gamePlayError = false
+    private var stepInfo: List<Int> = listOf(
+        R.drawable.selector_down_left,
+        R.drawable.selector_up_left,
+        R.drawable.selector_center,
+        R.drawable.selector_up_right,
+        R.drawable.selector_down_right
+    )
+    private var arrows: ArrayList<ImageView> = ArrayList()
 
     var nchar = 0
-    var indexMsj = 0
     var inputs = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     private val displayMetrics = DisplayMetrics()
 
@@ -52,7 +65,9 @@ class PlayerBga : Activity() {
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
         hilo = this.gamePlay?.mainTread
         i = Intent(this, EvaluationActivity::class.java)
-
+        val sharedPref = this.getSharedPreferences(
+            getString(R.string.singleArrowsPos), Context.MODE_PRIVATE
+        )
 
         val pathImg = intent.extras!!.getString("pathDisc", null)
         if (bg_pad != null)
@@ -63,33 +78,19 @@ class PlayerBga : Activity() {
         }
 
         try {
-            val inputsButton = arrayListOf(
-                image_0,
-                image_1,
-                image_2,
-                image_3,
-                image_4
-            )
+//            val inputsButton = arrayListOf(
+//                image_0,
+//                image_1,
+//                image_2,
+//                image_3,
+//                image_4
+//            )
             val size_pad = displayMetrics.widthPixels / 6
-            inputsButton.forEachIndexed { index, input ->
-                run {
-                    input.setOnTouchListener { _, event ->
-                        when (event.action) {
-                            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                                if (inputs[index] != 2.toByte()) {
-                                    inputs[index] = 1
-                                    StepsDrawer.noteSkins[0].tapsEffect[index].play()
-                                }
-                            }
-                            MotionEvent.ACTION_UP -> {
-                                inputs[index] = 0
-                            }
-                        }
-
-                        false
-                    }
-                }
-            }
+//            inputsButton.forEachIndexed { index, input ->
+//                run {
+//                    input
+//                }
+//            }
             //guideline xd
             guidelinecenter.setGuidelinePercent(0.5f)
             guidelineVer1.setGuidelinePercent(0.3333333333334f)
@@ -97,10 +98,41 @@ class PlayerBga : Activity() {
             guidelinehor2.setGuidelinePercent(0.6666666666667f)
             guidelinehor3.setGuidelinePercent(0.8333333333334f)
 
+
         } catch (ex: java.lang.Exception) {
 
         }
+
+
+        drawArrows(false)
+        val gson = Gson()
+        val saveGson = sharedPref.getString(getString(R.string.singleArrowsPos), "")
+        if (saveGson != "") {
+            val obj: ArrowsPositionPlace = gson.fromJson(saveGson, ArrowsPositionPlace::class.java)
+//            sizeBar.progress= obj.size-50
+            var count = 0
+            val pixel = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                obj.size + 0f, resources.displayMetrics
+            ).toInt()
+
+            obj.positions.forEach { pos ->
+                val lp = arrows.get(count).layoutParams as RelativeLayout.LayoutParams
+                lp.leftMargin = pos.x
+                lp.topMargin = pos.y
+                lp.rightMargin =arrows.get(count).width - lp.leftMargin
+                lp.bottomMargin = arrows.get(count).height - lp.topMargin
+                lp.width=pixel
+                lp.height=pixel
+                arrows.get(count).layoutParams = lp
+
+                count++
+            }
+        }
+
+
     }
+
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     override fun onStart() {
         super.onStart()
@@ -113,6 +145,7 @@ class PlayerBga : Activity() {
         //set height  to bga
         startGamePlay()
     }
+
     val resolution: Point
         get() {
             val displayMetrics = DisplayMetrics()
@@ -150,12 +183,12 @@ class PlayerBga : Activity() {
                     inputs
                 )
 
-                Evaluator.songName=step.songMetada["TITLE"].toString()
+                Evaluator.songName = step.songMetada["TITLE"].toString()
                 val bgPad =
                     BitmapFactory.decodeFile(step.path + File.separator + step.songMetada["BACKGROUND"])
                 if (bg_pad != null && bgPad != null) {
-                    Evaluator.imagePath=step.path + File.separator + step.songMetada["BACKGROUND"]
-                    Evaluator.bitmap = TransformBitmap.doBrightness(bgPad,-60)
+                    Evaluator.imagePath = step.path + File.separator + step.songMetada["BACKGROUND"]
+                    Evaluator.bitmap = TransformBitmap.doBrightness(bgPad, -60)
                     bg_pad.setImageBitmap(TransformBitmap.myblur(bgPad, this)?.let {
                         doBrightness(
                             it, -125
@@ -187,33 +220,33 @@ class PlayerBga : Activity() {
             super.onBackPressed()
         }
         when (keyCode) {
-            KeyEvent.KEYCODE_BUTTON_1 -> inputs[7] =1
-            KeyEvent.KEYCODE_BUTTON_2 ->inputs[9] = 1
-            KeyEvent.KEYCODE_BUTTON_3 ->inputs[6] = 1
-            KeyEvent.KEYCODE_BUTTON_4 ->inputs[8] = 1
-            KeyEvent.KEYCODE_BUTTON_5 ->inputs[0] = 1
-            KeyEvent.KEYCODE_BUTTON_6 ->inputs[2] = 1
-            KeyEvent.KEYCODE_BUTTON_7 ->inputs[3] = 1
-            KeyEvent.KEYCODE_BUTTON_8 ->inputs[1] = 1
-            KeyEvent.KEYCODE_BUTTON_9 ->inputs[4] = 1
-            KeyEvent.KEYCODE_BUTTON_10 ->inputs[5] = 1
-            145, 288 ->inputs[5] = 1
-            157, 293 ->inputs[6] = 1
-            149, 295 ->inputs[7] = 1
-            153 ->inputs[8] = 1
-            147 ->inputs[9] = 1
-            KeyEvent.KEYCODE_Z, 290 ->inputs[0] = 1
-            KeyEvent.KEYCODE_Q, 296 ->inputs[1] = 1
-            KeyEvent.KEYCODE_S, 292 ->inputs[2] = 1
-            KeyEvent.KEYCODE_E, KeyEvent.KEYCODE_DPAD_DOWN_LEFT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT ->inputs[
-                3
+            KeyEvent.KEYCODE_BUTTON_1 -> inputs[7] = 1
+            KeyEvent.KEYCODE_BUTTON_2 -> inputs[9] = 1
+            KeyEvent.KEYCODE_BUTTON_3 -> inputs[6] = 1
+            KeyEvent.KEYCODE_BUTTON_4 -> inputs[8] = 1
+            KeyEvent.KEYCODE_BUTTON_5 -> inputs[0] = 1
+            KeyEvent.KEYCODE_BUTTON_6 -> inputs[2] = 1
+            KeyEvent.KEYCODE_BUTTON_7 -> inputs[3] = 1
+            KeyEvent.KEYCODE_BUTTON_8 -> inputs[1] = 1
+            KeyEvent.KEYCODE_BUTTON_9 -> inputs[4] = 1
+            KeyEvent.KEYCODE_BUTTON_10 -> inputs[5] = 1
+            145, 288 -> inputs[5] = 1
+            157, 293 -> inputs[6] = 1
+            149, 295 -> inputs[7] = 1
+            153 -> inputs[8] = 1
+            147 -> inputs[9] = 1
+            KeyEvent.KEYCODE_Z, 290 -> inputs[0] = 1
+            KeyEvent.KEYCODE_Q, 296 -> inputs[1] = 1
+            KeyEvent.KEYCODE_S, 292 -> inputs[2] = 1
+            KeyEvent.KEYCODE_E, KeyEvent.KEYCODE_DPAD_DOWN_LEFT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT -> inputs[
+                    3
             ] = 1
             KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_DPAD_DOWN -> {
-               inputs[4] = 1
+                inputs[4] = 1
 
-               // startEvaluation()
+                // startEvaluation()
             }
-            KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN ->startEvaluation()
+            KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN -> startEvaluation()
             KeyEvent.KEYCODE_F8 -> ParamsSong.autoplay = !ParamsSong.autoplay
             KeyEvent.KEYCODE_VOLUME_UP -> {
                 audio!!.adjustStreamVolume(
@@ -236,37 +269,71 @@ class PlayerBga : Activity() {
     }
 
 
+    private fun drawArrows(isDouble: Boolean) {
+        val pixel = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            50f, resources.displayMetrics
+        ).toInt()
+        stepInfo.forEachIndexed { index, x ->
+            var iv = ImageView(this)
+            iv.setImageResource(x)
+            iv.setOnTouchListener { _, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                        if (inputs[index] != 2.toByte()) {
+                            inputs[index] = 1
+                            StepsDrawer.noteSkins[0].tapsEffect[index].play()
+                        }
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        inputs[index] = 0
+                    }
+                }
+
+                false
+            }
+            arrows.add(iv)
+            rootPad.addView(iv)
+            val lp = iv.layoutParams as RelativeLayout.LayoutParams
+            lp.width = pixel
+            lp.height = pixel
+            iv.layoutParams = lp
+        }
+        if (isDouble) drawArrows(false)
+    }
+
+
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
 
         // Toast.makeText(getApplicationContext(),""+keyCode,Toast.LENGTH_LONG).show();
         when (keyCode) {
-            KeyEvent.KEYCODE_BUTTON_1 ->inputs[7] = 0
-            KeyEvent.KEYCODE_BUTTON_2 ->inputs[9] = 0
-            KeyEvent.KEYCODE_BUTTON_3 ->inputs[6] = 0
-            KeyEvent.KEYCODE_BUTTON_4 ->inputs[8] = 0
-            KeyEvent.KEYCODE_BUTTON_5 ->inputs[0] = 0
-            KeyEvent.KEYCODE_BUTTON_6 ->inputs[2] = 0
-            KeyEvent.KEYCODE_BUTTON_7 ->inputs[3] = 0
-            KeyEvent.KEYCODE_BUTTON_8 ->inputs[1] = 0
-            KeyEvent.KEYCODE_BUTTON_9 ->inputs[4] = 0
-            KeyEvent.KEYCODE_BUTTON_10 ->inputs[5] = 0
-            145 ->inputs[5] = 0
-            157 ->inputs[6] = 0
-            149 ->inputs[7] = 0
-            153 ->inputs[8] = 0
-            147 ->inputs[9] = 0
-            KeyEvent.KEYCODE_Z ->inputs[0] = 0
-            KeyEvent.KEYCODE_Q ->inputs[1] = 0
-            KeyEvent.KEYCODE_S ->inputs[2] = 0
-            KeyEvent.KEYCODE_E ->inputs[3] = 0
-            KeyEvent.KEYCODE_C ->inputs[4] = 0
+            KeyEvent.KEYCODE_BUTTON_1 -> inputs[7] = 0
+            KeyEvent.KEYCODE_BUTTON_2 -> inputs[9] = 0
+            KeyEvent.KEYCODE_BUTTON_3 -> inputs[6] = 0
+            KeyEvent.KEYCODE_BUTTON_4 -> inputs[8] = 0
+            KeyEvent.KEYCODE_BUTTON_5 -> inputs[0] = 0
+            KeyEvent.KEYCODE_BUTTON_6 -> inputs[2] = 0
+            KeyEvent.KEYCODE_BUTTON_7 -> inputs[3] = 0
+            KeyEvent.KEYCODE_BUTTON_8 -> inputs[1] = 0
+            KeyEvent.KEYCODE_BUTTON_9 -> inputs[4] = 0
+            KeyEvent.KEYCODE_BUTTON_10 -> inputs[5] = 0
+            145 -> inputs[5] = 0
+            157 -> inputs[6] = 0
+            149 -> inputs[7] = 0
+            153 -> inputs[8] = 0
+            147 -> inputs[9] = 0
+            KeyEvent.KEYCODE_Z -> inputs[0] = 0
+            KeyEvent.KEYCODE_Q -> inputs[1] = 0
+            KeyEvent.KEYCODE_S -> inputs[2] = 0
+            KeyEvent.KEYCODE_E -> inputs[3] = 0
+            KeyEvent.KEYCODE_C -> inputs[4] = 0
             else -> {
             }
         }
         return true
     }
-    
-    
+
+
     fun startEvaluation() {
         startActivity(i)
     }

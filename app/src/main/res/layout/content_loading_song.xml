@@ -25,7 +25,7 @@
         android:id="@+id/textViewSong"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Song"
+        android:text="Song Name"
         android:textColor="@color/cardview_light_background"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -33,6 +33,6 @@
         app:layout_constraintHorizontal_bias="0.502"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_notUse"
-        app:layout_constraintVertical_bias="0.166" />
+        app:layout_constraintVertical_bias="0.18" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

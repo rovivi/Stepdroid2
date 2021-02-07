@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
+import android.view.Window
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.RelativeLayout
@@ -33,15 +34,26 @@ class DragStepActivity : AppCompatActivity() {
     )
     private var arrows: ArrayList<ImageView> = ArrayList()
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         val sharedPref = this.getSharedPreferences(
             getString(R.string.singleArrowsPos), Context.MODE_PRIVATE
         )
         super.onCreate(savedInstanceState)
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN)
         setContentView(R.layout.activity_drag_step)
+
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                // Set the content to appear under the system bars so that the
+                // content doesn't resize when the system bars hide and show.
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                // Hide the nav bar and status bar
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN)
+
 
         sizeBar.max = 200
         sizeBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -56,7 +68,7 @@ class DragStepActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar) {
             }
         })
-        val gson = Gson();
+        val gson = Gson()
         saveArrows.setOnClickListener {
             val save = ArrowsPositionPlace()
             save.size = sizeBar.progress + 50
@@ -82,10 +94,10 @@ class DragStepActivity : AppCompatActivity() {
             var count = 0
             obj.positions.forEach { pos->
                 val lp = arrows.get(count).layoutParams as RelativeLayout.LayoutParams
-                lp.leftMargin = pos.x - _xDelta
-                lp.topMargin = pos.y - _yDelta
-                lp.rightMargin =arrows.get(count).width - lp.leftMargin - windowWidth
-                lp.bottomMargin = arrows.get(count).height - lp.topMargin - windowHeight
+                lp.leftMargin = pos.x
+                lp.topMargin = pos.y
+                lp.rightMargin =arrows.get(count).width - lp.leftMargin
+                lp.bottomMargin = arrows.get(count).height - lp.topMargin
                 arrows.get(count).layoutParams = lp
                 sizeText.text = "${lp.leftMargin} ,${lp.topMargin}"
                 count++
@@ -94,10 +106,12 @@ class DragStepActivity : AppCompatActivity() {
         else {
             val params= root.layoutParams
             val size =(0.999f*params.height/6).toInt()
+            val sizeX = params.width
+            val sizeY =  params.height
             //set 1
             val  s1lp =  arrows[0].layoutParams as RelativeLayout.LayoutParams
-            s1lp.topMargin =5*size
-            s1lp.rightMargin =2*size
+            s1lp.topMargin =sizeY-size
+            s1lp.rightMargin = sizeY-size
             arrows[0].layoutParams = s1lp
 
             //set 7
@@ -135,10 +149,7 @@ class DragStepActivity : AppCompatActivity() {
     }
 
     private fun drawArrows(isDouble: Boolean) {
-        val pixel = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            50f, resources.displayMetrics
-        ).toInt()
+
         stepInfo.forEach { x ->
             var iv = ImageView(this)
             iv.setImageResource(x)
@@ -146,8 +157,6 @@ class DragStepActivity : AppCompatActivity() {
             arrows.add(iv)
             root.addView(iv)
             val lp = iv.layoutParams as RelativeLayout.LayoutParams
-            lp.width = pixel
-            lp.height = pixel
             iv.layoutParams = lp
         }
         if (isDouble) drawArrows(false)
@@ -165,7 +174,6 @@ class DragStepActivity : AppCompatActivity() {
             arrow.layoutParams = lp
         }
     }
-
 
     @SuppressLint("ClickableViewAccessibility")
     val move = View.OnTouchListener { v, event ->
@@ -185,7 +193,6 @@ class DragStepActivity : AppCompatActivity() {
                 lp.bottomMargin = v.height - lp.topMargin - windowHeight
                 v.layoutParams = lp
                 sizeText.text = "${lp.leftMargin} ,${lp.topMargin}"
-
             }
         }
         true
