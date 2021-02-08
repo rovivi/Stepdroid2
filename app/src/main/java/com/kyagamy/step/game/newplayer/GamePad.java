@@ -8,12 +8,9 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
-
 import androidx.annotation.RequiresApi;
-
 import com.kyagamy.step.R;
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap;
-
 
 public class GamePad {
 
@@ -21,17 +18,11 @@ public class GamePad {
     private Bitmap panel, panel2;
     private TransformBitmap TB;
     private Boolean[] waspressed;
-    private Point[] arrowsPosition;
     private Rect[] arrowsPosition2;
     private Point posPanel = new Point(0, 0);
     public byte pad[];
-    private boolean change = true;
     private Bitmap bg = null;
 
-
-    public void setBg(Bitmap bg) {
-        this.bg = bg;
-    }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public GamePad(Context context, String type, byte[] pad,int x,int y) {
@@ -43,11 +34,8 @@ public class GamePad {
         float starty1 = 0.76f;
         float starty2 = 0.51f;
         float starty3 = 0.62f;
-
-
+        Point[] arrowsPosition;
         switch (type) {
-
-
             case "pump-single":
 
                 panel = BitmapFactory.decodeResource(context.getResources(), R.drawable.touch_controls, myOpt2);
@@ -210,12 +198,8 @@ public class GamePad {
                     c.drawBitmap(arrowOFF[w], null, arrowsPosition2[w], new Paint());
                 }
                 break;
-
             default:
-
         }
-
-
     }
 
     public void draw(Canvas canvas) {
@@ -249,13 +233,8 @@ public class GamePad {
             pad[j] = 0;
         }
         // change= true;
-
     }
-
-
     public void checkInputs(int[][] positions,boolean isDownMove) {
-
-
         for (int j = 0; j < arrows.length; j++) {
             boolean wasPressed = false;
             for (int[] k : positions) {
@@ -268,7 +247,6 @@ public class GamePad {
                     }
                     wasPressed = true;
                     break;
-
                 }
             }
             if (!wasPressed) {
@@ -276,7 +254,6 @@ public class GamePad {
             }
         }
         //  change= true;
-
     }
 
 

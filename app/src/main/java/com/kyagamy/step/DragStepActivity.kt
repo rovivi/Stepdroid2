@@ -41,7 +41,10 @@ class DragStepActivity : AppCompatActivity() {
         )
         super.onCreate(savedInstanceState)
         this.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
+        )
         setContentView(R.layout.activity_drag_step)
 
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
@@ -63,8 +66,10 @@ class DragStepActivity : AppCompatActivity() {
                 sizeText.text = "Progress : $value dp"
                 resizeArrows(value)
             }
+
             override fun onStartTrackingTouch(seekBar: SeekBar) {
             }
+
             override fun onStopTrackingTouch(seekBar: SeekBar) {
             }
         })
@@ -74,8 +79,7 @@ class DragStepActivity : AppCompatActivity() {
             save.size = sizeBar.progress + 50
             var positions = ArrayList<Point>()
             arrows.forEach { x ->
-                val lp = x.layoutParams as RelativeLayout.LayoutParams
-                positions.add(Point(lp.leftMargin, lp.topMargin))
+                positions.add(Point(x.x.toInt(), x.y.toInt()))
             }
             save.positions = positions.toList().toTypedArray()
 
@@ -83,70 +87,51 @@ class DragStepActivity : AppCompatActivity() {
                 putString(getString(R.string.singleArrowsPos), gson.toJson(save))
                 apply()
             }
-            Toast.makeText(this,"Saved success!",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Saved success!", Toast.LENGTH_SHORT).show()
         }
 
         drawArrows(false)
         val saveGson = sharedPref.getString(getString(R.string.singleArrowsPos), "")
-        if (saveGson!=""){
+        if (saveGson != "") {
             val obj: ArrowsPositionPlace = gson.fromJson(saveGson, ArrowsPositionPlace::class.java)
-            sizeBar.progress= obj.size-50
-            var count = 0
-            obj.positions.forEach { pos->
-                val lp = arrows.get(count).layoutParams as RelativeLayout.LayoutParams
-                lp.leftMargin = pos.x
-                lp.topMargin = pos.y
-                lp.rightMargin =arrows.get(count).width - lp.leftMargin
-                lp.bottomMargin = arrows.get(count).height - lp.topMargin
-                arrows.get(count).layoutParams = lp
-                sizeText.text = "${lp.leftMargin} ,${lp.topMargin}"
-                count++
-             }
-        }
-        else {
-            val params= root.layoutParams
-            val size =(0.999f*params.height/6).toInt()
+            sizeBar.progress = obj.size - 50
+            obj.positions.forEachIndexed { index, pos ->
+                arrows[index].x = pos.x.toFloat()
+                arrows[index].y = pos.y.toFloat()
+            }
+        } else {
+            val params = root.layoutParams
             val sizeX = params.width
-            val sizeY =  params.height
+            val size = (sizeX / 3).toInt()
+            val sizeY = params.height
             //set 1
-            val  s1lp =  arrows[0].layoutParams as RelativeLayout.LayoutParams
-            s1lp.topMargin =sizeY-size
-            s1lp.rightMargin = sizeY-size
-            arrows[0].layoutParams = s1lp
-
+            arrows[0].y = (sizeY - size).toFloat()
+            arrows[0].x = 0f
             //set 7
-            val  s2lp =  arrows[1].layoutParams as RelativeLayout.LayoutParams
-            s2lp.bottomMargin =2*size
-            s2lp.topMargin =3*size
-            s2lp.rightMargin =2*size
-            arrows[1].layoutParams = s2lp
+            arrows[1].y = (sizeY/2).toFloat()
+            arrows[1].x = 0f
 
             //set 5
-            val  s3lp =  arrows[2].layoutParams as RelativeLayout.LayoutParams
-            s3lp.bottomMargin =1*size
-            s3lp.topMargin =4*size
-            s3lp.leftMargin =1*size
-            s3lp.rightMargin =1*size
-            arrows[2].layoutParams = s3lp
-            //set 9
-            val  s4lp =  arrows[3].layoutParams as RelativeLayout.LayoutParams
-            s4lp.bottomMargin =2*size
-            s4lp.topMargin =3*size
-            s4lp.leftMargin =2*size
-            arrows[3].layoutParams = s4lp
+            val sizeRsty = (sizeY/2-size)/2
+            arrows[2].y = ((sizeY/2-size)/2+sizeY/2).toFloat()
+            arrows[2].x = ((sizeX-size)/2).toFloat()
 
+            //set 9
+            arrows[3].y = (sizeY/2).toFloat()
+            arrows[3].x = ((sizeX-size).toFloat())
             //set 3
-            val  s5lp =  arrows[4].layoutParams as RelativeLayout.LayoutParams
-            s5lp.topMargin =5*size
-            s5lp.leftMargin =2*size
-            arrows[4].layoutParams = s5lp
-            sizeBar.progress = pxToDp(size)
+            arrows[4].y =(sizeY - size).toFloat()
+            arrows[4].x = ((sizeX-size).toFloat())
+            //resizeArrows(pxToDp(size))
+            sizeBar.progress =pxToDp(size)-50
         }
 
     }
+
     fun pxToDp(px: Int): Int {
         return (px / Resources.getSystem().displayMetrics.density).toInt()
     }
+
 
     private fun drawArrows(isDouble: Boolean) {
 
@@ -156,8 +141,7 @@ class DragStepActivity : AppCompatActivity() {
             iv.setOnTouchListener(move)
             arrows.add(iv)
             root.addView(iv)
-            val lp = iv.layoutParams as RelativeLayout.LayoutParams
-            iv.layoutParams = lp
+
         }
         if (isDouble) drawArrows(false)
     }
@@ -167,6 +151,7 @@ class DragStepActivity : AppCompatActivity() {
             TypedValue.COMPLEX_UNIT_DIP,
             value + 0f, resources.displayMetrics
         ).toInt()
+
         arrows.forEach { arrow ->
             val lp = arrow.layoutParams as RelativeLayout.LayoutParams
             lp.width = pixel
@@ -186,13 +171,15 @@ class DragStepActivity : AppCompatActivity() {
                 _yDelta = Y - v.top
             }
             MotionEvent.ACTION_MOVE -> {
-                val lp = v.layoutParams as RelativeLayout.LayoutParams
-                lp.leftMargin = X - _xDelta
-                lp.topMargin = Y - _yDelta
-                lp.rightMargin = v.width - lp.leftMargin - windowWidth
-                lp.bottomMargin = v.height - lp.topMargin - windowHeight
-                v.layoutParams = lp
-                sizeText.text = "${lp.leftMargin} ,${lp.topMargin}"
+                v.x = X - _xDelta + 0f
+                v.y = Y - _yDelta + 0f
+//                val lp = v.layoutParams as RelativeLayout.LayoutParams
+//                lp.leftMargin = X - _xDelta
+//                lp.topMargin = Y - _yDelta
+//                lp.rightMargin = v.width - lp.leftMargin - windowWidth
+//                lp.bottomMargin = v.height - lp.topMargin - windowHeight
+//                v.layoutParams = lp
+                sizeText.text = "${X - _xDelta + 0f} ,${Y - _yDelta + 0f}"
             }
         }
         true

@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="#000000"
     android:theme="@style/AppTheme.NoActionBar"
+    android:id="@+id/rootPlayer"
     tools:context=".PlayerBga">
 
 
@@ -47,61 +48,6 @@
         app:srcCompat="@drawable/no_banner" />
 
 
-
-<!--    <Button-->
-<!--        android:id="@+id/image_0"-->
-<!--        android:layout_width="0dp"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:background="@drawable/selector_down_left"-->
-<!--        android:contentDescription="@string/app_name"-->
-<!--        android:scaleType="fitXY"-->
-<!--        app:layout_constraintBottom_toBottomOf="parent"-->
-<!--        app:layout_constraintEnd_toStartOf="@+id/guidelineVer1"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="@+id/guidelinehor3" />-->
-
-<!--    <Button-->
-<!--        android:id="@+id/image_1"-->
-<!--        android:layout_width="0dp"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:background="@drawable/selector_up_left"-->
-<!--        android:backgroundTintMode="add"-->
-<!--        app:layout_constraintBottom_toTopOf="@+id/guidelinehor2"-->
-<!--        app:layout_constraintEnd_toStartOf="@+id/guidelineVer1"-->
-<!--        app:layout_constraintHorizontal_bias="0.0"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="@+id/guidelinecenter" />-->
-
-<!--    <Button-->
-<!--        android:id="@+id/image_2"-->
-<!--        android:layout_width="0dp"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:background="@drawable/selector_center"-->
-<!--        app:layout_constraintBottom_toTopOf="@+id/guidelinehor3"-->
-<!--        app:layout_constraintEnd_toStartOf="@+id/guidelineVer3"-->
-<!--        app:layout_constraintStart_toStartOf="@+id/guidelineVer1"-->
-<!--        app:layout_constraintTop_toTopOf="@+id/guidelinehor2" />-->
-
-<!--    <Button-->
-<!--        android:id="@+id/image_3"-->
-<!--        android:layout_width="0dp"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:background="@drawable/selector_up_right"-->
-<!--        app:layout_constraintBottom_toTopOf="@+id/guidelinehor2"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintHorizontal_bias="1.0"-->
-<!--        app:layout_constraintStart_toStartOf="@+id/guidelineVer3"-->
-<!--        app:layout_constraintTop_toTopOf="@+id/guidelinecenter" />-->
-
-<!--    <Button-->
-<!--        android:id="@+id/image_4"-->
-<!--        android:layout_width="0dp"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:background="@drawable/selector_down_right"-->
-<!--        app:layout_constraintBottom_toBottomOf="parent"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintStart_toStartOf="@+id/guidelineVer3"-->
-<!--        app:layout_constraintTop_toTopOf="@+id/guidelinehor3" />-->
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelinecenter"

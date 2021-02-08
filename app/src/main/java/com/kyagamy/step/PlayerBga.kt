@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Point
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
@@ -15,6 +17,7 @@ import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -25,17 +28,20 @@ import com.kyagamy.step.common.step.CommonGame.ArrowsPositionPlace
 import com.kyagamy.step.common.step.CommonGame.ParamsSong
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.doBrightness
+import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_HOLD_PRESSED
+import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_PRESSED
+import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_UNPRESSED
 import com.kyagamy.step.common.step.Parsers.FileSSC
 import com.kyagamy.step.game.newplayer.EvaluationActivity
 import com.kyagamy.step.game.newplayer.Evaluator
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.kyagamy.step.game.newplayer.StepsDrawer
 import com.squareup.picasso.Picasso
-import kotlinx.android.synthetic.main.activity_drag_step.*
 import kotlinx.android.synthetic.main.activity_playerbga.*
 import java.io.File
 import java.io.FileInputStream
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class PlayerBga : Activity() {
@@ -43,6 +49,8 @@ class PlayerBga : Activity() {
     var i: Intent? = null
     var audio: AudioManager? = null
     var gamePlayError = false
+    private val arrowsPosition2: Array<Rect> = emptyArray()
+
     private var stepInfo: List<Int> = listOf(
         R.drawable.selector_down_left,
         R.drawable.selector_up_left,
@@ -50,7 +58,7 @@ class PlayerBga : Activity() {
         R.drawable.selector_up_right,
         R.drawable.selector_down_right
     )
-    private var arrows: ArrayList<ImageView> = ArrayList()
+    private var arrows: ArrayList<Button> = ArrayList()
 
     var nchar = 0
     var inputs = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -61,6 +69,7 @@ class PlayerBga : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_playerbga)
+
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
         hilo = this.gamePlay?.mainTread
@@ -77,31 +86,6 @@ class PlayerBga : Activity() {
             mp.setVolume(0f, 0f)
         }
 
-        try {
-//            val inputsButton = arrayListOf(
-//                image_0,
-//                image_1,
-//                image_2,
-//                image_3,
-//                image_4
-//            )
-            val size_pad = displayMetrics.widthPixels / 6
-//            inputsButton.forEachIndexed { index, input ->
-//                run {
-//                    input
-//                }
-//            }
-            //guideline xd
-            guidelinecenter.setGuidelinePercent(0.5f)
-            guidelineVer1.setGuidelinePercent(0.3333333333334f)
-            guidelineVer3.setGuidelinePercent(0.6666666666667f)
-            guidelinehor2.setGuidelinePercent(0.6666666666667f)
-            guidelinehor3.setGuidelinePercent(0.8333333333334f)
-
-
-        } catch (ex: java.lang.Exception) {
-
-        }
 
 
         drawArrows(false)
@@ -115,15 +99,14 @@ class PlayerBga : Activity() {
                 TypedValue.COMPLEX_UNIT_DIP,
                 obj.size + 0f, resources.displayMetrics
             ).toInt()
-
             obj.positions.forEach { pos ->
                 val lp = arrows.get(count).layoutParams as RelativeLayout.LayoutParams
                 lp.leftMargin = pos.x
                 lp.topMargin = pos.y
-                lp.rightMargin =arrows.get(count).width - lp.leftMargin
+                lp.rightMargin = arrows.get(count).width - lp.leftMargin
                 lp.bottomMargin = arrows.get(count).height - lp.topMargin
-                lp.width=pixel
-                lp.height=pixel
+                lp.width = pixel
+                lp.height = pixel
                 arrows.get(count).layoutParams = lp
 
                 count++
@@ -275,8 +258,10 @@ class PlayerBga : Activity() {
             50f, resources.displayMetrics
         ).toInt()
         stepInfo.forEachIndexed { index, x ->
-            var iv = ImageView(this)
-            iv.setImageResource(x)
+            var iv = Button(this)
+            iv.x= 2f
+            iv.background= Drawable.createFromXml(resources,resources.getXml(x))
+            //iv.setImageResource(x)
             iv.setOnTouchListener { _, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
@@ -289,11 +274,11 @@ class PlayerBga : Activity() {
                         inputs[index] = 0
                     }
                 }
-
                 false
             }
+
             arrows.add(iv)
-            rootPad.addView(iv)
+           rootPad .addView(iv)
             val lp = iv.layoutParams as RelativeLayout.LayoutParams
             lp.width = pixel
             lp.height = pixel
@@ -302,39 +287,100 @@ class PlayerBga : Activity() {
         if (isDouble) drawArrows(false)
     }
 
-
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
 
-        // Toast.makeText(getApplicationContext(),""+keyCode,Toast.LENGTH_LONG).show();
         when (keyCode) {
             KeyEvent.KEYCODE_BUTTON_1 -> inputs[7] = 0
-            KeyEvent.KEYCODE_BUTTON_2 -> inputs[9] = 0
-            KeyEvent.KEYCODE_BUTTON_3 -> inputs[6] = 0
-            KeyEvent.KEYCODE_BUTTON_4 -> inputs[8] = 0
-            KeyEvent.KEYCODE_BUTTON_5 -> inputs[0] = 0
-            KeyEvent.KEYCODE_BUTTON_6 -> inputs[2] = 0
-            KeyEvent.KEYCODE_BUTTON_7 -> inputs[3] = 0
-            KeyEvent.KEYCODE_BUTTON_8 -> inputs[1] = 0
-            KeyEvent.KEYCODE_BUTTON_9 -> inputs[4] = 0
-            KeyEvent.KEYCODE_BUTTON_10 -> inputs[5] = 0
-            145 -> inputs[5] = 0
-            157 -> inputs[6] = 0
-            149 -> inputs[7] = 0
-            153 -> inputs[8] = 0
-            147 -> inputs[9] = 0
-            KeyEvent.KEYCODE_Z -> inputs[0] = 0
-            KeyEvent.KEYCODE_Q -> inputs[1] = 0
-            KeyEvent.KEYCODE_S -> inputs[2] = 0
-            KeyEvent.KEYCODE_E -> inputs[3] = 0
-            KeyEvent.KEYCODE_C -> inputs[4] = 0
             else -> {
             }
         }
         return true
     }
 
+    //Evaluation methods
+//Controles
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        try {
+            val maskedAction = event.actionMasked
+            val fingers = event.pointerCount
+            //this.fingersOnScreen = (byte) fingers;
+            val inputsTouch = Array(fingers) {
+                IntArray(2)
+            }
+            for (i in 0 until fingers) {
+                inputsTouch[i][0] = event.getX(i).toInt()
+                inputsTouch[i][1] = event.getY(i).toInt()
+                //                this.event += " " + i + ":(" + (int) event.getX(i) + "," + (int) event.getY(i) + ")";
+            }
+            when (maskedAction) {
+                MotionEvent.ACTION_POINTER_UP -> {
+                    val actionIndex = event.getPointerId(event.actionIndex)
+                    unPress(event.getX(actionIndex), event.getY(actionIndex))
+                }
+                MotionEvent.ACTION_DOWN -> {
+                    checkInputs(inputsTouch, true)
+                    //   this.event = "numero" + maskedAction;
+                    checkInputs(inputsTouch, false)
+                }
+                MotionEvent.ACTION_UP -> if (fingers == 1) clearPad()
+                else -> checkInputs(inputsTouch, false)
+            }
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+        return true
+    }
+
+
+    private fun clearPad() {
+        for (j in inputs.indices) {
+            inputs[j] = ARROW_UNPRESSED
+        }
+    }
+
+    private fun checkInputs(positions: Array<IntArray>, isDownMove: Boolean) {
+        for (j in arrows.indices) {
+            var wasPressed = false
+            for (k in positions) {
+                val x = k[0]
+                val y = k[1]
+                if (arrowsPosition2[j].contains(x, y)) {
+                    if (inputs[j] == ARROW_UNPRESSED || isDownMove && inputs[j] == ARROW_HOLD_PRESSED) { //by this way confirm if the curret pad is off
+                        inputs[j] = ARROW_PRESSED
+                        StepsDrawer.noteSkins[0].tapsEffect[j].play()
+                    }
+                    wasPressed = true
+                    break
+                }
+            }
+            if (!wasPressed) {
+                inputs[j] = ARROW_UNPRESSED
+            }
+        }
+        //  change= true;
+    }
+
+    private fun unPress(x: Float, y: Float) {
+        for (j in arrows.indices) { //checa cada felcha
+            if (arrowsPosition2[j].contains(x.toInt(), y.toInt())) inputs[j] = 0
+        }
+    }
 
     fun startEvaluation() {
         startActivity(i)
     }
+}
+
+
+/***
+ * This class help to find the position of the arrows in the screen
+ */
+class ArrowPositionHelper(initialPosition: Point, size: Int, imageView: ImageView) {
+    var rectPosition: Rect = Rect(
+        initialPosition.x,
+        initialPosition.y,
+        initialPosition.x + size,
+        initialPosition.y + size
+    )
 }

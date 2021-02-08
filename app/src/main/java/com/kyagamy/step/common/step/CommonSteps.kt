@@ -10,6 +10,11 @@ import kotlin.collections.ArrayList
 public class CommonSteps {
 
     companion object {
+
+        const val ARROW_UNPRESSED: Byte = 0
+        const val ARROW_PRESSED: Byte = 1
+        const val ARROW_HOLD_PRESSED: Byte = 2
+
         /**NOTE FIELDS*/
         const val NOTE_EMPTY: Short = 0
         const val NOTE_TAP: Short = 1
