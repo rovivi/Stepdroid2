@@ -47,8 +47,6 @@
         app:layout_constraintVertical_bias="0.45"
         app:srcCompat="@drawable/no_banner" />
 
-
-
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelinecenter"
         android:layout_width="wrap_content"
@@ -56,33 +54,6 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_begin="371dp" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guidelineVer1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_begin="132dp" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guidelineVer3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_begin="325dp" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guidelinehor3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_begin="600dp" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guidelinehor2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_begin="483dp" />
     <RelativeLayout
         android:id="@+id/rootPad"
         android:layout_width="409dp"

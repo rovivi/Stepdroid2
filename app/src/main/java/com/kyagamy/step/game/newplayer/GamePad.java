@@ -235,24 +235,24 @@ public class GamePad {
         // change= true;
     }
     public void checkInputs(int[][] positions,boolean isDownMove) {
-        for (int j = 0; j < arrows.length; j++) {
-            boolean wasPressed = false;
-            for (int[] k : positions) {
-                int x = k[0];
-                int y = k[1];
-                if (arrowsPosition2[j].contains(x, y)) {
-                    if (pad[j] == 0  || (isDownMove&& pad[j]==2)) { //by this way confirm if the curret pad is off
-                        pad[j] = 1;
-                        StepsDrawer.noteSkins[0].tapsEffect[j].play();
-                    }
-                    wasPressed = true;
-                    break;
-                }
-            }
-            if (!wasPressed) {
-                pad[j] = 0;
-            }
-        }
+//        for (int j = 0; j < arrows.length; j++) {
+//            boolean wasPressed = false;
+//            for (int[] k : positions) {
+//                int x = k[0];
+//                int y = k[1];
+//                if (arrowsPosition2[j].contains(x, y)) {
+//                    if (pad[j] == 0  || (isDownMove&& pad[j]==2)) { //by this way confirm if the curret pad is off
+//                        pad[j] = 1;
+//                        StepsDrawer.noteSkins[0].tapsEffect[j].play();
+//                    }
+//                    wasPressed = true;
+//                    break;
+//                }
+//            }
+//            if (!wasPressed) {
+//                pad[j] = 0;
+//            }
+//        }
         //  change= true;
     }
 
