@@ -1,29 +1,37 @@
 package com.kyagamy.step.game.newplayer;
+
 import android.media.AudioManager;
 import android.media.SoundPool;
 
 import com.kyagamy.step.common.Common;
 import com.kyagamy.step.common.step.CommonSteps;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
+
 import com.kyagamy.step.common.step.Game.GameRow;
+
 import game.Note;
 import game.StepObject;
 
+import static com.kyagamy.step.common.step.CommonSteps.ARROW_HOLD_PRESSED;
+import static com.kyagamy.step.common.step.CommonSteps.ARROW_PRESSED;
+import static com.kyagamy.step.common.step.CommonSteps.ARROW_UNPRESSED;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_BODY;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_END;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_PRESSED;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_START;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_PRESSED;
 import static com.kyagamy.step.common.step.CommonSteps.NOTE_TAP;
+
 public class GameState {
 
     ArrayList<GameRow> steps;
     protected Double currentSpeedMod = 1D;
     protected Double lastScroll = 1D;
 
-    public Double currentAudioSecond=0d;
+    public Double currentAudioSecond = 0d;
 
     public double currentBeat = 0d;
     public int currentTickCount = 0, currentElement = 0;
@@ -51,12 +59,23 @@ public class GameState {
 
     }
 
+
+    /**
+     * Validate Effects  call the method effects if found someone, its a method because its called by multiples sites
+     */
     void checkEffects() {
         if (steps.get(currentElement).getModifiers() != null)
             effects(Objects.requireNonNull(steps.get(currentElement).getModifiers()), steps.get(currentElement).getCurrentBeat());
     }
 
 
+    /**
+     * This method applies each effect to the SM files
+     * <p>
+     * param effects contains the effects type for the current beat
+     *
+     * @param effectBeat beat when the effect must be called (it needs to calculate dif in ms whit the current beat )
+     */
     void effects(HashMap<String, ArrayList<Double>> effects, double effectBeat) {
         if (effects.get("BPMS") != null) {
 
@@ -112,8 +131,8 @@ public class GameState {
         while (steps.get(currentElement).getCurrentBeat() <= currentBeat) {
             checkEffects();
             currentElement++;
-            if (Evaluator.Companion.containsNoteTap(steps.get(currentElement))||Evaluator.Companion.containNoteType(steps.get(currentElement), NOTE_LONG_START)){
-              //  combo.setComboUpdate(Combo.VALUE_PERFECT);
+            if (Evaluator.Companion.containsNoteTap(steps.get(currentElement)) || Evaluator.Companion.containNoteType(steps.get(currentElement), NOTE_LONG_START)) {
+                //  combo.setComboUpdate(Combo.VALUE_PERFECT);
             }
         }
         isRunning = !(currentElement >= steps.size());
@@ -162,7 +181,7 @@ public class GameState {
     }
 
     public void evaluate() {
-        if (false) {
+        if (false) {//Autoplay
 
 //            if (Evaluator.Companion.containNoteType(steps.get(currentElement), CommonSteps.NOTE_TAP)) {
 //               // combo.setComboUpdate(Combo.VALUE_PERFECT);
@@ -197,12 +216,13 @@ public class GameState {
 
             double addBeats = CommonSteps.Companion.secondToBeat(rBad / 1000d, BPM);
             posBack = 0;
-            while ((currentElement + posBack) > 0 &&
+            //Search outBeatRange gameRow
+            while (( currentElement + posBack) > 0 &&
                     steps.get(currentElement + posBack).getCurrentBeat() >= (currentBeat - addBeats)) {
                 posBack--;
             }
-
-            if ((currentElement + posBack ) > 0 &&
+            ////MISS
+            if ((currentElement + posBack) > 0 &&
                     !steps.get(currentElement + posBack - 1).getHasPressed() &&
                     Evaluator.Companion.containNoteToEvaluate(steps.get(currentElement + posBack - 1))
             ) {
@@ -213,43 +233,48 @@ public class GameState {
             int posEvaluate = -1;
             while ((currentElement + posBack) < steps.size() &&
                     steps.get(currentElement + posBack).getCurrentBeat() <= (currentBeat + addBeats)) {
-                if ((steps.get(currentElement + posBack)).getNotes() != null) {
-                    boolean checkLong = true;
+
+                if ((steps.get(currentElement + posBack)).getNotes() != null) {//Validate emptyRow
+                    //boolean checkLong = true;
                     //byte[] auxRow = (byte[]) steps.get(currentElement + posBack)[0];
-                    for (int w = 0; w < steps.get(currentElement + posBack).getNotes().size(); w++) {
-                        Note currentChar = steps.get(currentElement + posBack).getNotes().get(w);
-                        if (inputs[w] == 1 && currentChar.getType() == NOTE_TAP) {// tap1
-                            stepsDrawer.noteSkins[0].explotions[w].play();
-                            steps.get(currentElement + posBack).getNotes().get(w).setType(NOTE_PRESSED);
-                            inputs[w] = 2;
+
+
+                    for (int arrowIndex = 0; arrowIndex < steps.get(currentElement + posBack).getNotes().size(); arrowIndex++) {
+                        Note currentChar = steps.get(currentElement + posBack).getNotes().get(arrowIndex);
+                        if (inputs[arrowIndex] == ARROW_PRESSED && currentChar.getType() == NOTE_TAP) {//NORMALTAP
+                            StepsDrawer.noteSkins[0].explotions[arrowIndex].play();
+                            steps.get(currentElement + posBack).getNotes().get(arrowIndex).setType(NOTE_PRESSED);
+                            inputs[arrowIndex] = ARROW_HOLD_PRESSED;
                             posEvaluate = currentElement + posBack;
-                            continue;
+                            // continue;
                         }
-                        if (inputs[w] != 0
+                        if (inputs[arrowIndex] != ARROW_UNPRESSED
                                 && (currentChar.getType() == NOTE_LONG_START || currentChar.getType() == NOTE_LONG_BODY || currentChar.getType() == NOTE_LONG_END)
                                 && posBack < 0
 
                         ) {// tap1
-                            steps.get(currentElement + posBack).getNotes().get(w).setType(NOTE_LONG_PRESSED);
-//                            steps.get(currentElement + posBack).getNotes().get(w).setType(currentChar.getType() == NOTE_LONG_END ? NOTE_PRESSED : NOTE_LONG_PRESSED);
-                            combo.setComboUpdate(Combo.VALUE_PERFECT);
-                            stepsDrawer.noteSkins[0].explotionTails[w].play();
-                            inputs[w] = 2;
+                            steps.get(currentElement + posBack).getNotes().get(arrowIndex).setType(NOTE_LONG_PRESSED);
+//                            steps.get(currentElement + posBack).getNotes().get(arrowIndex).setType(currentChar.getType() == NOTE_LONG_END ? NOTE_PRESSED : NOTE_LONG_PRESSED);
+                            //   combo.setComboUpdate(Combo.VALUE_PERFECT);
+                            StepsDrawer.noteSkins[0].explotionTails[arrowIndex].play();
+                            inputs[arrowIndex] = ARROW_HOLD_PRESSED;
                         }
-                        if (inputs[w] == 0) {
-                            if (w < stepsDrawer.noteSkins[0].explotionTails.length) {
-                                stepsDrawer.noteSkins[0].explotionTails[w].stop();
+                        if (inputs[arrowIndex] == ARROW_UNPRESSED) {
+                            if (arrowIndex < StepsDrawer.noteSkins[0].explotionTails.length) {
+                                StepsDrawer.noteSkins[0].explotionTails[arrowIndex].stop();
                             }
                         }
                     }
                 }
                 if (posEvaluate != -1) {
                     boolean bol = !steps.get(posEvaluate).getHasPressed();
-                    if (Evaluator.Companion.containsNotePressed(steps.get(posEvaluate)) && bol) {//mejorar la condicion xdd
+                    if (!Evaluator.Companion.containNoteToEvaluate(steps.get(posEvaluate))  && bol) {//mejorar la condicion xdd
                         steps.get(posEvaluate).setHasPressed(true);
                         double auxRetro = Math.abs(CommonSteps.Companion.beatToSecond(currentBeat - steps.get(posEvaluate).getCurrentBeat(), BPM)) * 1000;
                         System.out.println(auxRetro + "NOTE" + posEvaluate);
-                        if (auxRetro < rGreat) {//perfetc
+                        if (!Evaluator.Companion.containsNotePressed(steps.get(posEvaluate))) {
+                            combo.setComboUpdate(Combo.VALUE_PERFECT);
+                        } else if (auxRetro < rGreat) {//perfetc
                             combo.setComboUpdate(Combo.VALUE_PERFECT);
                         } else if (auxRetro < rGood) {//great
                             combo.setComboUpdate(Combo.VALUE_GREAT);
@@ -281,7 +306,6 @@ public class GameState {
 
 
     }
-
 
     public void setCombo(Combo combo) {
         this.combo = combo;

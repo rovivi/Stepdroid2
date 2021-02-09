@@ -303,7 +303,6 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             bgPlayer.update(gameState.currentBeat);
             bar.update();
         }
-
         //se va actualizar una vez el audio
         double diff = ((gameState.currentSecond/100d)-gameState.offset-mpMusic.getCurrentPosition()/1000d);
         if (diff>=Math.abs(0.04d) && !mpUpdated &&gameState.isRunning && mpMusic.isPlaying()){
@@ -320,7 +319,6 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         playerBga.finish();
         //  ctx.startActivity(new Intent(ctx,EvaluationActivity.class));
     }
-
 
     public void drawStats(Canvas c) {
         paint.setTextSize(20);
@@ -340,7 +338,6 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         c.drawText("C BPM: " + gameState.BPM, 0, playerSizeY - 250, paint);
         c.drawText("C Speed: " + gameState.currentSpeedMod, 0, playerSizeY - 100, paint);
         c.drawText("Scroll: " + gameState.lastScroll, 0, playerSizeY , paint);
-
 
         StringBuilder st = new StringBuilder();
         for (int j = 0; j < 10; j++)
@@ -420,5 +417,4 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         }
         return true;
     }
-
 }

@@ -23,8 +23,6 @@ public class EvaluationThread extends Thread {
     public void run() {
         while (running) {
             try {
-
-
                     evaluate();
                 
                 sleep(1);

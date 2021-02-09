@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_BODY
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_END
+import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_START
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_MINE
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_PRESSED
@@ -101,6 +102,10 @@ class Evaluator {
 
         fun containsNotePressed(row: GameRow): Boolean {
             return containNoteType(row, NOTE_PRESSED)
+        }
+
+        fun containsNoteLongPressed(row: GameRow): Boolean {
+            return containNoteType(row, NOTE_LONG_PRESSED)
         }
 
 

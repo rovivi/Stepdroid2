@@ -18,8 +18,6 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import com.google.gson.Gson
@@ -192,7 +190,6 @@ class PlayerBga : Activity() {
             ] = 1
             KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_DPAD_DOWN -> {
                 inputs[4] = 1
-
                 // startEvaluation()
             }
             KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN -> startEvaluation()
@@ -224,14 +221,10 @@ class PlayerBga : Activity() {
         ).toInt()
         stepInfo.forEachIndexed { index, x ->
             val iv = Button(this)
-
             iv.background = Drawable.createFromXml(resources, resources.getXml(x))
-            // iv.setImageDrawable(x)
             arrows.add(iv)
-
             iv.x = data.positions[index].x.toFloat()
             iv.y = data.positions[index].y.toFloat()
-
             rootPad.addView(iv)
             var lp = iv.layoutParams
             lp.height = pixel
@@ -245,20 +238,6 @@ class PlayerBga : Activity() {
                     iv.y.toInt() + pixel
                 )
             )
-            //            iv.setOnTouchListener { _, event ->
-//                when (event.action) {
-//                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-//                        if (inputs[index] != 2.toByte()) {
-//                            inputs[index] = 1
-//                            StepsDrawer.noteSkins[0].tapsEffect[index].play()
-//                        }
-//                    }
-//                    MotionEvent.ACTION_UP -> {
-//                        inputs[index] = 0
-//                    }
-//                }
-//                false
-//            }
         }
     }
 
@@ -281,14 +260,12 @@ class PlayerBga : Activity() {
         try {
             val maskedAction = event.actionMasked
             val fingers = event.pointerCount
-            //this.fingersOnScreen = (byte) fingers;
             val inputsTouch = Array(fingers) {
                 IntArray(2)
             }
             for (i in 0 until fingers) {
                 inputsTouch[i][0] = event.getX(i).toInt()
                 inputsTouch[i][1] = event.getY(i).toInt()
-                //                this.event += " " + i + ":(" + (int) event.getX(i) + "," + (int) event.getY(i) + ")";
             }
             when (maskedAction) {
                 MotionEvent.ACTION_POINTER_UP -> {
@@ -297,7 +274,6 @@ class PlayerBga : Activity() {
                 }
                 MotionEvent.ACTION_DOWN -> {
                     checkInputs(inputsTouch, true)
-                    //   this.event = "numero" + maskedAction;
                     checkInputs(inputsTouch, false)
                 }
                 MotionEvent.ACTION_UP -> if (fingers == 1) clearPad()
@@ -308,11 +284,6 @@ class PlayerBga : Activity() {
         }
 
         return super.dispatchTouchEvent(event)
-    }
-
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-
-        return true
     }
 
     private fun clearPad() {
@@ -332,13 +303,6 @@ class PlayerBga : Activity() {
                         if (inputs[index] == ARROW_UNPRESSED || isDownMove && inputs[index] == ARROW_HOLD_PRESSED) { //by this way confirm if the curret pad is off
                             inputs[index] = ARROW_PRESSED
                             StepsDrawer.noteSkins[0].tapsEffect[index].play()
-                            // arrow.setImageState(intArrayOf(android.R.attr.state_checked),false)
-//                            arrows[j].setImageDrawable(
-//                                Drawable.createFromXml(
-//                                    resources,
-//                                    resources.getXml(stepInfo[0])
-//                                )
-//                            )
                         }
                         wasPressed = true
                         break
@@ -348,19 +312,13 @@ class PlayerBga : Activity() {
                     inputs[index] = ARROW_UNPRESSED
                 }
             }
-
-
         }
     }
-
 
     private fun unPress(x: Float, y: Float) {
         for (j in arrows.indices) { //checa cada felcha
             if (arrowsPosition2[j].contains(x.toInt(), y.toInt())) {
                 inputs[j] = 0
-                //arrows[j].state(intArrayOf(android.R.attr.state_focused))}
-                //arr
-
             }
         }
     }
@@ -368,7 +326,4 @@ class PlayerBga : Activity() {
     fun startEvaluation() {
         startActivity(i)
     }
-
-    
 }
-

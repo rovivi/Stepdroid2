@@ -24,10 +24,10 @@ public class CommonSteps {
         const val NOTE_MINE: Short = 5
         const val NOTE_MINE_DEATH: Short = 6
         const val NOTE_POSION: Short = 7
-        const val NOTE_LONG_BODY: Short = 8
-        const val NOTE_LONG_PRESSED: Short = 9
+        const val NOTE_LONG_BODY: Short = 50
         const val NOTE_LONG_TOUCHABLE: Short = 10
-        const val NOTE_PRESSED: Short = 120
+        const val NOTE_PRESSED: Short = 128
+        const val NOTE_LONG_PRESSED: Short = 51
 
         /**PERFORMANCE*/
         const val PLAYER_0: Byte = 1
