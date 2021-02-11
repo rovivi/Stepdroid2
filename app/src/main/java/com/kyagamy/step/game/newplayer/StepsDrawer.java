@@ -176,8 +176,6 @@ private int NON_USE = -999;
                                 if(gameRow.getPosY()>startValueY && gameRow.getPosY()<sizeY){
                                     startY=startValueY;
                                 }
-
-
                                 endY = (Objects.requireNonNull(note.getRowEnd()).getPosY() == NOT_DRAWABLE) ? sizeY : note.getRowEnd().getPosY();
                                 lastPositionDraw[count] = endY;
                                 noteSkins[SELECTED_SKIN]

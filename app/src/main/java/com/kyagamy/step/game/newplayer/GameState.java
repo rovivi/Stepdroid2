@@ -237,8 +237,6 @@ public class GameState {
                 if ((steps.get(currentElement + posBack)).getNotes() != null) {//Validate emptyRow
                     //boolean checkLong = true;
                     //byte[] auxRow = (byte[]) steps.get(currentElement + posBack)[0];
-
-
                     for (int arrowIndex = 0; arrowIndex < steps.get(currentElement + posBack).getNotes().size(); arrowIndex++) {
                         Note currentChar = steps.get(currentElement + posBack).getNotes().get(arrowIndex);
                         if (inputs[arrowIndex] == ARROW_PRESSED && currentChar.getType() == NOTE_TAP) {//NORMALTAP
@@ -251,11 +249,14 @@ public class GameState {
                         if (inputs[arrowIndex] != ARROW_UNPRESSED
                                 && (currentChar.getType() == NOTE_LONG_START || currentChar.getType() == NOTE_LONG_BODY || currentChar.getType() == NOTE_LONG_END)
                                 && posBack < 0
-
                         ) {// tap1
                             steps.get(currentElement + posBack).getNotes().get(arrowIndex).setType(NOTE_LONG_PRESSED);
 //                            steps.get(currentElement + posBack).getNotes().get(arrowIndex).setType(currentChar.getType() == NOTE_LONG_END ? NOTE_PRESSED : NOTE_LONG_PRESSED);
-                            //   combo.setComboUpdate(Combo.VALUE_PERFECT);
+                            if(!Evaluator.Companion.containNoteToEvaluate(steps.get(currentElement + posBack))){
+                                steps.get(currentElement + posBack).setHasPressed(true);
+                                combo.setComboUpdate(Combo.VALUE_PERFECT);
+                            }
+
                             StepsDrawer.noteSkins[0].explotionTails[arrowIndex].play();
                             inputs[arrowIndex] = ARROW_HOLD_PRESSED;
                         }
@@ -268,11 +269,12 @@ public class GameState {
                 }
                 if (posEvaluate != -1) {
                     boolean bol = !steps.get(posEvaluate).getHasPressed();
+
                     if (!Evaluator.Companion.containNoteToEvaluate(steps.get(posEvaluate))  && bol) {//mejorar la condicion xdd
                         steps.get(posEvaluate).setHasPressed(true);
                         double auxRetro = Math.abs(CommonSteps.Companion.beatToSecond(currentBeat - steps.get(posEvaluate).getCurrentBeat(), BPM)) * 1000;
                         System.out.println(auxRetro + "NOTE" + posEvaluate);
-                        if (!Evaluator.Companion.containsNotePressed(steps.get(posEvaluate))) {
+                        if (Evaluator.Companion.containsNoteLongPressed(steps.get(posEvaluate))) {
                             combo.setComboUpdate(Combo.VALUE_PERFECT);
                         } else if (auxRetro < rGreat) {//perfetc
                             combo.setComboUpdate(Combo.VALUE_PERFECT);
@@ -293,16 +295,6 @@ public class GameState {
         }
 
 
-        //posBack = -backSteps;Comentado pero es paal misss NOMAS
-//        if (backSteps >= currentElement)
-//            posBack = -currentElement;
-//        //posNext = backSteps;
-//
-//        if ((Evaluator.Companion.containsNoteTap(steps.get(currentElement + posBack)))) {//evaluate miss
-//            combo.setComboUpdate(Combo.VALUE_MISS);
-//            steps.get(currentElement + posBack).setHasPressed(true);
-//
-//        }
 
 
     }

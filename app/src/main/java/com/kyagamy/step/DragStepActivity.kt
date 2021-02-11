@@ -112,7 +112,7 @@ class DragStepActivity : AppCompatActivity() {
             arrows[1].x = 0f
 
             //set 5
-            val sizeRsty = (sizeY/2-size)/2
+
             arrows[2].y = ((sizeY/2-size)/2+sizeY/2).toFloat()
             arrows[2].x = ((sizeX-size)/2).toFloat()
 

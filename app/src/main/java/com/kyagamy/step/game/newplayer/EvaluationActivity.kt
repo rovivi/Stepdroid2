@@ -41,12 +41,12 @@ class EvaluationActivity : AppCompatActivity() {
         )
         setContentView(R.layout.activity_evaluation2)
         //setSounds
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            soundPool = SoundPool.Builder()
+        soundPool = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            SoundPool.Builder()
                 .setMaxStreams(35)
                 .build()
         } else {
-            soundPool = SoundPool(35, AudioManager.STREAM_MUSIC, 1)
+            SoundPool(35, AudioManager.STREAM_MUSIC, 1)
         }
 
         soundPullTick = soundPool.load(applicationContext, R.raw.grade_tick, 1)
