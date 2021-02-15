@@ -23,22 +23,24 @@
 
     <ImageView
         android:id="@+id/image"
-        android:layout_width="300px"
-        android:layout_height="300px"
-        android:scaleType="fitXY"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="16dp"
+        android:rotationX="11"
+        android:scaleType="fitCenter"
+        android:scaleX="1.2"
+        android:scaleY="1.2"
         android:src="@drawable/ic_launcher_background"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.04000002"
         app:srcCompat="@drawable/music" />
 
     <TextView
         android:id="@+id/titleCate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:rotationX="20"
         android:text="Category"
         android:textColor="#262626"
         android:textSize="30sp"

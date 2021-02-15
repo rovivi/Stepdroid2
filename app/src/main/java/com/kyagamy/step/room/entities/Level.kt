@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package com.kyagamy.step.room.entities
 
 import androidx.room.Embedded

@@ -38,15 +38,9 @@ class SongsList : Fragment() {
     // TODO: Rename and change types of parameters
     //TEST (you must remove later )
 
-
-
-
-
     private var param1: String? = null
     private lateinit var songsModel: SongViewModel
     private lateinit var songsRecyclerView: RecyclerView
-
-
 
     //Old
     var fadeOut: ObjectAnimator? = null
@@ -62,7 +56,7 @@ class SongsList : Fragment() {
     //ThemeElements themeElements;
 
 
-    private lateinit var preview: VideoView
+   // private lateinit var preview: VideoView
 
     var spinner: Spinner? = null
 
@@ -84,15 +78,15 @@ class SongsList : Fragment() {
         // Inflate the layout for this fragment
         songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
 
-        val songAdapter = SongAdapter(activity!!.applicationContext)
+        val songAdapter = SongAdapter(this.requireContext(),ViewModelProvider(this).get(LevelViewModel::class.java),viewLifecycleOwner )
 
 
         val view = inflater.inflate(R.layout.fragment_songs_list, container, false)
         songsRecyclerView = view.findViewById(R.id.songs_recyclerView)
 
-        preview = view.findViewById(R.id.videoView3)
+//        preview = view.findViewById(R.id.videoView3)
 
-        songsRecyclerView.layoutManager = LinearLayoutManager(activity!!.applicationContext)
+        songsRecyclerView.layoutManager = LinearLayoutManager(requireActivity().applicationContext)
 
         songsRecyclerView.adapter = songAdapter
         songsModel.categorySong(param1 ?: "").observe(viewLifecycleOwner, Observer { words ->
@@ -143,14 +137,14 @@ class SongsList : Fragment() {
                     .endsWith(".mp4") || video.path.endsWith(".avi"))
             ) {
 
-                preview?.setOnPreparedListener(OnPreparedListener { mediaPlayer: MediaPlayer ->
-                    mediaPlayer.isLooping = true
-                    mediaPlayer.setVolume(0f, 0f)
-                })
+           //     preview?.setOnPreparedListener(OnPreparedListener { mediaPlayer: MediaPlayer ->
+//                    mediaPlayer.isLooping = true
+//                    mediaPlayer.setVolume(0f, 0f)
+//                })
 
-                preview?.background = null
-                preview?.setVideoPath(video.path)
-                preview?.start()
+//                preview?.background = null
+//                preview?.setVideoPath(video.path)
+//                preview?.start()
                 transparent =
                     TransformBitmap.makeTransparent(BitmapFactory.decodeFile(bg.path), 180)
                 this.errorAuxImage = BitmapDrawable(transparent)
@@ -170,7 +164,7 @@ class SongsList : Fragment() {
                     )
                     this.errorAuxImage = BitmapDrawable(transparent)
                 }
-                preview?.background = errorAuxImage
+               // preview?.background = errorAuxImage
             }
         } catch (e: FileNotFoundException) {
             e.printStackTrace()

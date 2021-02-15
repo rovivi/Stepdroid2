@@ -19,11 +19,9 @@ class CategoryAdapter(var myDataSet: List<Category>, val context: Context) :
         return view === `object`
     }
 
-    public fun list():List<Category>{
+    fun list():List<Category>{
         return myDataSet
     }
-
-
 
 
     override fun instantiateItem(container: ViewGroup, position: Int): Any {
@@ -36,12 +34,10 @@ class CategoryAdapter(var myDataSet: List<Category>, val context: Context) :
         if (myDataSet[position].banner != null) {
             val img = BitmapFactory.decodeFile(myDataSet[position].banner)
             imageView.setImageBitmap(img)
-
         }
-
         textTitle.text = myDataSet[position].name
         container.addView(layout)
-        Log.println(Log.ASSERT, "awa$position", "" + position + "awa")
+        //Log.println(Log.ASSERT, "awa$position", "" + position + "awa")
 
         return layout
     }
@@ -60,6 +56,5 @@ class CategoryAdapter(var myDataSet: List<Category>, val context: Context) :
         container.removeView(`object` as View?)
 
     }
-
 
 }

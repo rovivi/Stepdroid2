@@ -12,16 +12,12 @@
 
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:icvp_center_page_scale_offset="30dp"
-        app:icvp_max_page_scale="0.8"
-        app:icvp_medium_scaled="true"
-        app:icvp_min_page_scale="0.5"
-        app:icvp_min_page_scale_offset="5dp"
+        app:icvp_interpolator="@android:anim/overshoot_interpolator"
+        app:icvp_center_page_scale_offset="-10dp"
+        app:icvp_max_page_scale="0.9"
+        app:icvp_medium_scaled="false"
+        app:icvp_min_page_scale="0.4"
+        app:icvp_min_page_scale_offset="1dp"
         app:icvp_scroll_duration="500" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
 
 </FrameLayout>

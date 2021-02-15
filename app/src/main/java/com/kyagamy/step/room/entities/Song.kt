@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package com.kyagamy.step.room.entities
 import androidx.room.*
 
@@ -23,12 +25,10 @@ class Song (
     val GENRE:String,
     val PREVIEWVID:String,
     val DISPLAYBPM:String,
-    val catecatecate:String,
+    val catecatecate:String,//To know all time the category
     @Embedded
     val CATEGORY_LINK: Category?
 
 
 
-) {
-
-}
+)

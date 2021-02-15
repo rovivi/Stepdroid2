@@ -40,7 +40,6 @@ class FragmenStartMenu : DialogFragment() {
 
     private var idSong: Int = 0
 
-
     //public ArrayList<Level> lista;
     private var hexagons =
         arrayOfNulls<ImageView>(2)
@@ -90,7 +89,7 @@ class FragmenStartMenu : DialogFragment() {
 
 
 
-        exit.setOnClickListener(View.OnClickListener { v: View? -> dismiss() })
+        exit.setOnClickListener { dismiss() }
         startImage = view.findViewById(R.id.start_image)
         startImage2 = view.findViewById(R.id.start_blour)
         if (!loadingScreen) {
@@ -140,9 +139,9 @@ class FragmenStartMenu : DialogFragment() {
         songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
         levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
 
+
         i = Intent(requireActivity(), PlayerBga::class.java)
 
-        levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
 
         val levelAdapter = LevelAdapter(requireActivity().applicationContext)
 
@@ -201,7 +200,7 @@ class FragmenStartMenu : DialogFragment() {
 
 
         levelModel.get(idSong)
-            .observe(viewLifecycleOwner, androidx.lifecycle.Observer { level ->
+            .observe(viewLifecycleOwner, { level ->
                 level?.let { levelAdapter.setLevels(it) }
             })
 

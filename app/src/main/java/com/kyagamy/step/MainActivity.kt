@@ -48,6 +48,11 @@ class MainActivity : AppCompatActivity() {
         hideSystemUI()
     }
 
+    override fun onResume() {
+        super.onResume()
+        hideSystemUI()
+    }
+
     private fun hideSystemUI() {
         // Enables regular immersive mode.
         // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
@@ -72,18 +77,18 @@ class MainActivity : AppCompatActivity() {
         transaction.commit()
     }
 
-    private fun showFragmentTwo(category:String) {
+    private fun showFragmentSongList(category:String) {
         val transaction = manager.beginTransaction()
         val fragment = SongsList.newInstance(category,"")
         transaction.setCustomAnimations(R.anim.fragment_fade_enter,R.anim.fragment_fade_exit)
-        transaction.add(R.id.fragment_holder, fragment)
-        transaction.addToBackStack(null)
+        transaction.replace(R.id.fragment_holder, fragment)
+        transaction.addToBackStack("changetocategory")
         transaction.commit()
     }
 
     fun changeCategory (category:String,categoryPosition: Int){
         positionCategory= categoryPosition
         Toast.makeText(this, "value:${category}",Toast.LENGTH_SHORT).show()
-        showFragmentTwo(category)
+        showFragmentSongList(category)
     }
 }

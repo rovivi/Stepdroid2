@@ -2,95 +2,88 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/song_list_bg"
     android:gravity="center"
     android:paddingStart="15sp"
     android:paddingEnd="15sp">
 
 
-    <ImageView
-        android:id="@+id/imageView"
+    <TextView
+        android:id="@+id/songNameAdapter"
         android:layout_width="wrap_content"
-        android:layout_height="69dp"
-        android:layout_marginEnd="14dp"
-        android:scaleType="fitXY"
-        android:src="@drawable/song_list_bg"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:rotationY="14"
+        android:text="Nombre"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/banner_song_adapter"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/banner_song_adapter"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:paddingTop="3sp"
+        android:paddingBottom="1sp"
+        android:scaleType="fitXY"
+        android:src="@mipmap/ic_launcher"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
-
-
-        android:id="@+id/linearLayout"
+    <TextView
+        android:id="@+id/songDescriptionAdapter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginTop="2dp"
+        android:text="Author"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        app:layout_constraintEnd_toEndOf="@+id/songNameAdapter"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/songNameAdapter"
+        app:layout_constraintTop_toBottomOf="@+id/songNameAdapter" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/levelRV"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="4dp"
+        android:rotationY="0"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.05"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/banner_song_adapter"
+        app:layout_constraintTop_toBottomOf="@+id/songDescriptionAdapter" />
 
-        <ImageView
-            android:id="@+id/banner2"
-            android:layout_width="15sp"
-            android:layout_height="match_parent"
-            android:layout_marginTop="0dp"
-            android:layout_marginEnd="0dp"
-            android:paddingBottom="0dp"
-            android:scaleType="fitXY"
-            android:src="@drawable/lifebar_blue_tip" />
-
-
-        <ImageView
-            android:id="@+id/banner_song_adapter"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="5sp"
-            android:layout_marginTop="4sp"
-            android:layout_marginEnd="8sp"
-            android:paddingTop="3sp"
-            android:paddingBottom="1sp"
-            android:scaleType="fitXY"
-            android:src="@mipmap/ic_launcher" />
-
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/songNameAdapter"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginTop="10sp"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-
-                android:text="Nombre"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/songDescriptionAdapter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
-                android:layout_marginBottom="15dp"
-                android:text="Descripcion "
-                android:textColor="#FFFFFF" />
-
-        </LinearLayout>
-
-
-    </LinearLayout>
+    <TextView
+        android:id="@+id/index"
+        style="@style/Widget.MaterialComponents.TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="14dp"
+        android:background="@color/black_overlay"
+        android:rotation="0"
+        android:rotationX="11"
+        android:text="TextView"
+        android:textColor="@color/step_5_on"
+        android:textSize="10sp"
+        android:textStyle="bold|italic"
+        app:layout_constraintEnd_toEndOf="@+id/banner_song_adapter"
+        app:layout_constraintStart_toStartOf="@+id/banner_song_adapter"
+        app:layout_constraintTop_toTopOf="@+id/banner_song_adapter" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

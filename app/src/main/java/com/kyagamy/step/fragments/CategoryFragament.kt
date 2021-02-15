@@ -9,6 +9,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -35,7 +36,6 @@ private const val POSITION = "position"
 class CategoryFragament : Fragment() {
     // TODO: Rename and change types of parameters
     private var position = 0
-    private var param2: String? = null
     private lateinit var categoryModel: CategoryViewModel
     private lateinit var cycle: HorizontalInfiniteCycleViewPager
     private lateinit var  myDataSet : List<Category>
@@ -45,7 +45,6 @@ class CategoryFragament : Fragment() {
         arguments?.let {
             position = it.getInt(POSITION)
         }
-
     }
 
     override fun onCreateView(
@@ -60,7 +59,9 @@ class CategoryFragament : Fragment() {
         val adapter = CategoryAdapter(list, this.requireContext())
         cycle.adapter = adapter
         cycle.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
-            override fun onPageScrollStateChanged(state: Int) {}
+            override fun onPageScrollStateChanged(state: Int) {
+
+            }
             override fun onPageScrolled(
                 position: Int,
                 positionOffset: Float,
@@ -76,7 +77,7 @@ class CategoryFragament : Fragment() {
             }
         }
         )
-        categoryModel.allCategory.observe(viewLifecycleOwner, Observer { words ->
+        categoryModel.allCategory.observe(viewLifecycleOwner, { words ->
             words?.let { adapter.setSongs(it) }
         })
 
@@ -98,22 +99,23 @@ class CategoryFragament : Fragment() {
                 }
             })
         }
-
-
-
-        //lifecycle.run {
-
-            cycle.setCurrentItem(3,false)
-        //}
-
-
         return  view
+    }
 
+    override fun onStart() {
+        super.onStart()
+        cycle.setCurrentItem(5,true)
+        cycle.notifyDataSetChanged()
+    }
+
+    override fun onDetach() {
+        super.onDetach()
     }
 
     override fun onResume() {
         super.onResume()
         try {
+
             playSound()
         }
         catch (ex:Exception){

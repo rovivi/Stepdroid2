@@ -8,25 +8,36 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.lifecycle.LifecycleOwner
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.kyagamy.step.R
 import com.kyagamy.step.common.Common
 import com.kyagamy.step.room.entities.Song
+import com.kyagamy.step.viewModels.LevelViewModel
 import com.squareup.picasso.Picasso
 import java.io.File
 
+
 class  SongAdapter internal constructor(
-    context: Context
+    val context: Context,
+    private val levelModel: LevelViewModel,
+    val lifecycleOwner: LifecycleOwner
 ) : RecyclerView.Adapter<SongAdapter.songViewHolder>() {
 
     private val inflater: LayoutInflater = LayoutInflater.from(context)
     private var songs = emptyList<Song>() // Cached copy of songs
     var lastPosition = -1
 
+
+
     inner class songViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleItemView: TextView = itemView.findViewById(R.id.songNameAdapter)
+        val index: TextView = itemView.findViewById(R.id.index)
+
         val descriptionItemView: TextView = itemView.findViewById(R.id.songDescriptionAdapter)
         val imageItemView: ImageView = itemView.findViewById(R.id.banner_song_adapter)
+        val levelRecyclerView :RecyclerView=  itemView.findViewById(R.id.levelRV)
 
     }
 
@@ -37,23 +48,37 @@ class  SongAdapter internal constructor(
     }
 
     override fun onBindViewHolder(holder: songViewHolder, position: Int) {
+        //recyvler
+        val levelAdapter = LevelAdapterPreview(context)
+        holder.levelRecyclerView.layoutManager = LinearLayoutManager(
+            context,
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
+
+        holder. levelRecyclerView.adapter = levelAdapter
+
+        levelModel.get(songs[position].song_id)
+            .observe(lifecycleOwner, { level ->
+                level?.let { levelAdapter.setLevels(it) }
+            })
+
+
         val current = songs[position]
         holder.titleItemView.text = current.TITLE
-        holder.descriptionItemView.text = "awa"+current.song_id
-        val  f = File(current.PATH_SONG+"/"+current.BANNER_SONG)
-        Picasso.get().load(f).resize(200, 120).centerInside().into(holder.imageItemView);
-
+        holder.descriptionItemView.text =current.ARTIST
+        holder.index.text= (position+1).toString().plus("/").plus(songs.size)
+        val  f = File(current.PATH_SONG + "/" + current.BANNER_SONG)
+        Picasso.get().load(f).resize(250, 160).centerInside().into(holder.imageItemView);
         // holder.setSelected( selectedItems.get(position, false));
         setAnimation(holder.itemView, position)
-
-
     }
 
     internal fun setSongs(songs: List<Song>) {
         this.songs = songs
         notifyDataSetChanged()
     }
-    public fun getSong (position:Int):Song{
+    public fun getSong(position: Int):Song{
         return songs[position]
     }
 

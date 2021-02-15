@@ -90,6 +90,7 @@ class EvaluationActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        hideSystemUI()
         //play loop
         mediaPlayer = MediaPlayer.create(this, R.raw.evaluation_loop)
         mediaPlayer.isLooping = true
@@ -166,7 +167,6 @@ class EvaluationActivity : AppCompatActivity() {
             )
             delay(animDuration)
 
-
             animateTextView(result_Perfect, Evaluator.PERFECT.toString())
             delay(timeToDisplayMs)
             animateTextView(result_Great, Evaluator.GREAT.toString())
@@ -191,7 +191,7 @@ class EvaluationActivity : AppCompatActivity() {
     suspend fun animateTextView(tv: TextView, combo: String) {
         //primero calculamos el numero de digitos
         var strCombo = combo
-        if (strCombo.length < 6 && !strCombo.contains(".")) {
+        if (strCombo.length < 4 && !strCombo.contains(".")) {
             strCombo = (strCombo.toInt() + 1000).toString().substring(1)
         }
         strCombo = strCombo.reversed()
@@ -221,6 +221,10 @@ class EvaluationActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        hideSystemUI()
+    }
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         hideSystemUI()
