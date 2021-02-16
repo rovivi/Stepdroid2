@@ -5,19 +5,22 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
-import android.content.DialogInterface
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
+import android.media.MediaPlayer
+import android.media.SoundPool
 import android.os.Bundle
-import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.VideoView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -27,26 +30,26 @@ import com.kyagamy.step.PlayerBga
 import com.kyagamy.step.R
 import com.kyagamy.step.adapters.LevelAdapter
 import com.kyagamy.step.common.RecyclerItemClickListener
+import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.viewModels.LevelViewModel
 import com.kyagamy.step.viewModels.SongViewModel
 import kotlinx.android.synthetic.main.fragment_fragment__start_menu.view.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileNotFoundException
 import java.util.*
 
 private const val songId = "song"
 
-
-class FragmenStartMenu : DialogFragment() {
-
+class FragmentStartMenu : DialogFragment() {
     private var idSong: Int = 0
-
-    //public ArrayList<Level> lista;
     private var hexagons =
         arrayOfNulls<ImageView>(2)
     private lateinit var exit: TextView
     private lateinit var loading: TextView
     private lateinit var percent: TextView
-
     private lateinit var startImage: ImageView
     private lateinit var startImage2: ImageView
     var anim: ValueAnimator? = null
@@ -59,6 +62,13 @@ class FragmenStartMenu : DialogFragment() {
     private lateinit var levelRecyclerView: RecyclerView
     var i: Intent? = null
 
+    var currentSong: Song? = null
+    lateinit var preview: VideoView
+
+    var errorAuxImage: BitmapDrawable? = null
+    var changeMusic: SoundPool? = null
+    var mediaPlayer: MediaPlayer? = MediaPlayer()
+    var spCode = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,13 +77,11 @@ class FragmenStartMenu : DialogFragment() {
         }
     }
 
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        //adapterLevel = new AdapterLevel(lista, null, getActivity().getAssets());
         Objects.requireNonNull(dialog?.window)
             ?.attributes!!.windowAnimations = R.style.DialogAnimation
         Objects.requireNonNull(dialog?.window)
@@ -82,12 +90,10 @@ class FragmenStartMenu : DialogFragment() {
             inflater.inflate(R.layout.fragment_fragment__start_menu, container, false)
         hexagons[0] = view.findViewById(R.id.iv_hexagon1)
         hexagons[1] = view.findViewById(R.id.iv_hexagon2)
-        //hexagons[2] = view.findViewById(R.id.iv_hexagon3)
-        //percent = view.findViewById(R.id.percent_text_fragment)
+        preview = view.findViewById(R.id.videoPreview)
+
         loading = view.findViewById(R.id.loading_text_dialog)
         exit = view.findViewById(R.id.tv_damiss)
-
-
 
         exit.setOnClickListener { dismiss() }
         startImage = view.findViewById(R.id.start_image)
@@ -101,9 +107,7 @@ class FragmenStartMenu : DialogFragment() {
             startImage2.visibility = View.INVISIBLE
             startImage.visibility = View.INVISIBLE
             exit.visibility = View.INVISIBLE
-            //  getDialog().setCancelable(false);
             loading.visibility = View.VISIBLE
-            //    percent.setVisibility(View.VISIBLE);
         }
         val from = Color.argb(100, 0, 0, 0)
         val to = Color.argb(100, 255, 255, 255)
@@ -123,17 +127,14 @@ class FragmenStartMenu : DialogFragment() {
         anim!!.duration = 250
 
         //setSettingsFragment
-
         try {
             val transaction = childFragmentManager.beginTransaction()
             val fragmentCategory = MenuOptionFragment()
-            transaction!!.add(R.id.frame_options, fragmentCategory)
-            transaction.addToBackStack(null)
+            transaction.add(R.id.frame_options, fragmentCategory)
             transaction.commit()
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
-
         //songs
 
         songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
@@ -151,18 +152,13 @@ class FragmenStartMenu : DialogFragment() {
             LinearLayoutManager.HORIZONTAL,
             false
         )
-//        levelRecyclerView.layoutManager = LinearLayoutManager(activity!!.applicationContext)
         levelRecyclerView.adapter = levelAdapter
-
-        var currentSong: Song? = null
-
         songsModel.songById(idSong)
-            .observe(viewLifecycleOwner, androidx.lifecycle.Observer { words ->
+            .observe(viewLifecycleOwner, { words ->
                 words?.let {
                     currentSong = it[0]
                 }
             })
-
         levelRecyclerView.addOnItemTouchListener(
             RecyclerItemClickListener(activity,
                 levelRecyclerView,
@@ -171,7 +167,7 @@ class FragmenStartMenu : DialogFragment() {
                         lifecycleScope.run {
                             try {
                                 // root.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_out));
-                                
+
                                 i!!.putExtra("ssc", currentSong?.PATH_File)
                                 i!!.putExtra("nchar", levelAdapter.getLevel(position).index)
                                 i!!.putExtra("path", currentSong?.PATH_SONG)
@@ -180,16 +176,11 @@ class FragmenStartMenu : DialogFragment() {
                                     currentSong?.PATH_SONG + currentSong?.BANNER_SONG
                                 )
                                 startActivity(i)
-                                //finish();
-                                //finish();
-
-
                             } catch (ex: Exception) {
                                 ex.printStackTrace()
                             }
                         }
                     }
-
                     override fun onItemLongClick(
                         view: View?,
                         position: Int
@@ -197,7 +188,6 @@ class FragmenStartMenu : DialogFragment() {
                     }
                 })
         )
-
 
         levelModel.get(idSong)
             .observe(viewLifecycleOwner, { level ->
@@ -222,18 +212,10 @@ class FragmenStartMenu : DialogFragment() {
         return view
     }
 
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
-        //
-//        if (songList!=null){
-//            songList.playSoundPool(songList.spSelectSong);
-//
-//        }
-    }
 
-
-    override fun onStart() {
-        super.onStart()
+    override fun onDestroyView() {
+        releaseMediaPlayer()
+        super.onDestroyView()
     }
 
     override fun onResume() {
@@ -257,38 +239,124 @@ class FragmenStartMenu : DialogFragment() {
             )
         )
         if (!loadingScreen) {
-            startImage2!!.startAnimation(
+            startImage2.startAnimation(
                 AnimationUtils.loadAnimation(
                     activity?.baseContext,
                     R.anim.fade_half
                 )
             )
         }
+        songsModel.songById(idSong)
+            .observe(viewLifecycleOwner, { words ->
+                words?.let {
+                    changeSong( it[0])
+                }
+            })
     }
 
 
-    override fun onDetach() {
-//        if (wanrStartSong) {
-//            if (songList!=null){
-//            songList.startSong();
-//            }
-//        }
-        super.onDetach()
+    private fun changeSong(song: Song?) {
+        if (song == null) return
+        changeMusic?.play(spCode, 1f, 1f, 1, 0, 1.0f)
+        releaseMediaPlayer()
+        try {
+            val video = File(song.PATH_SONG + "/" + song.PREVIEWVID)
+            val bg = File(song.PATH_SONG + "/" + song.BACKGROUND)
+            val transparent: Bitmap
+            lifecycleScope.launch() {
+                playMusicPreview(song)
+            }
+            if (video.exists() && (video.path.endsWith(".mpg") || video.path
+                    .endsWith(".mp4") || video.path.endsWith(".avi"))
+            ) {
+
+                preview.setOnPreparedListener { mediaPlayer: MediaPlayer ->
+                    mediaPlayer.isLooping = true
+                    mediaPlayer.setVolume(0f, 0f)
+                }
+
+                preview.background = null
+                preview.setVideoPath(video.path)
+                preview.start()
+                transparent =
+                    TransformBitmap.makeTransparent(BitmapFactory.decodeFile(bg.path), 180)
+                this.errorAuxImage = BitmapDrawable(transparent)
+            } else {
+                if (bg.exists() && bg.isFile) {
+                    transparent = TransformBitmap.makeTransparent(
+                        BitmapFactory.decodeFile(bg.path),
+                        180
+                    )
+                    this.errorAuxImage = BitmapDrawable(transparent)
+                } else {
+                    transparent = TransformBitmap.makeTransparent(
+                        BitmapFactory.decodeResource(
+                            resources,
+                            R.drawable.no_banner
+                        ), 180
+                    )
+                    this.errorAuxImage = BitmapDrawable(transparent)
+                }
+                preview.background = errorAuxImage
+            }
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
+
+    private fun releaseMediaPlayer() {
+        try {
+            while (mediaPlayer != null) {
+                //preview?.suspend()
+                if (mediaPlayer!!.isPlaying) mediaPlayer!!.stop()
+                mediaPlayer!!.release()
+                mediaPlayer = null
+            }
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private suspend fun playMusicPreview(song: Song) {
+        val startTime = System.currentTimeMillis()
+        releaseMediaPlayer()
+        val audio = File(song.PATH_SONG + "/" + song.MUSIC)
+        val duration = song.SAMPLELENGTH * 1000 + 3000
+        mediaPlayer = MediaPlayer()
+        mediaPlayer!!.setVolume(1f, 1f)
+        mediaPlayer!!.setDataSource(audio.path)
+        mediaPlayer!!.prepare()
+        mediaPlayer!!.seekTo(song.SAMPLESTART.toInt() * 1000)
+        mediaPlayer!!.start()
+
+        while (mediaPlayer != null) {
+            try {
+                delay(100)
+                val timeLapsed = System.currentTimeMillis() - startTime
+                if (timeLapsed >= duration) {
+                    releaseMediaPlayer()
+                    break
+                } else if (timeLapsed >= (duration - 3000)) {
+                    val lapset = (100 - ((timeLapsed - (duration - 3000)) / 3000 * 100)) / 100
+                    mediaPlayer!!.setVolume(lapset.toFloat(), lapset.toFloat())
+                }
+            } catch (ex: NullPointerException) {
+            }
+        }
+    }
 
     companion object {
         var loadingScreen = false
 
         @JvmStatic
         fun newInstance(idSong: Int) =
-            FragmenStartMenu().apply {
+            FragmentStartMenu().apply {
                 arguments = Bundle().apply {
                     putInt(songId, idSong)
-
                 }
             }
     }
-
-
 }
