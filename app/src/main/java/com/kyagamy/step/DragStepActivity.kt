@@ -20,9 +20,7 @@ import com.kyagamy.step.common.step.CommonGame.ArrowsPositionPlace
 import kotlinx.android.synthetic.main.activity_drag_step.*
 
 
-class DragStepActivity : AppCompatActivity() {
-    var windowHeight: Int = 0
-    var windowWidth: Int = 0
+class DragStepActivity : FullScreenActivity() {
     private var _xDelta = 0
     private var _yDelta = 0
     private var stepInfo: List<Int> = listOf(
@@ -40,22 +38,10 @@ class DragStepActivity : AppCompatActivity() {
             getString(R.string.singleArrowsPos), Context.MODE_PRIVATE
         )
         super.onCreate(savedInstanceState)
-        this.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN
-        )
+
         setContentView(R.layout.activity_drag_step)
 
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
-                // Set the content to appear under the system bars so that the
-                // content doesn't resize when the system bars hide and show.
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                // Hide the nav bar and status bar
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN)
+
 
 
         sizeBar.max = 200

@@ -15,6 +15,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.kyagamy.step.FullScreenActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.adapters.LevelAdapter
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
@@ -25,7 +26,7 @@ import kotlinx.android.synthetic.main.activity_evaluation2.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class EvaluationActivity : AppCompatActivity() {
+class EvaluationActivity : FullScreenActivity() {
     lateinit var mediaPlayer: MediaPlayer
     lateinit var soundPool: SoundPool
     private var soundPullTick: Int = 0
@@ -77,12 +78,10 @@ class EvaluationActivity : AppCompatActivity() {
 
         }
         title_evaluation2.text = Evaluator.songName
-        hideSystemUI()
     }
 
     override fun onStart() {
         super.onStart()
-        hideSystemUI()
         //play loop
         mediaPlayer = MediaPlayer.create(this, R.raw.evaluation_loop)
         mediaPlayer.isLooping = true
@@ -213,14 +212,6 @@ class EvaluationActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        hideSystemUI()
-    }
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        hideSystemUI()
-    }
 
     fun showGrade() {
         val mediaPlayer: MediaPlayer
@@ -287,18 +278,4 @@ class EvaluationActivity : AppCompatActivity() {
         mediaPlayerbg.start()
     }
 
-    private fun hideSystemUI() {
-        // Enables regular immersive mode.
-        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
-        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
-                // Set the content to appear under the system bars so that the
-                // content doesn't resize when the system bars hide and show.
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                // Hide the nav bar and status bar
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN)
-    }
 }

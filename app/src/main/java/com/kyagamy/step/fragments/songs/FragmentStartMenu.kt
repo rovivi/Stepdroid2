@@ -272,7 +272,7 @@ class FragmentStartMenu : DialogFragment() {
 
     private fun changeSong(song: Song?) {
         if (song == null) return
-        //display
+        //display 
         song_name.text = song.TITLE
 
 
