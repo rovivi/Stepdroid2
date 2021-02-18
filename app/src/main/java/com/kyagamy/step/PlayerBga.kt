@@ -193,7 +193,7 @@ class PlayerBga : Activity() {
                 // startEvaluation()
             }
             KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN -> startEvaluation()
-            KeyEvent.KEYCODE_F8 -> ParamsSong.autoplay = !ParamsSong.autoplay
+            KeyEvent.KEYCODE_F8 -> ParamsSong.autoPlay = !ParamsSong.autoPlay
             KeyEvent.KEYCODE_VOLUME_UP -> {
                 audio!!.adjustStreamVolume(
                     AudioManager.STREAM_MUSIC,
@@ -232,10 +232,10 @@ class PlayerBga : Activity() {
             iv.layoutParams = lp
             arrowsPosition2.add(
                 Rect(
-                    iv.x.toInt(),
-                    iv.y.toInt(),
-                    iv.x.toInt() + pixel,
-                    iv.y.toInt() + pixel
+                    iv.x.toInt()-50,
+                    iv.y.toInt()-5,
+                    iv.x.toInt() + pixel+50,
+                    iv.y.toInt() + pixel+50
                 )
             )
         }

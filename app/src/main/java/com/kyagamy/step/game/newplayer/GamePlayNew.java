@@ -28,6 +28,7 @@ import androidx.annotation.RequiresApi;
 import com.kyagamy.step.PlayerBga;
 import com.kyagamy.step.R;
 import com.kyagamy.step.common.Common;
+import com.kyagamy.step.common.step.CommonGame.ParamsSong;
 import com.kyagamy.step.common.step.Game.GameRow;
 
 import java.io.BufferedInputStream;
@@ -205,6 +206,13 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 
     public void startGame() {
         Evaluator.Companion.resetScore();
+        mpMusic.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                startEvaluation();
+            }
+        });
+
         gameState.start();
         try {
             if (mainTread.running) {
@@ -246,7 +254,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         try {
             //speed calc
             double avAuxValue = (gameState.initialBPM); //example BPM 200 ;
-            speed = (int) (stepsDrawer.sizeNote / avAuxValue * 650);//580 av
+            speed = (int) (stepsDrawer.sizeNote / avAuxValue * ParamsSong.av);//580 av
             double lastScrollAux = gameState.lastScroll;
             double lastBeat = this.gameState.currentBeat + 0;
             double lastPosition = stepsDrawer.sizeNote * 0.7;

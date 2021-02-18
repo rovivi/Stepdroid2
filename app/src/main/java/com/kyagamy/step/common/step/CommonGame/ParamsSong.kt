@@ -4,17 +4,25 @@ package com.kyagamy.step.common.step.CommonGame
  * Created : Rodrigo Vidal
  * This class is used to manage the preferences in the game
  */
-object ParamsSong {
-
+ object ParamsSong {
+    @JvmField
     var speed = 2f
+    @JvmField
     var judgment = 3
+    @JvmField
     var av = -1
+    @JvmField
     var delayMS = 0
+    @JvmField
     var rush = 1.0f
-    var autoplay = false
+    @JvmField
+    var autoPlay = false
+    @JvmField
     var nameNoteSkin = "prime"
+    @JvmField
     var stepType2Evaluation = "single"
     var stepLevel = "15"
+    @JvmField
     var skinIndex = 0
 
     /**
@@ -30,5 +38,8 @@ object ParamsSong {
 
     //List mode
     var listCuadricula = true
+    @JvmField
     var FD = false
+
+
 }

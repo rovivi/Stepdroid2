@@ -6,6 +6,7 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -14,13 +15,13 @@ import android.graphics.drawable.ColorDrawable
 import android.media.MediaPlayer
 import android.media.SoundPool
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.VideoView
+import android.widget.*
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -34,12 +35,14 @@ import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.viewModels.LevelViewModel
 import com.kyagamy.step.viewModels.SongViewModel
+import kotlinx.android.synthetic.main.fragment_fragment__start_menu.*
 import kotlinx.android.synthetic.main.fragment_fragment__start_menu.view.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.*
+
 
 private const val songId = "song"
 
@@ -91,6 +94,7 @@ class FragmentStartMenu : DialogFragment() {
         hexagons[0] = view.findViewById(R.id.iv_hexagon1)
         hexagons[1] = view.findViewById(R.id.iv_hexagon2)
         preview = view.findViewById(R.id.videoPreview)
+        val constraintLayout = view.findViewById<ConstraintLayout>(R.id.constraintLayoutMenu)
 
         loading = view.findViewById(R.id.loading_text_dialog)
         exit = view.findViewById(R.id.tv_damiss)
@@ -167,7 +171,7 @@ class FragmentStartMenu : DialogFragment() {
                         lifecycleScope.run {
                             try {
                                 // root.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_out));
-
+                                releaseMediaPlayer()
                                 i!!.putExtra("ssc", currentSong?.PATH_File)
                                 i!!.putExtra("nchar", levelAdapter.getLevel(position).index)
                                 i!!.putExtra("path", currentSong?.PATH_SONG)
@@ -175,12 +179,14 @@ class FragmentStartMenu : DialogFragment() {
                                     "pathDisc",
                                     currentSong?.PATH_SONG + currentSong?.BANNER_SONG
                                 )
+
                                 startActivity(i)
                             } catch (ex: Exception) {
                                 ex.printStackTrace()
                             }
                         }
                     }
+
                     override fun onItemLongClick(
                         view: View?,
                         position: Int
@@ -208,7 +214,16 @@ class FragmentStartMenu : DialogFragment() {
             )
         )
 
+//Sizes
+        val displayMetrics = DisplayMetrics()
+        activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        val height = displayMetrics.heightPixels
+        val width = displayMetrics.widthPixels
 
+        val lp = constraintLayout.layoutParams
+        lp.height = (height * 0.95).toInt()
+        lp.width = (width * 0.9).toInt()
+        constraintLayout.layoutParams = lp
         return view
     }
 
@@ -249,7 +264,7 @@ class FragmentStartMenu : DialogFragment() {
         songsModel.songById(idSong)
             .observe(viewLifecycleOwner, { words ->
                 words?.let {
-                    changeSong( it[0])
+                    changeSong(it[0])
                 }
             })
     }
@@ -257,6 +272,10 @@ class FragmentStartMenu : DialogFragment() {
 
     private fun changeSong(song: Song?) {
         if (song == null) return
+        //display
+        song_name.text = song.TITLE
+
+
         changeMusic?.play(spCode, 1f, 1f, 1, 0, 1.0f)
         releaseMediaPlayer()
         try {

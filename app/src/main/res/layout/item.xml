@@ -38,11 +38,13 @@
 
     <TextView
         android:id="@+id/titleCate"
+        style="@style/ShadowBlack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/karnivol"
         android:rotationX="20"
         android:text="Category"
-        android:textColor="#262626"
+        android:textColor="@color/design_default_color_background"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

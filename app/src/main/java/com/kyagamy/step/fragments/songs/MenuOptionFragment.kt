@@ -4,12 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.kyagamy.step.R
 import com.kyagamy.step.common.SettingsGameGetter
 import com.kyagamy.step.common.step.CommonGame.ParamsSong
-import com.kyagamy.step.game.newplayer.NoteSkin
+import kotlinx.android.synthetic.main.fragment_song_options.*
 import kotlinx.android.synthetic.main.fragment_song_options.view.*
 import java.util.*
 
@@ -20,15 +19,12 @@ class MenuOptionFragment : Fragment() {
     private var param1: String? = null
     private var param2: String? = null
 
-
     var skins: ArrayList<*> = ArrayList<Any>()
     var indexNS = 0
-    var velocity: Float = ParamsSong.speed
-    public lateinit var  infoAV :TextView
+    var autoVelocity: Int = ParamsSong.av
+    var speed: Float = ParamsSong.speed
+
     lateinit  var settingsGameGetter:SettingsGameGetter
-
-
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,17 +42,33 @@ class MenuOptionFragment : Fragment() {
 
 
         val fView = inflater.inflate(R.layout.fragment_song_options, container, false)
-        infoAV  =fView.findViewById(R.id.tvAV)
+        fView.tv_1P .setOnClickListener { changeAutoVelocity(1) }
+        fView.tv_10P .setOnClickListener { changeAutoVelocity(10) }
+        fView.tv_100P .setOnClickListener { changeAutoVelocity(100) }
+        fView.tv_1L .setOnClickListener { changeAutoVelocity(-1) }
+        fView.tv_10L .setOnClickListener { changeAutoVelocity(-10) }
+        fView.tv_100L .setOnClickListener { changeAutoVelocity(-100) }
 
-        fView.tv_1P .setOnClickListener { changeVelocity(1) }
-        fView.tv_10P .setOnClickListener { changeVelocity(10) }
-        fView.tv_100P .setOnClickListener { changeVelocity(100) }
-        fView.tv_1L .setOnClickListener { changeVelocity(-1) }
-        fView.tv_10L .setOnClickListener { changeVelocity(-10) }
-        fView.tv_100L .setOnClickListener { changeVelocity(-100) }
+        fView.tvP25.setOnClickListener{changeSpeed(0.25F)}
+        fView.tvP5.setOnClickListener{changeSpeed(0.5F)}
+        fView.tvP1.setOnClickListener{changeSpeed(1F)}
+        fView.tvL25.setOnClickListener{changeSpeed(-0.25F)}
+        fView.tvL5.setOnClickListener{changeSpeed(-0.5F)}
+        fView.tvL1.setOnClickListener{changeSpeed(-1F)}
+
+
 
         //skins = NoteSkin.arraySkin(context)
         settingsGameGetter= SettingsGameGetter(requireActivity().applicationContext)
+
+
+        autoVelocity = settingsGameGetter.getValueInt(SettingsGameGetter.AV)
+        ParamsSong.av=autoVelocity
+        ParamsSong.speed = settingsGameGetter.getValueFloat(SettingsGameGetter.SPEED)
+
+        fView.tvAV.text="".plus(autoVelocity)
+
+
         indexNS = ParamsSong.skinIndex
 
 
@@ -69,17 +81,28 @@ class MenuOptionFragment : Fragment() {
         indexNS %= skins.size
         ParamsSong.skinIndex = indexNS
         ParamsSong.nameNoteSkin = skins[indexNS].toString()
-
     }
 
 
+    private fun changeAutoVelocity(plusValue: Int) {
+        autoVelocity += plusValue
 
-    private fun changeVelocity(plusValue: Int) {
-        velocity += plusValue
-        settingsGameGetter.saveSetting(SettingsGameGetter.AV,velocity )
-        ParamsSong.av = 0
-        ParamsSong.speed = velocity
-        infoAV.text = "AV: $velocity"
+        if(autoVelocity<200) autoVelocity= 200
+        if(autoVelocity>1200) autoVelocity= 1200
+        settingsGameGetter.saveSetting(SettingsGameGetter.AV,autoVelocity )
+
+        ParamsSong.av = autoVelocity
+        tvAV.text = "$autoVelocity "
+    }
+
+    private fun changeSpeed(plusValue: Float) {
+        speed += plusValue
+        if(speed<0.25) speed= 0.25f
+        if(speed>10) speed= 10f
+        settingsGameGetter.saveSetting(SettingsGameGetter.SPEED,speed )
+
+        ParamsSong.speed = speed
+        speedValue.text = "$speed"
     }
 
 

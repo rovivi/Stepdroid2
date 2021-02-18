@@ -76,7 +76,7 @@ class DragStepActivity : AppCompatActivity() {
         val gson = Gson()
         saveArrows.setOnClickListener {
             val save = ArrowsPositionPlace()
-            save.size = sizeBar.progress + 50
+            save.size = sizeBar.progress + 50+20
             var positions = ArrayList<Point>()
             arrows.forEach { x ->
                 positions.add(Point(x.x.toInt(), x.y.toInt()))

@@ -3,32 +3,54 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:background="#7F3F51B5"
+    android:layout_height="match_parent"
+    android:background="@color/black_overlay"
     tools:context=".FragmenSongOptions">
 
 
-    <TextView
-        android:id="@+id/tv_1P"
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/SpeedGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
+        app:constraint_referenced_ids="textView11,tvP1,tvP25,tvL5,speedValue,tvL1,tvP5,tvL25" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/AVGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="tv_10L,tv_100L,tv_100P,tv_10P,tv_1L,tvAV,textView4,tv_1P" />
+
+    <TextView
+        android:id="@+id/tv_1P"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/step_1_off"
+        android:fontFamily="@font/karnivol"
         android:text="+1"
+        android:textAlignment="center"
         android:textColor="#ffffff"
         android:textSize="12sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.13"
+        app:layout_constraintHorizontal_bias="0.005"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/textView4"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/tv_100L"
-        android:layout_width="wrap_content"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_1_off"
+        android:fontFamily="@font/karnivol"
         android:text="-100"
+        android:textAlignment="center"
         android:textColor="#ffffff"
         android:textSize="12sp"
         android:textStyle="bold"
@@ -37,63 +59,241 @@
 
     <TextView
         android:id="@+id/tv_1L"
-        android:layout_width="wrap_content"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="32dp"
+        android:background="@color/step_1_off"
+        android:fontFamily="@font/karnivol"
         android:text="-1"
+        android:textAlignment="center"
         android:textColor="#ffffff"
         android:textSize="12sp"
         android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/tv_10L"
         app:layout_constraintTop_toTopOf="@+id/tv_10L" />
 
     <TextView
         android:id="@+id/tv_10P"
-        android:layout_width="wrap_content"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_1_off"
+        android:fontFamily="@font/karnivol"
         android:text="+10"
+        android:textAlignment="center"
         android:textColor="#ffffff"
         android:textSize="12sp"
         android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_1P"
         app:layout_constraintStart_toEndOf="@+id/tv_1P"
         app:layout_constraintTop_toTopOf="@+id/tv_1P" />
 
     <TextView
         android:id="@+id/tv_10L"
-        android:layout_width="wrap_content"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_1_off"
+        android:fontFamily="@font/karnivol"
         android:text="-10"
+        android:textAlignment="center"
         android:textColor="#ffffff"
         android:textSize="12sp"
         android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_100L"
         app:layout_constraintStart_toEndOf="@+id/tv_100L"
         app:layout_constraintTop_toTopOf="@+id/tv_100L" />
 
     <TextView
         android:id="@+id/tv_100P"
-        android:layout_width="wrap_content"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_1_off"
+        android:fontFamily="@font/karnivol"
         android:text="+100"
+        android:textAlignment="center"
         android:textColor="#ffffff"
         android:textSize="12sp"
         android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_10P"
         app:layout_constraintStart_toEndOf="@+id/tv_10P"
         app:layout_constraintTop_toTopOf="@+id/tv_10P" />
 
     <TextView
         android:id="@+id/tvAV"
-        android:layout_width="wrap_content"
+        style="@style/ShadowBlack"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:text="TextView"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:fontFamily="@font/karnivol"
+        android:text="NA"
+        android:textAlignment="textEnd"
         android:textColor="@color/cardview_light_background"
         android:textColorLink="#00BCD4"
+        android:textSize="14sp"
+        android:textStyle="bold|italic"
+        app:layout_constraintBottom_toBottomOf="@+id/textView4"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/textView4"
+        app:layout_constraintTop_toTopOf="@+id/textView4" />
+
+    <TextView
+        android:id="@+id/textView4"
+        style="@style/ShadowBlack"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/karnivol"
+        android:text="Auto Velocity"
+        android:textSize="14sp"
+        android:textStyle="italic"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_100P" />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView11"
+        style="@style/ShadowBlack"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="76dp"
+        android:fontFamily="@font/karnivol"
+        android:text="Speed"
+        android:textSize="14sp"
+        android:textStyle="italic"
+        app:layout_constraintEnd_toEndOf="@+id/textView4"
+        app:layout_constraintStart_toStartOf="@+id/textView4"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView13"
+        style="@style/ShadowBlack"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/karnivol"
+        android:text="Judment - Rush - Skins"
+        android:textSize="14sp"
+        android:textStyle="italic"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/textView11"
+        app:layout_constraintTop_toBottomOf="@+id/tvP25" />
+
+    <TextView
+        android:id="@+id/tvP25"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/step_7_off"
+        android:fontFamily="@font/karnivol"
+        android:text="+0.25"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="@+id/tv_1P"
+        app:layout_constraintTop_toBottomOf="@+id/textView11" />
+
+    <TextView
+        android:id="@+id/tvP5"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_7_off"
+        android:fontFamily="@font/karnivol"
+        android:text="+0.5"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tvP25"
+        app:layout_constraintStart_toEndOf="@+id/tvP25"
+        app:layout_constraintTop_toTopOf="@+id/tvP25" />
+
+    <TextView
+        android:id="@+id/tvP1"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_7_off"
+        android:fontFamily="@font/karnivol"
+        android:text="+1"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tvP5"
+        app:layout_constraintStart_toEndOf="@+id/tvP5"
+        app:layout_constraintTop_toTopOf="@+id/tvP5" />
+
+    <TextView
+        android:id="@+id/tvL5"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_7_off"
+        android:fontFamily="@font/karnivol"
+        android:text="-0.5"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tvL1"
+        app:layout_constraintStart_toEndOf="@+id/tvL1"
+        app:layout_constraintTop_toTopOf="@+id/tvL1" />
+
+    <TextView
+        android:id="@+id/tvL25"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_7_off"
+        android:fontFamily="@font/karnivol"
+        android:text="-0.25"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tvL5"
+        app:layout_constraintStart_toEndOf="@+id/tvL5"
+        app:layout_constraintTop_toTopOf="@+id/tvL5"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/tvL1"
+        style="@style/ShadowBlack"
+        android:layout_width="38sp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@color/step_7_off"
+        android:fontFamily="@font/karnivol"
+        android:text="-1"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tvP1"
+        app:layout_constraintStart_toEndOf="@+id/tvP1"
+        app:layout_constraintTop_toTopOf="@+id/tvP1" />
+
+    <TextView
+        android:id="@+id/speedValue"
+        style="@style/ShadowBlack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/karnivol"
+        android:text="NA"
+        android:textSize="14sp"
+        android:textStyle="italic"
+        app:layout_constraintBottom_toBottomOf="@+id/textView11"
+        app:layout_constraintEnd_toEndOf="@+id/tvAV"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/textView11"
+        app:layout_constraintTop_toTopOf="@+id/textView11" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

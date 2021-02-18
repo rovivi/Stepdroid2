@@ -52,16 +52,8 @@ class EvaluationActivity : AppCompatActivity() {
         soundPullTick = soundPool.load(applicationContext, R.raw.grade_tick, 1)
 
 
-        //setFonts
-        val customFont = Typeface.createFromAsset(applicationContext.assets, "fonts/karnivol.ttf")
-        result_Perfect.typeface = customFont
-        result_Great.typeface = customFont
-        result_good.typeface = customFont
-        result_bad.typeface = customFont
-        result_miss.typeface = customFont
-        result_max_combo.typeface = customFont
-        result_total_score.typeface = customFont
-
+        //
+        exitButton.setOnClickListener { finish() }
 
         level_view_rank.layoutManager = LinearLayoutManager(
             this,
