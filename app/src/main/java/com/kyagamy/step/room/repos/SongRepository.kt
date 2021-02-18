@@ -10,12 +10,18 @@ class SongRepository(private val songDao: SongDao) {
     // Room executes all queries on a separate thread.
     // Observed LiveData will notify the observer when the data has changed.
     val allSong: LiveData<List<Song>> = songDao.getAll()
-    fun  categorySong (nameCategory: String):LiveData<List<Song>> {
+
+
+    fun  songByCategory (nameCategory: String):LiveData<List<Song>> {
         return  songDao.getCategory(nameCategory)
     }
 
-    fun  songByCategory (nameCategory: String):LiveData<List<Song>> {
-        return  songDao.getByCategory(nameCategory)
+    fun  songByCategoryAuthor (nameCategory: String):LiveData<List<Song>> {
+        return  songDao.getCategoryByAuthor(nameCategory)
+    }
+
+    fun  songByBPM (nameCategory: String):LiveData<List<Song>> {
+        return  songDao.getCategoryBPM(nameCategory)
     }
 
 
@@ -26,7 +32,6 @@ class SongRepository(private val songDao: SongDao) {
     fun  songBySongType(nameCategory: String):LiveData<List<Song>> {
         return  songDao.getBySongType(nameCategory)
     }
-
 
     fun  idSong (id:Int):LiveData<List<Song>> {
         return  songDao.loadAllByIds(id)

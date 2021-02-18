@@ -81,6 +81,8 @@ class CategoryFragament : Fragment() {
             words?.let { adapter.setSongs(it) }
         })
 
+
+
         val mainActivity = activity as MainActivity
 
 

@@ -124,8 +124,7 @@ private int NON_USE = -999;
     public void draw(Canvas canvas, ArrayList<GameRow> listRow) {
 
         //List position
-        int[] lastPositionDraw = {NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE};
-
+        int[] lastPositionDraw = {NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE,NON_USE};
 
         int startValueY = (int) (sizeNote * 0.7);
 

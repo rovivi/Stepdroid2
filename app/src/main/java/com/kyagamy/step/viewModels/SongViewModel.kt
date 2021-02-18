@@ -37,13 +37,19 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
         repository.deleteAll()
     }
 
-    fun categorySong(nameCategory: String): LiveData<List<Song>> {
-        return repository.categorySong(nameCategory)
-    }
 
     fun songByCategory(nameCategory: String): LiveData<List<Song>> {
         return repository.songByCategory(nameCategory)
     }
+
+    fun songByCategoryAuthor(nameCategory: String): LiveData<List<Song>> {
+        return repository.songByCategoryAuthor(nameCategory)
+    }
+
+    fun songByCategoryBPM(nameCategory: String): LiveData<List<Song>> {
+        return repository.songByBPM(nameCategory)
+    }
+
 
     fun songByGenre(nameCategory: String): LiveData<List<Song>> {
         return repository.songByGenre(nameCategory)

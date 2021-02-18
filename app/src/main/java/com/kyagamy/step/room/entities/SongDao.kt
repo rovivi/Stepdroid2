@@ -20,9 +20,14 @@ interface SongDao {
     @Query("SELECT * FROM Song where SONGTYPE like:filter order  By TITLE asc")
     fun getBySongType(filter:String): LiveData<List<Song>>
 
-
     @Query("SELECT * FROM Song where catecatecate like :categoryName order By TITLE asc")
     fun getCategory(categoryName: String ): LiveData<List<Song>>
+
+    @Query("SELECT * FROM Song where catecatecate like :categoryName order By ARTIST asc")
+    fun getCategoryByAuthor(categoryName: String ): LiveData<List<Song>>
+
+    @Query("SELECT * FROM Song where catecatecate like :categoryName order By DISPLAYBPM asc")
+    fun getCategoryBPM(categoryName: String ): LiveData<List<Song>>
 
 //    @Query("SELECT * FROM Song")
 //    fun getList(): MutableLiveData<ArrayList<Song>>

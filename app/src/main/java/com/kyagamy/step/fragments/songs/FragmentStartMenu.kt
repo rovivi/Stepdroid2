@@ -344,12 +344,17 @@ class FragmentStartMenu : DialogFragment() {
         releaseMediaPlayer()
         val audio = File(song.PATH_SONG + "/" + song.MUSIC)
         val duration = song.SAMPLELENGTH * 1000 + 3000
-        mediaPlayer = MediaPlayer()
-        mediaPlayer!!.setVolume(1f, 1f)
-        mediaPlayer!!.setDataSource(audio.path)
-        mediaPlayer!!.prepare()
-        mediaPlayer!!.seekTo(song.SAMPLESTART.toInt() * 1000)
-        mediaPlayer!!.start()
+        try {
+
+            mediaPlayer = MediaPlayer()
+            mediaPlayer!!.setVolume(1f, 1f)
+            mediaPlayer!!.setDataSource(audio.path)
+            mediaPlayer!!.prepare()
+            mediaPlayer!!.seekTo(song.SAMPLESTART.toInt() * 1000)
+            mediaPlayer!!.start()
+
+        } catch (ex: Exception) {
+        }
 
         while (mediaPlayer != null) {
             try {

@@ -18,6 +18,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : FullScreenActivity() {
 
+    private lateinit var fragmentCategory: CategoryFragament
     private lateinit var text: TextView
     private lateinit var button: Button
     private var positionCategory = 2
@@ -31,6 +32,9 @@ class MainActivity : FullScreenActivity() {
             WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
         setContentView(R.layout.activity_main)
+        fragmentCategory = CategoryFragament.newInstance(positionCategory)
+
+
         showFragmentCategory()
 
         //video
@@ -77,9 +81,8 @@ class MainActivity : FullScreenActivity() {
     }
 
 
-    private fun showFragmentCategory() {
+    fun showFragmentCategory() {
         val transaction = manager.beginTransaction()
-        val fragmentCategory = CategoryFragament.newInstance(positionCategory)
         transaction.setCustomAnimations(R.anim.fragment_fade_enter, R.anim.fragment_fade_exit)
         transaction.replace(R.id.fragment_holder, fragmentCategory)
         transaction.addToBackStack(null)
@@ -89,7 +92,7 @@ class MainActivity : FullScreenActivity() {
     private fun showFragmentSongList(category: String) {
         val transaction = manager.beginTransaction()
         val fragment = SongsList.newInstance(category, "")
-        transaction.setCustomAnimations(R.anim.fragment_fade_enter, R.anim.fragment_fade_exit)
+        transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
         transaction.replace(R.id.fragment_holder, fragment)
         transaction.addToBackStack("changetocategory")
         transaction.commit()
@@ -100,4 +103,7 @@ class MainActivity : FullScreenActivity() {
         Toast.makeText(this, "value:${category}", Toast.LENGTH_SHORT).show()
         showFragmentSongList(category)
     }
+
+
+
 }

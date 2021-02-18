@@ -34,7 +34,7 @@ class  SongAdapter internal constructor(
     inner class songViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleItemView: TextView = itemView.findViewById(R.id.songNameAdapter)
         val index: TextView = itemView.findViewById(R.id.index)
-
+        val bpm: TextView=itemView.findViewById(R.id.tvBpm)
         val descriptionItemView: TextView = itemView.findViewById(R.id.songDescriptionAdapter)
         val imageItemView: ImageView = itemView.findViewById(R.id.banner_song_adapter)
         val levelRecyclerView :RecyclerView=  itemView.findViewById(R.id.levelRV)
@@ -67,6 +67,7 @@ class  SongAdapter internal constructor(
         val current = songs[position]
         holder.titleItemView.text = current.TITLE
         holder.descriptionItemView.text =current.ARTIST
+        holder.bpm.text="BPM: ${current.DISPLAYBPM}"
         holder.index.text= (position+1).toString().plus("/").plus(songs.size)
         val  f = File(current.PATH_SONG + "/" + current.BANNER_SONG)
         Picasso.get().load(f).resize(250, 160).centerInside().into(holder.imageItemView);
