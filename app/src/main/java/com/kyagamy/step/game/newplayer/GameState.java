@@ -109,7 +109,9 @@ public class GameState {
             currentBeat += entry.get(1);
             double metaBeat = effectBeat + entry.get(1);
             while (steps.get(currentElement).getCurrentBeat() < metaBeat) {
+                steps.get(currentElement).setHasPressed(true);
                 currentElement++;
+                steps.get(currentElement).setHasPressed(true);
                 checkEffects();
                 if (CommonSteps.Companion.almostEqual(metaBeat, steps.get(currentElement).getCurrentBeat())) {
                 }

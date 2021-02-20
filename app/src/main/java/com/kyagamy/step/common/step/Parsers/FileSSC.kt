@@ -215,7 +215,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         }
         //se añadie un ultimo row para que finalize
         var lastRow = GameRow()
-        lastRow.currentBeat=currentBeat+5
+        lastRow.currentBeat=currentBeat+120
         listGameRow.add(lastRow)
         return listGameRow
     }

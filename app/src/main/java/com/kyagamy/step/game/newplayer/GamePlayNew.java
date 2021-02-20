@@ -261,7 +261,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             ArrayList<GameRow> list = new ArrayList<>();
             int initialIndex = 0;
             if (gameState.isRunning) {
-                    drawStats(canvas);
+                 //   drawStats(canvas);
                 for (int x = 0; (gameState.currentElement + x) >= 0 && lastScrollAux != 0; x--) {
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
                     double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
@@ -312,11 +312,15 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             bar.update();
         }
         //se va actualizar una vez el audio
-        double diff = ((gameState.currentSecond/100d)-gameState.offset-mpMusic.getCurrentPosition()/1000d);
-        if (diff>=Math.abs(0.04d) && !mpUpdated &&gameState.isRunning && mpMusic.isPlaying()){
-            gameState.currentBeat-=Common.Companion.second2Beat(diff,gameState.BPM);
-            gameState.currentSecond-=diff*100;
-            mpUpdated=true;
+        if (!mpUpdated){
+            double diff = ((gameState.currentSecond/100d)-gameState.offset-mpMusic.getCurrentPosition()/1000d);
+            if (Math.abs(diff)<0.001){ mpUpdated=true;}
+
+            if (diff>=Math.abs(0.04d) && !mpUpdated &&gameState.isRunning && mpMusic.isPlaying()){
+                gameState.currentBeat-=Common.Companion.second2Beat(diff,gameState.BPM);
+                gameState.currentSecond-=diff*100;
+                //mpUpdated=true;
+            }
         }
 
     }

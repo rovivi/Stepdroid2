@@ -4,6 +4,8 @@
     <!-- Required to access Google Play Licensing -->
     <uses-permission android:name="com.android.vending.CHECK_LICENSE" /> <!-- Required to download files from Google Play -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--
          Required to keep CPU alive while downloading files
@@ -20,6 +22,7 @@
     <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+
     <application
         android:allowBackup="true"
         android:configChanges="orientation|screenSize"
@@ -28,15 +31,14 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:installLocation="preferExternal"
         android:theme="@style/AppTheme">
-
+        <activity android:name=".DownloadUpdateFiles"></activity>
         <activity android:name=".game.newplayer.EvaluationActivity">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+                <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
             </intent-filter>
-
         </activity>
         <activity android:name=".DragStepActivity" />
         <activity
@@ -56,9 +58,10 @@
         </activity>
         <activity android:name=".MainActivity" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".PlayerBga"
             android:keepScreenOn="true"
-            android:screenOrientation="fullSensor" />
+             />
 
         <meta-data
             android:name="preloaded_fonts"

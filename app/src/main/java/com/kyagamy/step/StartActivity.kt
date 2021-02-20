@@ -20,12 +20,12 @@ class StartActivity : FullScreenActivity() {
         val intentSongList = Intent(this, MainActivity::class.java)
         val intent = Intent(this, LoadingSongActivity::class.java)
         val intentDrag = Intent(this, DragStepActivity::class.java)
-        this.button_start.setOnClickListener {
-            startActivity(intentSongList)
-        }
-        this.dragStartButton.setOnClickListener {
-            startActivity(intentDrag)
-        }
+        val intentDS = Intent(this, DownloadUpdateFiles::class.java)
+        this.button_start.setOnClickListener { startActivity(intentSongList) }
+        this.dragStartButton.setOnClickListener { startActivity(intentDrag) }
+        reloadSings.setOnClickListener {  startActivity(intent) }
+        buttonDS.setOnClickListener { startActivity(intentDS) }
+
         //Se valida el permission
         val permissionListener: PermissionListener = object : PermissionListener {
             override fun onPermissionGranted() {
@@ -73,6 +73,8 @@ class StartActivity : FullScreenActivity() {
             // Toast
             // startActivity(intent)
         }
+
+
     }
 
 
