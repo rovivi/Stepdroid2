@@ -130,11 +130,11 @@ class PlayerBga : Activity() {
                     inputs
                 )
 
-                Evaluator.songName = step.songMetada["TITLE"].toString()
+                Evaluator.songName = step.songMetadata["TITLE"].toString()
                 val bgPad =
-                    BitmapFactory.decodeFile(step.path + File.separator + step.songMetada["BACKGROUND"])
+                    BitmapFactory.decodeFile(step.path + File.separator + step.songMetadata["BACKGROUND"])
                 if (bg_pad != null && bgPad != null) {
-                    Evaluator.imagePath = step.path + File.separator + step.songMetada["BACKGROUND"]
+                    Evaluator.imagePath = step.path + File.separator + step.songMetadata["BACKGROUND"]
                     Evaluator.bitmap = TransformBitmap.doBrightness(bgPad, -60)
                     bg_pad.setImageBitmap(TransformBitmap.myblur(bgPad, this)?.let {
                         doBrightness(

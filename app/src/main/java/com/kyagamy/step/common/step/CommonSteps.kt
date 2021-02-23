@@ -44,7 +44,7 @@ public class CommonSteps {
         }
 
         fun beatToSecond(value: Double, BPM: Double): Double {
-            return value / BPM*60
+            return value / BPM * 60
         }
 
         fun secondToBeat(value: Double, BPM: Double): Double {
@@ -71,31 +71,60 @@ public class CommonSteps {
             return len
         }
 
+
+        fun getModifiersSM(data: String): ArrayList<ArrayList<Double>> {
+            val list: ArrayList<ArrayList<Double>> = ArrayList()
+            val elements = data.replace("\r", "").replace("\n", "").split(",")
+            elements.forEach { e ->
+                val currentItem: ArrayList<Double> = ArrayList()
+                val params = e.split("=")
+                params.forEach { x ->
+                    currentItem.add(x.toDouble())
+                }
+                list.add(currentItem)
+            }
+            return list
+        }
+
+
+        fun getFirstBPM(data: String): Double {
+            var modifiers = getModifiersSM(data)
+            try {
+                return modifiers[0][1]
+            } catch (ex: Exception) {
+                Log.e("stepdroid", ex.message)
+                throw  ex
+            }
+            return 0.0
+        }
+
+
         fun applyLongNotes(steps: ArrayList<GameRow>, len: Int) {
             try {
                 var currentTickCount = 2.0
-                var intialTickCount=2.0
+                var intialTickCount = 2.0
                 var i = 0
                 while (i < steps.size) {
                     val row = steps[i]
                     if (row.modifiers?.get("TICKCOUNTS") != null)
-                        intialTickCount  = row.modifiers!!["TICKCOUNTS"]!![1]
+                        intialTickCount = row.modifiers!!["TICKCOUNTS"]!![1]
                     if (row.notes != null) {
                         for (j in 0 until row.notes!!.size) {
-                            currentTickCount=intialTickCount+0.00000001
+                            currentTickCount = intialTickCount + 0.00000001
                             if (row.notes!![j].type == NOTE_LONG_START) {
                                 val beatLimit = row.notes!![j].rowEnd?.currentBeat
                                 var beatLong = row.currentBeat
 
                                 try {
-                                    while (beatLong <= beatLimit ?:0.0) {//prevent infinite loop
+                                    while (beatLong <= beatLimit ?: 0.0) {//prevent infinite loop
                                         beatLong += (1.0 / currentTickCount)//currentTickCount
-                                        val newRowAux = steps.firstOrNull { findRow ->//find row correspondent
-                                            almostEqual(
-                                                beatLong,
-                                                findRow.currentBeat
-                                            )
-                                        }
+                                        val newRowAux =
+                                            steps.firstOrNull { findRow ->//find row correspondent
+                                                almostEqual(
+                                                    beatLong,
+                                                    findRow.currentBeat
+                                                )
+                                            }
                                         if (newRowAux == null) {//case does't exist row
                                             val newNote =
                                                 Note.CloneNote(row.notes!![j])//Se crea una nueva nota que tiene los mismos parametros que la de entrada

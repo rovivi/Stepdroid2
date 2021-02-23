@@ -16,6 +16,7 @@ import com.kyagamy.step.viewModels.CategoryViewModel
 import com.kyagamy.step.viewModels.LevelViewModel
 import com.kyagamy.step.viewModels.SongViewModel
 import kotlinx.android.synthetic.main.activity_loading_song.*
+import kotlinx.android.synthetic.main.content_loading_song.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -69,20 +70,13 @@ class LoadingSongActivity : AppCompatActivity() {
         songsModel.deleteAll()
         levelModel.deleteAll()
 
-
         //add default categorysogs hardCoded needed NO
-
-
 //        val category = Category(
 //            cate.name,
 //            cate.path,
 //            if (banner.exists()) banner.path else null,
 //            if (sound.exists()) sound.path else null
 //        )
-
-
-
-
 
         var songId = 1
 
@@ -109,14 +103,15 @@ class LoadingSongActivity : AppCompatActivity() {
                 var hasSong = false
                 var count = 0
                 val listFilesCategory =cate.listFiles()
+
+                textViewCategory.text= cate.name
                 listFilesCategory ?.filter { x -> x.isDirectory }?.forEach { subFolder ->
                     run {
                         text.text = subFolder.name
                         val fileSong = subFolder.listFiles()
-                        val songFile = fileSong.filter { ssc ->
+                        val songFile = fileSong.firstOrNull { ssc ->
                             ssc.name.toLowerCase().endsWith("ssc")
-                        }.firstOrNull()
-
+                        }
                         if (songFile != null && songFile.isFile) {
                             hasSong = true
                             try {
@@ -127,24 +122,24 @@ class LoadingSongActivity : AppCompatActivity() {
                                 val parsedFile = stepFileLoaded.parseData(true)
                                 val song = Song(
                                     songId++,
-                                    parsedFile.songMetada["TITLE"] ?: "",
-                                    parsedFile.songMetada["SUBTITLE"] ?: "",
-                                    parsedFile.songMetada["ARTIST"] ?: "",
-                                    parsedFile.songMetada["BANNER"] ?: "",
-                                    parsedFile.songMetada["BACKGROUND"] ?: "",
-                                    parsedFile.songMetada["CDIMAGE"] ?: "",
-                                    parsedFile.songMetada["CDTITLE"] ?: "",
-                                    parsedFile.songMetada["MUSIC"] ?: "",
-                                    parsedFile.songMetada["SAMPLESTART"]?.toDouble()!!,
-                                    parsedFile.songMetada["SAMPLELENGTH"]?.toDouble()!!,
-                                    parsedFile.songMetada["SONGTYPE"] ?: "",
-                                    parsedFile.songMetada["SONGCATEGORY"] ?: "",
-                                    parsedFile.songMetada["VERSION"] ?: "",
+                                    parsedFile.songMetadata["TITLE"] ?: "",
+                                    parsedFile.songMetadata["SUBTITLE"] ?: "",
+                                    parsedFile.songMetadata["ARTIST"] ?: "",
+                                    parsedFile.songMetadata["BANNER"] ?: "",
+                                    parsedFile.songMetadata["BACKGROUND"] ?: "",
+                                    parsedFile.songMetadata["CDIMAGE"] ?: "",
+                                    parsedFile.songMetadata["CDTITLE"] ?: "",
+                                    parsedFile.songMetadata["MUSIC"] ?: "",
+                                    parsedFile.songMetadata["SAMPLESTART"]?.toDouble()!!,
+                                    parsedFile.songMetadata["SAMPLELENGTH"]?.toDouble()!!,
+                                    parsedFile.songMetadata["SONGTYPE"] ?: "",
+                                    parsedFile.songMetadata["SONGCATEGORY"] ?: "",
+                                    parsedFile.songMetadata["VERSION"] ?: "",
                                     subFolder.path,
                                     songFile.path,
-                                    parsedFile.songMetada["GENRE"] ?: "",
-                                    parsedFile.songMetada["PREVIEWVID"] ?: "",
-                                    parsedFile.songMetada["DISPLAYBPM"] ?: "",
+                                    parsedFile.songMetadata["GENRE"] ?: "",
+                                    parsedFile.songMetadata["PREVIEWVID"] ?: "",
+                                    parsedFile.getDisplayBPM().toString(),
                                     category.name,
                                     category
                                 )

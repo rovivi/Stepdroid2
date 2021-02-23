@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
                 )
                     // Wipes and rebuilds instead of migrating if no Migration object.
                     // Migration is not part of this codelab.
+                    .allowMainThreadQueries()
                     .fallbackToDestructiveMigration()
                     .addCallback(SDDatabaseCallback(scope))
                     .build()

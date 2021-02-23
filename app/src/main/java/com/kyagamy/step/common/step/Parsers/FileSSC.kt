@@ -2,6 +2,7 @@ package com.kyagamy.step.common.step.Parsers
 
 
 import com.kyagamy.step.common.step.CommonSteps
+import com.kyagamy.step.common.step.CommonSteps.Companion.getModifiersSM
 import com.kyagamy.step.room.entities.Level
 import com.kyagamy.step.common.step.Game.GameRow
 import game.Note
@@ -24,7 +25,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         val levelMetaData: HashMap<String, String> = HashMap()
         val modifiers: HashMap<String, ArrayList<ArrayList<Double>>> = HashMap()
         val stepObject = StepObject()
-        stepObject.levelMetada = HashMap()
+        stepObject.levelMetadata = HashMap()
         var steps: ArrayList<GameRow> = arrayListOf()
 
         //new variables tos save room orm
@@ -55,7 +56,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                         "NOTES" -> steps = processNotes(value)
                         "STEPSTYPE" -> stepObject.stepType = value
                         "BPMS", "STOPS", "DELAYS", "WARPS", "TIMESIGNATURES", "TICKCOUNTS", "COMBOS", "SPEEDS", "SCROLLS" -> {
-                            if (value != "") modifiers[key] = fillModifiers(value)
+                            if (value != "") modifiers[key] = getModifiersSM(value)
                         }
                         else -> {
                             levelMetaData[key] = value
@@ -64,7 +65,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                     -1 -> {
                         when (key) {//Si se tienen effectos globales
                             "BPMS", "STOPS", "DELAYS", "WARPS", "TIMESIGNATURES", "TICKCOUNTS", "COMBOS", "SPEEDS", "SCROLLS" ->
-                                if (value != "") modifiers[key] = fillModifiers(value)
+                                if (value != "") modifiers[key] = getModifiersSM(value)
                             else -> songMetaData[key] = value
                         }
                     }
@@ -110,8 +111,8 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                     null
                 )
             )
+        } catch (ex: Exception) {
         }
-        catch (ex:Exception){}
 
         /**End Parsing */
         /**Start Setting effects*/
@@ -157,29 +158,16 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
 
         CommonSteps.stopsToScroll(steps)//Se aplican los stops
         CommonSteps.orderByBeat(steps)
-        steps.filter { x -> x.notes != null }.forEach { x -> println(x.toString()) }
+        // steps.filter { x -> x.notes != null }.forEach { x -> println(x.toString()) }
         stepObject.steps = steps
         /**End Apply effects*/
-        stepObject.songMetada = songMetaData
-        stepObject.levelMetada = levelMetaData
-        stepObject.levelList =listLevels
+        stepObject.songMetadata = songMetaData
+        stepObject.levelMetadata = levelMetaData
+        stepObject.levelList = listLevels
         //stepObject.steps.forEach { x -> println(x) }
         return stepObject
     }
 
-    private fun fillModifiers(data: String): ArrayList<ArrayList<Double>> {
-        val list: ArrayList<ArrayList<Double>> = ArrayList()
-        val elements = data.replace("\r", "").replace("\n", "").split(",")
-        elements.forEach { e ->
-            val currentItem: ArrayList<Double> = ArrayList()
-            val params = e.split("=")
-            params.forEach { x ->
-                currentItem.add(x.toDouble())
-            }
-            list.add(currentItem)
-        }
-        return list
-    }
 
     private fun processNotes(notes: String): ArrayList<GameRow> {
         val data = notes.replace(" ", "").replace("\n\n", "\n")
@@ -196,18 +184,18 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
                     gameRow.currentBeat = currentBeat
 
                     //scan form game row
-                    gameRow.notes?.forEachIndexed { index,note ->
+                    gameRow.notes?.forEachIndexed { index, note ->
                         run {
-                        if (note.type ==CommonSteps.NOTE_LONG_START){
-                            auxLongRow[index]=gameRow
+                            if (note.type == CommonSteps.NOTE_LONG_START) {
+                                auxLongRow[index] = gameRow
+                            } else if (note.type == CommonSteps.NOTE_LONG_END) {
+                                //set first start note end
+                                auxLongRow[index]?.notes?.get(index)?.rowEnd = gameRow
+                                note.rowOrigin = auxLongRow[index]
+                                auxLongRow[index] = null
+                            }
                         }
-                        else if (note.type ==CommonSteps.NOTE_LONG_END){
-                            //set first start note end
-                            auxLongRow[index]?.notes?.get(index)?.rowEnd =gameRow
-                            note.rowOrigin =auxLongRow[index]
-                            auxLongRow[index]=null
-                        }
-                    }}
+                    }
                     listGameRow.add(gameRow)
                 }
                 currentBeat += 4.0 / blockSize
@@ -215,7 +203,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         }
         //se añadie un ultimo row para que finalize
         var lastRow = GameRow()
-        lastRow.currentBeat=currentBeat+120
+        lastRow.currentBeat = currentBeat + 120
         listGameRow.add(lastRow)
         return listGameRow
     }
