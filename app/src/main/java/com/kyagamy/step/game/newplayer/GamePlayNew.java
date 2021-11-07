@@ -74,6 +74,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     //TEST
 
      boolean mpUpdated=false;
+        private double avAuxValue =100;
 //    public InputStream IS;
 //    public BufferedInputStream BIS;
 //    public DataInputStream DIS;
@@ -191,7 +192,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 //
 //            DIS .close();
 
-
+//AV
+            avAuxValue=stepData.getDisplayBPM();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -253,15 +255,15 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 
         try {
             //speed calc
-            double avAuxValue = (gameState.initialBPM); //example BPM 200 ;
-            speed = (int) (stepsDrawer.sizeNote / avAuxValue * ParamsSong.av);//580 av
+         //   avAuxValue = (gameState.initialBPM); //example BPM 200 ;
+            speed = (int) ((int) (stepsDrawer.sizeNote / avAuxValue * ParamsSong.av)*0.9f)  ;//580 av
             double lastScrollAux = gameState.lastScroll;
             double lastBeat = this.gameState.currentBeat + 0;
             double lastPosition = stepsDrawer.sizeNote * 0.7;
             ArrayList<GameRow> list = new ArrayList<>();
             int initialIndex = 0;
             if (gameState.isRunning) {
-                 //   drawStats(canvas);
+                    drawStats(canvas);
                 for (int x = 0; (gameState.currentElement + x) >= 0 && lastScrollAux != 0; x--) {
                     GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
                     double diffBeats = currentElemt.getCurrentBeat() - lastBeat;

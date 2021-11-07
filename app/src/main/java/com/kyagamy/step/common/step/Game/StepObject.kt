@@ -84,7 +84,6 @@ class StepObject {
         } catch (ex: Exception) {
 
         }
-
         try {
             if (songMetadata["BPMS"] != null)
                 return getFirstBPM(songMetadata["BPMS"].toString())
@@ -97,8 +96,7 @@ class StepObject {
         } catch (ex: Exception) {
             Log.e("STEPDROID", ex.stackTraceToString())
         }
-        return -1500.0
-
+        return 120.0
     }
 
 }

@@ -36,7 +36,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         //Se limpian los comen
         // tarios
         stringData =
-            stringData.replace(Regex("(\\s+//-([^;]+)\\s)|(//[\\s+]measure\\s[0-9]+\\s)"), "")
+                stringData.replace(Regex("(\\s+//-([^;]+)\\s)|(//[\\s+]measure\\s[0-9]+\\s)"), "")
 
         //Se crea el matcher Para Seccionar el Regex
         val matcher = Pattern.compile("#([^;]+);").matcher(stringData)
