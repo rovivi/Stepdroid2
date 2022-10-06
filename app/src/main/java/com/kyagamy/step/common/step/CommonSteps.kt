@@ -92,7 +92,7 @@ public class CommonSteps {
             try {
                 return modifiers[0][1]
             } catch (ex: Exception) {
-                Log.e("stepdroid", ex.message)
+                ex.message?.let { Log.e("stepdroid", it) }
                 throw  ex
             }
             return 0.0

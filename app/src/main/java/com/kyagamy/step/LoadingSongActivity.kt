@@ -9,14 +9,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.kyagamy.step.common.Common
 import com.kyagamy.step.common.step.Parsers.FileSSC
+import com.kyagamy.step.databinding.ActivityLoadingSongBinding
 import com.kyagamy.step.room.entities.Category
 import com.kyagamy.step.room.entities.Level
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.viewModels.CategoryViewModel
 import com.kyagamy.step.viewModels.LevelViewModel
 import com.kyagamy.step.viewModels.SongViewModel
-import kotlinx.android.synthetic.main.activity_loading_song.*
-import kotlinx.android.synthetic.main.content_loading_song.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -24,6 +23,7 @@ import java.io.FileInputStream
 import java.lang.Exception
 
 class LoadingSongActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityLoadingSongBinding
     private lateinit var songsModel: SongViewModel
     private lateinit var categoryModel: CategoryViewModel
     private lateinit var levelModel: LevelViewModel
@@ -32,10 +32,10 @@ class LoadingSongActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_loading_song)
-        setSupportActionBar(toolbar)
-        songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
-        categoryModel = ViewModelProvider(this).get(CategoryViewModel::class.java)
-        levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
+        setSupportActionBar(binding.toolbar)
+        songsModel = ViewModelProvider(this)[SongViewModel::class.java]
+        categoryModel = ViewModelProvider(this)[CategoryViewModel::class.java]
+        levelModel = ViewModelProvider(this)[LevelViewModel::class.java]
 
         text = findViewById(R.id.textViewSong)
         lifecycleScope.launch {
@@ -103,8 +103,8 @@ class LoadingSongActivity : AppCompatActivity() {
                 var hasSong = false
                 var count = 0
                 val listFilesCategory =cate.listFiles()
-
-                textViewCategory.text= cate.name
+                //binding.textViewCategory
+                //binding.textViewCategory.text= cate.name
                 listFilesCategory ?.filter { x -> x.isDirectory }?.forEach { subFolder ->
                     run {
                         text.text = subFolder.name

@@ -6,33 +6,33 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.downloader.PRDownloader
-import com.downloader.PRDownloaderConfig
-import com.liulishuo.filedownloader.BaseDownloadTask
-import com.liulishuo.filedownloader.FileDownloadListener
-import com.liulishuo.filedownloader.FileDownloader
-import kotlinx.android.synthetic.main.activity_download_update_files.*
+//import com.downloader.PRDownloader
+//import com.downloader.PRDownloaderConfig
+//import com.liulishuo.filedownloader.BaseDownloadTask
+//import com.liulishuo.filedownloader.FileDownloadListener
+//import com.liulishuo.filedownloader.FileDownloader
+
 
 
 class DownloadUpdateFiles : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_download_update_files)
-        this.DownloadButton.setOnClickListener { download() }
+        //this.DownloadButton.setOnClickListener { download() }
 
-        FileDownloader.setupOnApplicationOnCreate(application)
-        FileDownloader.setup(this)
-        //PRDownloader.initialize(applicationContext);
-
-
-// Setting timeout globally for the download network requests:
-
-// Setting timeout globally for the download network requests:
-        val config = PRDownloaderConfig.newBuilder()
-            .setReadTimeout(30000)
-            .setConnectTimeout(15000)
-            .build()
-        PRDownloader.initialize(applicationContext, config)
+//        FileDownloader.setupOnApplicationOnCreate(application)
+//        FileDownloader.setup(this)
+//        //PRDownloader.initialize(applicationContext);
+//
+//
+//// Setting timeout globally for the download network requests:
+//
+//// Setting timeout globally for the download network requests:
+//        val config = PRDownloaderConfig.newBuilder()
+//            .setReadTimeout(30000)
+//            .setConnectTimeout(15000)
+//            .build()
+//        PRDownloader.initialize(applicationContext, config)
 
     }
 

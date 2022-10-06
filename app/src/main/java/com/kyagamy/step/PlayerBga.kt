@@ -30,12 +30,12 @@ import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_HOLD_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_UNPRESSED
 import com.kyagamy.step.common.step.Parsers.FileSSC
+import com.kyagamy.step.databinding.ActivityPlayerbgaBinding
 import com.kyagamy.step.game.newplayer.EvaluationActivity
 import com.kyagamy.step.game.newplayer.Evaluator
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.kyagamy.step.game.newplayer.StepsDrawer
 import com.squareup.picasso.Picasso
-import kotlinx.android.synthetic.main.activity_playerbga.*
 import java.io.File
 import java.io.FileInputStream
 import java.util.*
@@ -43,6 +43,8 @@ import kotlin.collections.ArrayList
 
 
 class PlayerBga : Activity() {
+    private lateinit var binding :ActivityPlayerbgaBinding
+    
     var hilo: MainThreadNew? = null
     var i: Intent? = null
     var audio: AudioManager? = null
@@ -69,15 +71,15 @@ class PlayerBga : Activity() {
         setContentView(R.layout.activity_playerbga)
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
-        hilo = this.gamePlay?.mainTread
+        hilo = this.binding.gamePlay?.mainTread
         i = Intent(this, EvaluationActivity::class.java)
         val sharedPref = this.getSharedPreferences(
             getString(R.string.singleArrowsPos), Context.MODE_PRIVATE
         )
         val pathImg = intent.extras!!.getString("pathDisc", null)
-        if (bg_pad != null)
-            if (pathImg != null) Picasso.get().load(File(pathImg)).into(bg_pad)
-        videoViewBGA.setOnPreparedListener { mp: MediaPlayer ->
+        if (binding.bgPad != null)
+            if (pathImg != null) Picasso.get().load(File(pathImg)).into(binding.bgPad)
+        binding.videoViewBGA.setOnPreparedListener { mp: MediaPlayer ->
             mp.isLooping = true
             mp.setVolume(0f, 0f)
         }
@@ -92,7 +94,7 @@ class PlayerBga : Activity() {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     override fun onStart() {
         super.onStart()
-        gamePlay!!.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
+        binding.gamePlay!!.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
                 or View.SYSTEM_UI_FLAG_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -121,8 +123,8 @@ class PlayerBga : Activity() {
                 step.path = Objects.requireNonNull(path).toString()
                 //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-                gamePlay!!.build1Object(
-                    videoViewBGA,
+                binding.gamePlay!!.build1Object(
+                    binding.videoViewBGA,
                     step,
                     baseContext,
                     Point(displayMetrics.widthPixels, displayMetrics.heightPixels),
@@ -133,10 +135,10 @@ class PlayerBga : Activity() {
                 Evaluator.songName = step.songMetadata["TITLE"].toString()
                 val bgPad =
                     BitmapFactory.decodeFile(step.path + File.separator + step.songMetadata["BACKGROUND"])
-                if (bg_pad != null && bgPad != null) {
+                if (bgPad != null && bgPad != null) {
                     Evaluator.imagePath = step.path + File.separator + step.songMetadata["BACKGROUND"]
                     Evaluator.bitmap = TransformBitmap.doBrightness(bgPad, -60)
-                    bg_pad.setImageBitmap(TransformBitmap.myblur(bgPad, this)?.let {
+                    binding.bgPad?.setImageBitmap(TransformBitmap.myblur(bgPad, this)?.let {
                         doBrightness(
                             it, -125
                         )
@@ -150,19 +152,19 @@ class PlayerBga : Activity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        videoViewBGA!!.setOnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
+        binding.videoViewBGA!!.setOnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
             val path2 = "android.resource://" + packageName + "/" + R.raw.bgaoff
-            videoViewBGA!!.setVideoPath(path2)
-            videoViewBGA!!.start()
+            binding.videoViewBGA!!.setVideoPath(path2)
+            binding.videoViewBGA!!.start()
             true
         }
-        if (!gamePlayError && gamePlay != null) gamePlay!!.startGame() else finish()
+        if (!gamePlayError && binding.gamePlay != null) binding.gamePlay!!.startGame() else finish()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (!gamePlayError && gamePlay != null) {
-                gamePlay.stop()
+            if (!gamePlayError && binding.gamePlay != null) {
+                binding.gamePlay.stop()
             }
             super.onBackPressed()
         }
@@ -225,7 +227,7 @@ class PlayerBga : Activity() {
             arrows.add(iv)
             iv.x = data.positions[index].x.toFloat()
             iv.y = data.positions[index].y.toFloat()
-            rootPad.addView(iv)
+            binding.rootPad.addView(iv)
             var lp = iv.layoutParams
             lp.height = pixel
             lp.width = pixel

@@ -19,14 +19,17 @@ import com.kyagamy.step.FullScreenActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.adapters.LevelAdapter
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
+import com.kyagamy.step.databinding.ActivityEvaluation2Binding
+import com.kyagamy.step.databinding.ActivityEvaluationBinding
 import com.kyagamy.step.room.entities.Level
 import com.squareup.picasso.Picasso
-import kotlinx.android.synthetic.main.activity_evaluation.*
-import kotlinx.android.synthetic.main.activity_evaluation2.*
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class EvaluationActivity : FullScreenActivity() {
+    private lateinit var binding: ActivityEvaluation2Binding
+    
     lateinit var mediaPlayer: MediaPlayer
     lateinit var soundPool: SoundPool
     private var soundPullTick: Int = 0
@@ -54,9 +57,9 @@ class EvaluationActivity : FullScreenActivity() {
 
 
         //
-        exitButton.setOnClickListener { finish() }
+        binding.exitButton.setOnClickListener { finish() }
 
-        level_view_rank.layoutManager = LinearLayoutManager(
+        binding.levelViewRank.layoutManager = LinearLayoutManager(
             this,
             LinearLayoutManager.HORIZONTAL,
             false
@@ -69,15 +72,15 @@ class EvaluationActivity : FullScreenActivity() {
         var level = listOf(lvl)
         levelAdapter.setLevels(level )
         levelAdapter.bigMode=true
-        level_view_rank.adapter= levelAdapter
+        binding.levelViewRank.adapter= levelAdapter
         levelAdapter.notifyDataSetChanged()
 
-
+    
         if (Evaluator.bitmap!=null){
-            bg_title_grade.setImageBitmap(Evaluator.bitmap)
+            binding.bgTitleGrade.setImageBitmap(Evaluator.bitmap)
 
         }
-        title_evaluation2.text = Evaluator.songName
+        binding.titleEvaluation2.text = Evaluator.songName
     }
 
     override fun onStart() {
@@ -88,69 +91,69 @@ class EvaluationActivity : FullScreenActivity() {
         mediaPlayer.start()
         //animation
 
-        img_perfect.visibility = View.INVISIBLE
-        img_great.visibility = View.INVISIBLE
-        img_good.visibility = View.INVISIBLE
-        img_bad.visibility = View.INVISIBLE
-        img_miss.visibility = View.INVISIBLE
-        img_max_combo.visibility = View.INVISIBLE
-        img_total_score.visibility = View.INVISIBLE
+        binding.imgPerfect.visibility = View.INVISIBLE
+        binding.imgGreat.visibility = View.INVISIBLE
+        binding.imgGood.visibility = View.INVISIBLE
+        binding.imgBad.visibility = View.INVISIBLE
+        binding.imgMiss.visibility = View.INVISIBLE
+        binding.imgMaxCombo.visibility = View.INVISIBLE
+        binding.imgTotalScore.visibility = View.INVISIBLE
 
 
         val anim_down = AnimationUtils.loadAnimation(applicationContext, R.anim.slide_down)
 
-        level_view_rank.startAnimation(AnimationUtils.loadAnimation(applicationContext,R.anim.translate_up))
+        binding.levelViewRank.startAnimation(AnimationUtils.loadAnimation(applicationContext,R.anim.translate_up))
         val anim_move = AnimationUtils.loadAnimation(this,R.anim.translate_down_static)
-        title_evaluation2.startAnimation(AnimationUtils.loadAnimation(this,R.anim.zoom_in))
+        binding.titleEvaluation2.startAnimation(AnimationUtils.loadAnimation(this,R.anim.zoom_in))
         val animDuration = 70L
         anim_down.duration = animDuration
 
         lifecycleScope.launch {
-                 img_dance_grade.startAnimation(anim_move)
+            binding.imgDanceGrade.startAnimation(anim_move)
 
-            img_perfect.startAnimation(
+            binding.imgPerfect.startAnimation(
                 AnimationUtils.loadAnimation(
                     applicationContext,
                     R.anim.slide_down
                 )
             )
             delay(animDuration)
-            img_great.startAnimation(
+            binding.imgGreat.startAnimation(
                 AnimationUtils.loadAnimation(
                     applicationContext,
                     R.anim.slide_down
                 )
             )
             delay(animDuration)
-            img_good.startAnimation(
+            binding.imgGood.startAnimation(
                 AnimationUtils.loadAnimation(
                     applicationContext,
                     R.anim.slide_down
                 )
             )
             delay(animDuration)
-            img_bad.startAnimation(
+            binding.imgBad.startAnimation(
                 AnimationUtils.loadAnimation(
                     applicationContext,
                     R.anim.slide_down
                 )
             )
             delay(animDuration)
-            img_miss.startAnimation(
+            binding.imgMiss.startAnimation(
                 AnimationUtils.loadAnimation(
                     applicationContext,
                     R.anim.slide_down
                 )
             )
             delay(animDuration)
-            img_max_combo.startAnimation(
+            binding.imgMaxCombo.startAnimation(
                 AnimationUtils.loadAnimation(
                     applicationContext,
                     R.anim.slide_down
                 )
             )
             delay(animDuration)
-            img_total_score.startAnimation(
+            binding.imgTotalScore.startAnimation(
                 AnimationUtils.loadAnimation(
                     applicationContext,
                     R.anim.slide_down
@@ -158,20 +161,20 @@ class EvaluationActivity : FullScreenActivity() {
             )
             delay(animDuration)
 
-            animateTextView(result_Perfect, Evaluator.PERFECT.toString())
+            animateTextView(binding.resultPerfect, Evaluator.PERFECT.toString())
             delay(timeToDisplayMs)
-            animateTextView(result_Great, Evaluator.GREAT.toString())
+            animateTextView(binding.resultGreat, Evaluator.GREAT.toString())
             delay(timeToDisplayMs)
-            animateTextView(result_good, Evaluator.GOOD.toString())
+            animateTextView(binding.resultGood, Evaluator.GOOD.toString())
             delay(timeToDisplayMs)
-            animateTextView(result_bad, Evaluator.BAD.toString())
+            animateTextView(binding.resultBad, Evaluator.BAD.toString())
             delay(timeToDisplayMs)
-            animateTextView(result_miss, Evaluator.MISS.toString())
+            animateTextView(binding.resultMiss, Evaluator.MISS.toString())
             delay(timeToDisplayMs)
-            animateTextView(result_max_combo, Evaluator.MAX_COMBO.toString())
+            animateTextView(binding.resultMaxCombo, Evaluator.MAX_COMBO.toString())
             delay(timeToDisplayMs)
             animateTextView(
-                result_total_score,
+                binding.resultTotalScore,
                 String.format("%.3f", Evaluator.getTotalScore()) + "%"
             )
             delay(timeToDisplayMs * 2)
@@ -226,45 +229,45 @@ class EvaluationActivity : FullScreenActivity() {
             "SSS" -> {
                 res = R.raw.rank_0
                 res2 = R.raw.rank_0_b
-                img_rank_grade.setImageBitmap(lettersArray[0])
+                binding.imgRankGrade.setImageBitmap(lettersArray[0])
             }
             "SS" -> {
                 res = R.raw.rank_1
                 res2 = R.raw.rank_1_b
-                img_rank_grade.setImageBitmap(lettersArray[1])
+                binding.imgRankGrade.setImageBitmap(lettersArray[1])
             }
             "S" -> {
                 res = R.raw.rank_2
                 res2 = R.raw.rank_2_b
-                img_rank_grade.setImageBitmap(lettersArray[2])
+                binding.imgRankGrade.setImageBitmap(lettersArray[2])
             }
             "A" -> {
                 res = R.raw.rank_3
                 res2 = R.raw.rank_3_b
-                img_rank_grade.setImageBitmap(lettersArray[3])
+                binding.imgRankGrade.setImageBitmap(lettersArray[3])
             }
             "B" -> {
                 res = R.raw.rank_4
                 res2 = R.raw.rank_4_b
-                img_rank_grade.setImageBitmap(lettersArray[4])
+                binding.imgRankGrade.setImageBitmap(lettersArray[4])
             }
             "C" -> {
                 res = R.raw.rank_5
                 res2 = R.raw.rank_5_b
-                img_rank_grade.setImageBitmap(lettersArray[5])
+                binding.imgRankGrade.setImageBitmap(lettersArray[5])
             }
             "D" -> {
                 res = R.raw.rank_6
                 res2 = R.raw.rank_6_b
-                img_rank_grade.setImageBitmap(lettersArray[6])
+                binding.imgRankGrade.setImageBitmap(lettersArray[6])
             }
             "F" -> {
                 res = R.raw.rank_7
                 res2 = R.raw.rank_7_b
-                img_rank_grade.setImageBitmap(lettersArray[7])
+                binding.imgRankGrade.setImageBitmap(lettersArray[7])
             }
         }
-        img_rank_grade.startAnimation(
+        binding.imgRankGrade.startAnimation(
             AnimationUtils.loadAnimation(
                 baseContext,
                 R.anim.zoom_letter

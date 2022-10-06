@@ -10,19 +10,29 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.VideoView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.kyagamy.step.databinding.ActivityMainBinding
 import com.kyagamy.step.fragments.CategoryFragament
 import com.kyagamy.step.fragments.songs.SongsList
-import kotlinx.android.synthetic.main.activity_main.*
+
 
 class MainActivity : FullScreenActivity() {
+    // Reference to "name" TextView using synthetic properties.
+    private  lateinit var binding :ActivityMainBinding
+
+// Reference to "name" TextView using the binding class instance.
+
+
+
 
     private lateinit var fragmentCategory: CategoryFragament
     private lateinit var text: TextView
     private lateinit var button: Button
     private var positionCategory = 2
     private val manager = supportFragmentManager
+
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,34 +45,36 @@ class MainActivity : FullScreenActivity() {
         fragmentCategory = CategoryFragament.newInstance(positionCategory)
 
 
+
+
         showFragmentCategory()
 
         //video
         val rawId = R.raw.ssmbg
         val path = "android.resource://$packageName/$rawId"
-        bgVideo.setOnPreparedListener {
+        binding.bgVideo.setOnPreparedListener {
             it.isLooping = true
             it.setVolume(0f, 0f)
         }
-        bgVideo.setVideoURI(Uri.parse(path))
-        bgVideo.start()
+        binding.bgVideo.setVideoURI(Uri.parse(path))
+        binding.bgVideo.start()
 
 
     }
 
     override fun onPause() {
         super.onPause()
-        bgVideo.pause()
+        binding.bgVideo.pause()
     }
 
     override fun onStop() {
         super.onStop()
-        bgVideo.pause()
+        binding.bgVideo.pause()
     }
 
     override fun onPostResume() {
         super.onPostResume()
-        bgVideo.start()
+        binding.bgVideo.start()
     }
 
     override fun onBackPressed() {
@@ -83,7 +95,7 @@ class MainActivity : FullScreenActivity() {
 
     fun showFragmentCategory() {
         val transaction = manager.beginTransaction()
-        transaction.setCustomAnimations(R.anim.fragment_fade_enter, R.anim.fragment_fade_exit)
+       // transaction.setCustomAnimations(R.anim.fragment_fade_enter, R.anim.fragment_fade_exit)
         transaction.replace(R.id.fragment_holder, fragmentCategory)
         transaction.addToBackStack(null)
         transaction.commit()
@@ -92,7 +104,7 @@ class MainActivity : FullScreenActivity() {
     private fun showFragmentSongList(category: String) {
         val transaction = manager.beginTransaction()
         val fragment = SongsList.newInstance(category, "")
-        transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
+       // transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
         transaction.replace(R.id.fragment_holder, fragment)
         transaction.addToBackStack("changetocategory")
         transaction.commit()

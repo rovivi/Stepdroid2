@@ -32,11 +32,10 @@ import com.kyagamy.step.R
 import com.kyagamy.step.adapters.LevelAdapter
 import com.kyagamy.step.common.RecyclerItemClickListener
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
+import com.kyagamy.step.databinding.FragmentFragmentStartMenuBinding
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.viewModels.LevelViewModel
 import com.kyagamy.step.viewModels.SongViewModel
-import kotlinx.android.synthetic.main.fragment_fragment__start_menu.*
-import kotlinx.android.synthetic.main.fragment_fragment__start_menu.view.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -47,6 +46,11 @@ import java.util.*
 private const val songId = "song"
 
 class FragmentStartMenu : DialogFragment() {
+
+    private lateinit var _binding: FragmentFragmentStartMenuBinding
+    private val binding get() = _binding!!
+
+
     private var idSong: Int = 0
     private var hexagons =
         arrayOfNulls<ImageView>(2)
@@ -91,6 +95,8 @@ class FragmentStartMenu : DialogFragment() {
             ?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         val view =
             inflater.inflate(R.layout.fragment_fragment__start_menu, container, false)
+        _binding = FragmentFragmentStartMenuBinding.inflate(LayoutInflater.from(context))
+
         hexagons[0] = view.findViewById(R.id.iv_hexagon1)
         hexagons[1] = view.findViewById(R.id.iv_hexagon2)
         preview = view.findViewById(R.id.videoPreview)
@@ -201,18 +207,18 @@ class FragmentStartMenu : DialogFragment() {
             })
 
         //animaciones
-        view.image_arrow_l.startAnimation(
-            AnimationUtils.loadAnimation(
-                context,
-                R.anim.translate_left
-            )
-        )
-        view.image_arrow_r.startAnimation(
-            AnimationUtils.loadAnimation(
-                context,
-                R.anim.translate_right
-            )
-        )
+//        view.image_arrow_l.startAnimation(
+//            AnimationUtils.loadAnimation(
+//                context,
+//                R.anim.translate_left
+//            )
+//        )
+//        view.image_arrow_r.startAnimation(
+//            AnimationUtils.loadAnimation(
+//                context,
+//                R.anim.translate_right
+//            )
+//        )
 
 //Sizes
         val displayMetrics = DisplayMetrics()
@@ -273,7 +279,7 @@ class FragmentStartMenu : DialogFragment() {
     private fun changeSong(song: Song?) {
         if (song == null) return
         //display 
-        song_name.text = song.TITLE
+        binding.songName.text = song.TITLE
 
 
         changeMusic?.play(spCode, 1f, 1f, 1, 0, 1.0f)

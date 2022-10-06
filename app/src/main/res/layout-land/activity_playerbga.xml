@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="#000000"
     android:theme="@style/AppTheme.NoActionBar"
+    android:id="@+id/rootPlayer"
     tools:context=".PlayerBga">
 
 

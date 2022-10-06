@@ -13,8 +13,9 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
-import com.gigamole.infinitecycleviewpager.HorizontalInfiniteCycleViewPager
+
 import com.kyagamy.step.MainActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.adapters.CategoryAdapter
@@ -37,7 +38,7 @@ class CategoryFragament : Fragment() {
     // TODO: Rename and change types of parameters
     private var position = 0
     private lateinit var categoryModel: CategoryViewModel
-    private lateinit var cycle: HorizontalInfiniteCycleViewPager
+    private lateinit var cycle: ViewPager
     private lateinit var  myDataSet : List<Category>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +59,7 @@ class CategoryFragament : Fragment() {
         val list = ArrayList<Category>()
         val adapter = CategoryAdapter(list, this.requireContext())
         cycle.adapter = adapter
+
         cycle.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrollStateChanged(state: Int) {
 
@@ -94,7 +96,7 @@ class CategoryFragament : Fragment() {
                         MotionEvent.ACTION_DOWN -> flage = 0
                         MotionEvent.ACTION_MOVE -> flage = 1
                         MotionEvent.ACTION_UP -> if (flage == 0) {
-                            mainActivity.changeCategory(adapter.myDataSet[currentItem].name,currentItem)
+//                            mainActivity.changeCategory(adapter.myDataSet[currentItem].name,currentItem)
                         }
                     }
                     return false
@@ -106,8 +108,8 @@ class CategoryFragament : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        cycle.setCurrentItem(5,true)
-        cycle.notifyDataSetChanged()
+        //cycle.setCurrentItem(5,true)
+       // cycle.notifyDataSetChanged()
     }
 
     override fun onDetach() {

@@ -8,14 +8,17 @@ import androidx.fragment.app.Fragment
 import com.kyagamy.step.R
 import com.kyagamy.step.common.SettingsGameGetter
 import com.kyagamy.step.common.step.CommonGame.ParamsSong
-import kotlinx.android.synthetic.main.fragment_song_options.*
-import kotlinx.android.synthetic.main.fragment_song_options.view.*
+import com.kyagamy.step.databinding.FragmentSongOptionsBinding
 import java.util.*
 
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
 
 class MenuOptionFragment : Fragment() {
+    private lateinit var _binding: FragmentSongOptionsBinding
+
+    private val binding get() = _binding
+
     private var param1: String? = null
     private var param2: String? = null
 
@@ -39,22 +42,22 @@ class MenuOptionFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        _binding = FragmentSongOptionsBinding.inflate(inflater,container,false)
 
+        //val fView = inflater.inflate(R.layout.fragment_song_options, container, false)
+        binding.tv1P .setOnClickListener { changeAutoVelocity(1) }
+        binding.tv10P .setOnClickListener { changeAutoVelocity(10) }
+        binding.tv100P .setOnClickListener { changeAutoVelocity(100) }
+        binding.tv1L .setOnClickListener { changeAutoVelocity(-1) }
+        binding.tv10L .setOnClickListener { changeAutoVelocity(-10) }
+        binding.tv100L .setOnClickListener { changeAutoVelocity(-100) }
 
-        val fView = inflater.inflate(R.layout.fragment_song_options, container, false)
-        fView.tv_1P .setOnClickListener { changeAutoVelocity(1) }
-        fView.tv_10P .setOnClickListener { changeAutoVelocity(10) }
-        fView.tv_100P .setOnClickListener { changeAutoVelocity(100) }
-        fView.tv_1L .setOnClickListener { changeAutoVelocity(-1) }
-        fView.tv_10L .setOnClickListener { changeAutoVelocity(-10) }
-        fView.tv_100L .setOnClickListener { changeAutoVelocity(-100) }
-
-        fView.tvP25.setOnClickListener{changeSpeed(0.25F)}
-        fView.tvP5.setOnClickListener{changeSpeed(0.5F)}
-        fView.tvP1.setOnClickListener{changeSpeed(1F)}
-        fView.tvL25.setOnClickListener{changeSpeed(-0.25F)}
-        fView.tvL5.setOnClickListener{changeSpeed(-0.5F)}
-        fView.tvL1.setOnClickListener{changeSpeed(-1F)}
+        binding.tvP25.setOnClickListener{changeSpeed(0.25F)}
+        binding.tvP5.setOnClickListener{changeSpeed(0.5F)}
+        binding.tvP1.setOnClickListener{changeSpeed(1F)}
+        binding.tvL25.setOnClickListener{changeSpeed(-0.25F)}
+        binding.tvL5.setOnClickListener{changeSpeed(-0.5F)}
+        binding.tvL1.setOnClickListener{changeSpeed(-1F)}
 
 
 
@@ -66,13 +69,13 @@ class MenuOptionFragment : Fragment() {
         ParamsSong.av=autoVelocity
         ParamsSong.speed = settingsGameGetter.getValueFloat(SettingsGameGetter.SPEED)
 
-        fView.tvAV.text="".plus(autoVelocity)
+        binding.tvAV.text="".plus(autoVelocity)
 
 
         indexNS = ParamsSong.skinIndex
 
 
-        return fView
+        return binding.root
     }
 
 
@@ -92,7 +95,7 @@ class MenuOptionFragment : Fragment() {
         settingsGameGetter.saveSetting(SettingsGameGetter.AV,autoVelocity )
 
         ParamsSong.av = autoVelocity
-        tvAV.text = "$autoVelocity "
+        binding.tvAV.text = "$autoVelocity "
     }
 
     private fun changeSpeed(plusValue: Float) {
@@ -102,7 +105,7 @@ class MenuOptionFragment : Fragment() {
         settingsGameGetter.saveSetting(SettingsGameGetter.SPEED,speed )
 
         ParamsSong.speed = speed
-        speedValue.text = "$speed"
+        binding.speedValue.text = "$speed"
     }
 
 

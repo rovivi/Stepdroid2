@@ -7,17 +7,9 @@
     tools:context=".fragments.CategoryFragament">
 
     <!-- TODO: Update blank fragment layout -->
-    <com.gigamole.infinitecycleviewpager.HorizontalInfiniteCycleViewPager
+    <androidx.viewpager.widget.ViewPager
         android:id="@+id/cycle"
-
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:icvp_interpolator="@android:anim/overshoot_interpolator"
-        app:icvp_center_page_scale_offset="-10dp"
-        app:icvp_max_page_scale="0.9"
-        app:icvp_medium_scaled="false"
-        app:icvp_min_page_scale="0.4"
-        app:icvp_min_page_scale_offset="1dp"
-        app:icvp_scroll_duration="500" />
+        android:layout_height="match_parent" />
 
 </FrameLayout>

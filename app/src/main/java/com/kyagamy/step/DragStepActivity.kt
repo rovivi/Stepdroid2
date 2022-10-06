@@ -17,10 +17,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.kyagamy.step.common.step.CommonGame.ArrowsPositionPlace
-import kotlinx.android.synthetic.main.activity_drag_step.*
+import com.kyagamy.step.databinding.ActivityDragStepBinding
+import com.kyagamy.step.databinding.ActivityMainBinding
 
 
 class DragStepActivity : FullScreenActivity() {
+    private lateinit var binding: ActivityDragStepBinding
     private var _xDelta = 0
     private var _yDelta = 0
     private var stepInfo: List<Int> = listOf(
@@ -44,12 +46,12 @@ class DragStepActivity : FullScreenActivity() {
 
 
 
-        sizeBar.max = 200
-        sizeBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        binding.sizeBar.max = 200
+        binding.sizeBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 
             override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
                 val value = 50 + i;
-                sizeText.text = "Progress : $value dp"
+                binding.sizeText.text = "Progress : $value dp"
                 resizeArrows(value)
             }
 
@@ -60,9 +62,9 @@ class DragStepActivity : FullScreenActivity() {
             }
         })
         val gson = Gson()
-        saveArrows.setOnClickListener {
+        binding.saveArrows.setOnClickListener {
             val save = ArrowsPositionPlace()
-            save.size = sizeBar.progress + 50+20
+            save.size = binding.sizeBar.progress + 50+20
             var positions = ArrayList<Point>()
             arrows.forEach { x ->
                 positions.add(Point(x.x.toInt(), x.y.toInt()))
@@ -80,13 +82,13 @@ class DragStepActivity : FullScreenActivity() {
         val saveGson = sharedPref.getString(getString(R.string.singleArrowsPos), "")
         if (saveGson != "") {
             val obj: ArrowsPositionPlace = gson.fromJson(saveGson, ArrowsPositionPlace::class.java)
-            sizeBar.progress = obj.size - 50
+            binding.sizeBar.progress = obj.size - 50
             obj.positions.forEachIndexed { index, pos ->
                 arrows[index].x = pos.x.toFloat()
                 arrows[index].y = pos.y.toFloat()
             }
         } else {
-            val params = root.layoutParams
+            val params = binding.root.layoutParams
             val sizeX = params.width
             val size = (sizeX / 3).toInt()
             val sizeY = params.height
@@ -109,7 +111,7 @@ class DragStepActivity : FullScreenActivity() {
             arrows[4].y =(sizeY - size).toFloat()
             arrows[4].x = ((sizeX-size).toFloat())
             //resizeArrows(pxToDp(size))
-            sizeBar.progress =pxToDp(size)-50
+            binding.sizeBar.progress =pxToDp(size)-50
         }
 
     }
@@ -126,7 +128,7 @@ class DragStepActivity : FullScreenActivity() {
             iv.setImageResource(x)
             iv.setOnTouchListener(move)
             arrows.add(iv)
-            root.addView(iv)
+            binding.root.addView(iv)
 
         }
         if (isDouble) drawArrows(false)
@@ -165,7 +167,7 @@ class DragStepActivity : FullScreenActivity() {
 //                lp.rightMargin = v.width - lp.leftMargin - windowWidth
 //                lp.bottomMargin = v.height - lp.topMargin - windowHeight
 //                v.layoutParams = lp
-                sizeText.text = "${X - _xDelta + 0f} ,${Y - _yDelta + 0f}"
+                binding.sizeText.text = "${X - _xDelta + 0f} ,${Y - _yDelta + 0f}"
             }
         }
         true
