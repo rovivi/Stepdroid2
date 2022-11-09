@@ -21,12 +21,7 @@ import com.kyagamy.step.fragments.songs.SongsList
 class MainActivity : FullScreenActivity() {
     // Reference to "name" TextView using synthetic properties.
     private  lateinit var binding :ActivityMainBinding
-
 // Reference to "name" TextView using the binding class instance.
-
-
-
-
     private lateinit var fragmentCategory: CategoryFragament
     private lateinit var text: TextView
     private lateinit var button: Button
@@ -42,8 +37,9 @@ class MainActivity : FullScreenActivity() {
             WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
         setContentView(R.layout.activity_main)
-        fragmentCategory = CategoryFragament.newInstance(positionCategory)
 
+        fragmentCategory = CategoryFragament.newInstance(positionCategory)
+        binding = ActivityMainBinding.inflate(layoutInflater)
 
 
 

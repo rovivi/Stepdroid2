@@ -31,7 +31,10 @@ class LoadingSongActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityLoadingSongBinding.inflate(layoutInflater)
+
         setContentView(R.layout.activity_loading_song)
+
         setSupportActionBar(binding.toolbar)
         songsModel = ViewModelProvider(this)[SongViewModel::class.java]
         categoryModel = ViewModelProvider(this)[CategoryViewModel::class.java]

@@ -17,6 +17,8 @@ class StartActivity : FullScreenActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityStartBinding.inflate(layoutInflater)
+
         setContentView(R.layout.activity_start)
         val intentSongList = Intent(this, MainActivity::class.java)
         val intent = Intent(this, LoadingSongActivity::class.java)
@@ -52,28 +54,28 @@ class StartActivity : FullScreenActivity() {
         //Route validation
         val sharedPref = this.getSharedPreferences("pref", Context.MODE_PRIVATE)
         val basePath = sharedPref.getString(getString(R.string.base_path), "noPath")
-        if (basePath == "noPath") {
-            val chooser: StorageChooser = StorageChooser.Builder()
-                .withActivity(this@StartActivity)
-                .withFragmentManager(this.fragmentManager)
-                .setDialogTitle("Choose StepDroid Destination Folder")
-                .withMemoryBar(true)
-                .build()
-            chooser.show()
-            chooser.setOnSelectListener { path ->
-                lifecycleScope.run {
-                    val paths = path + ""
-                    with(sharedPref.edit()) {
-                        putString(getString(R.string.base_path), paths)
-                        commit()
-                    }
-                    startActivity(intent)
-                }
-            }
-        } else {
-            // Toast
-            // startActivity(intent)
-        }
+//        if (basePath == "noPath") {
+//            val chooser: StorageChooser = StorageChooser.Builder()
+//                .withActivity(this@StartActivity)
+//                .withFragmentManager(this.fragmentManager)
+//                .setDialogTitle("Choose StepDroid Destination Folder")
+//                .withMemoryBar(true)
+//                .build()
+//            chooser.show()
+//            chooser.setOnSelectListener { path ->
+//                lifecycleScope.run {
+//                    val paths = path + ""
+//                    with(sharedPref.edit()) {
+//                        putString(getString(R.string.base_path), paths)
+//                        commit()
+//                    }
+//                    startActivity(intent)
+//                }
+//            }
+//        } else {
+//            // Toast
+//            // startActivity(intent)
+//        }
 
 
     }
