@@ -71,7 +71,7 @@ class FragmentStartMenu : DialogFragment() {
     private lateinit var songsModel: SongViewModel
 
     private lateinit var levelRecyclerView: RecyclerView
-    var i: Intent? = null
+    //var i: Intent? = null
 
     var currentSong: Song? = null
     lateinit var preview: VideoView
@@ -154,7 +154,6 @@ class FragmentStartMenu : DialogFragment() {
         levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
 
 
-        i = Intent(requireActivity(), PlayerBga::class.java)
 
 
         val levelAdapter = LevelAdapter(requireActivity().applicationContext)
@@ -167,11 +166,11 @@ class FragmentStartMenu : DialogFragment() {
         )
         levelRecyclerView.adapter = levelAdapter
         songsModel.songById(idSong)
-            .observe(viewLifecycleOwner, { words ->
+            .observe(viewLifecycleOwner) { words ->
                 words?.let {
                     currentSong = it[0]
                 }
-            })
+            }
         levelRecyclerView.addOnItemTouchListener(
             RecyclerItemClickListener(activity,
                 levelRecyclerView,
@@ -179,17 +178,19 @@ class FragmentStartMenu : DialogFragment() {
                     override fun onItemClick(view: View?, position: Int) {
                         lifecycleScope.run {
                             try {
+                                val i = Intent(requireActivity(), PlayerBga::class.java)
+
                                 // root.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_out));
                                 releaseMediaPlayer()
-                                i!!.putExtra("ssc", currentSong?.PATH_File)
-                                i!!.putExtra("nchar", levelAdapter.getLevel(position).index)
-                                i!!.putExtra("path", currentSong?.PATH_SONG)
-                                i!!.putExtra(
+                                i.putExtra("ssc", currentSong?.PATH_File)
+                                i.putExtra("nchar", levelAdapter.getLevel(position).index)
+                                i.putExtra("path", currentSong?.PATH_SONG)
+                                i.putExtra(
                                     "pathDisc",
                                     currentSong?.PATH_SONG + currentSong?.BANNER_SONG
                                 )
 
-                                //startActivity(i)
+                                startActivity(i)
                             } catch (ex: Exception) {
                                 ex.printStackTrace()
                             }
@@ -205,9 +206,9 @@ class FragmentStartMenu : DialogFragment() {
         )
 
         levelModel.get(idSong)
-            .observe(viewLifecycleOwner, { level ->
+            .observe(viewLifecycleOwner) { level ->
                 level?.let { levelAdapter.setLevels(it) }
-            })
+            }
 
         //animaciones
 //        view.image_arrow_l.startAnimation(
@@ -271,11 +272,11 @@ class FragmentStartMenu : DialogFragment() {
             )
         }
         songsModel.songById(idSong)
-            .observe(viewLifecycleOwner, { words ->
+            .observe(viewLifecycleOwner) { words ->
                 words?.let {
                     changeSong(it[0])
                 }
-            })
+            }
     }
 
 
@@ -362,7 +363,7 @@ class FragmentStartMenu : DialogFragment() {
             mediaPlayer!!.seekTo(song.SAMPLESTART.toInt() * 1000)
             mediaPlayer!!.start()
 
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
         }
 
         while (mediaPlayer != null) {
@@ -376,7 +377,7 @@ class FragmentStartMenu : DialogFragment() {
                     val lapset = (100 - ((timeLapsed - (duration - 3000)) / 3000 * 100)) / 100
                     mediaPlayer!!.setVolume(lapset.toFloat(), lapset.toFloat())
                 }
-            } catch (ex: NullPointerException) {
+            } catch (_: NullPointerException) {
             }
         }
     }

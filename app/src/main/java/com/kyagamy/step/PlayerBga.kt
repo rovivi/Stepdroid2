@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.KeyEvent
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
@@ -30,6 +31,7 @@ import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_HOLD_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_UNPRESSED
 import com.kyagamy.step.common.step.Parsers.FileSSC
+import com.kyagamy.step.databinding.ActivityMainBinding
 import com.kyagamy.step.databinding.ActivityPlayerbgaBinding
 import com.kyagamy.step.game.newplayer.EvaluationActivity
 import com.kyagamy.step.game.newplayer.Evaluator
@@ -43,8 +45,14 @@ import kotlin.collections.ArrayList
 
 
 class PlayerBga : Activity() {
-    private lateinit var binding :ActivityPlayerbgaBinding
-    
+    //private lateinit var binding :ActivityPlayerbgaBinding
+
+    private val binding: ActivityPlayerbgaBinding by lazy {
+        ActivityPlayerbgaBinding.inflate(LayoutInflater.from(this))
+    }
+
+
+
     var hilo: MainThreadNew? = null
     var i: Intent? = null
     var audio: AudioManager? = null
@@ -65,10 +73,9 @@ class PlayerBga : Activity() {
     private val displayMetrics = DisplayMetrics()
 
     @SuppressLint("ClickableViewAccessibility")
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_playerbga)
+        setContentView(binding.root)
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
         hilo = this.binding.gamePlay?.mainTread
