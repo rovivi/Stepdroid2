@@ -3,10 +3,14 @@ package com.kyagamy.step
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import android.provider.Settings
 import com.codekidlabs.storagechooser.StorageChooser
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
@@ -40,25 +44,42 @@ class StartActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+
+
+
     private fun checkPermissions() {
-        val permissionListener = object : PermissionListener {
-            override fun onPermissionGranted() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Para Android 11 (API 30) y superior
+            if (!Environment.isExternalStorageManager()) {
+                // El permiso MANAGE_EXTERNAL_STORAGE no está concedido, solicitar...
+                val uri = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
+                startActivity(intent) // Considera usar un ActivityResultLauncher para manejar el resultado
+            } else {
+                // Permiso concedido, continuar con la operación
                 showToast("Permission Granted")
             }
+        } else {
+            // Para Android 10 (API 29) y versiones anteriores
+            val permissionListener = object : PermissionListener {
+                override fun onPermissionGranted() {
+                    showToast("Permission Granted")
+                }
 
-            override fun onPermissionDenied(deniedPermissions: List<String>) {
-                showToast("Permission Denied\n$deniedPermissions")
+                override fun onPermissionDenied(deniedPermissions: List<String>) {
+                    showToast("Permission Denied\n$deniedPermissions")
+                }
             }
-        }
 
-        TedPermission.create()
-            .setPermissionListener(permissionListener)
-            .setDeniedMessage("If you reject permission, you cannot use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
-            .setPermissions(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
-            .check()
+            TedPermission.create()
+                .setPermissionListener(permissionListener)
+                .setDeniedMessage("If you reject permission, you cannot use this service\n\nPlease turn on permissions at [Settings] > [Permissions]")
+                .setPermissions(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+                .check()
+        }
     }
 
     private fun showToast(message: String) {
