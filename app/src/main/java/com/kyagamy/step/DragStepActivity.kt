@@ -66,7 +66,7 @@ class DragStepActivity : FullScreenActivity() {
         binding.saveArrows.setOnClickListener {
             val save = ArrowsPositionPlace()
             save.size = binding.sizeBar.progress + 50 + 20
-            var positions = ArrayList<Point>()
+            val positions = ArrayList<Point>()
             arrows.forEach { x ->
                 positions.add(Point(x.x.toInt(), x.y.toInt()))
             }
@@ -121,6 +121,7 @@ class DragStepActivity : FullScreenActivity() {
     }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun drawArrows(isDouble: Boolean) {
 
         stepInfo.forEach { x ->
@@ -148,7 +149,7 @@ class DragStepActivity : FullScreenActivity() {
         }
     }
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
     val move = View.OnTouchListener { v, event ->
         val X = event.rawX.toInt()
         val Y = event.rawY.toInt()

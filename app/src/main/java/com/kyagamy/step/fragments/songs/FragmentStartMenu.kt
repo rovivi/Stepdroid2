@@ -1,12 +1,10 @@
 package com.kyagamy.step.fragments.songs
 
-
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.content.Intent
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -17,10 +15,13 @@ import android.media.SoundPool
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.LayoutInflater
+import android.view.LayoutInflater.from
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
-import android.widget.*
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.VideoView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
@@ -47,8 +48,11 @@ private const val songId = "song"
 
 class FragmentStartMenu : DialogFragment() {
 
-    private lateinit var _binding: FragmentFragmentStartMenuBinding
-    private val binding get() = _binding!!
+    private val binding: FragmentFragmentStartMenuBinding by lazy {
+        //FragmentFragmentStartMenuBinding.inflate(layoutInflater(this))
+        FragmentFragmentStartMenuBinding.inflate(from(context), null, false)
+
+    }
 
 
     private var idSong: Int = 0
@@ -95,7 +99,6 @@ class FragmentStartMenu : DialogFragment() {
             ?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         val view =
             inflater.inflate(R.layout.fragment_fragment__start_menu, container, false)
-        _binding = FragmentFragmentStartMenuBinding.inflate(LayoutInflater.from(context))
 
         hexagons[0] = view.findViewById(R.id.iv_hexagon1)
         hexagons[1] = view.findViewById(R.id.iv_hexagon2)
