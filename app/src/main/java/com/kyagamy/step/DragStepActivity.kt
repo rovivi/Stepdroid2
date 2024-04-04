@@ -20,9 +20,8 @@ import com.kyagamy.step.databinding.ActivityDragStepBinding
 
 class DragStepActivity : FullScreenActivity() {
 
-    private val binding: ActivityDragStepBinding by lazy {
-        ActivityDragStepBinding.inflate(LayoutInflater.from(this))
-    }
+    private lateinit var binding: ActivityDragStepBinding
+
 
     private var _xDelta = 0
     private var _yDelta = 0
@@ -37,82 +36,86 @@ class DragStepActivity : FullScreenActivity() {
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityDragStepBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        initUI()
+    }
+
+    private fun initUI() {
         val sharedPref = this.getSharedPreferences(
             getString(R.string.singleArrowsPos), Context.MODE_PRIVATE
         )
-        super.onCreate(savedInstanceState)
-
-        setContentView(R.layout.activity_drag_step)
-
-
-
-
-        binding.sizeBar.max = 200
-        binding.sizeBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-
-            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
-                val value = 50 + i;
-                binding.sizeText.text = "Progress : $value dp"
-                resizeArrows(value)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar) {
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar) {
-            }
-        })
         val gson = Gson()
-        binding.saveArrows.setOnClickListener {
-            val save = ArrowsPositionPlace()
-            save.size = binding.sizeBar.progress + 50 + 20
-            val positions = ArrayList<Point>()
-            arrows.forEach { x ->
-                positions.add(Point(x.x.toInt(), x.y.toInt()))
+
+        with(binding) {
+            sizeBar.max = 200
+            sizeBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+                override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                    val value = 50 + i;
+                    binding.sizeText.text = "Progress : $value dp"
+                    //resizeArrows(value)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+                }
+            })
+            saveArrows.setOnClickListener {
+                val save = ArrowsPositionPlace()
+                save.size = binding.sizeBar.progress + 50 + 20
+                val positions = ArrayList<Point>()
+                arrows.forEach { x ->
+                    positions.add(Point(x.x.toInt(), x.y.toInt()))
+                }
+                save.positions = positions.toList().toTypedArray()
+
+                with(sharedPref.edit()) {
+                    putString(
+                        getString(com.kyagamy.step.R.string.singleArrowsPos),
+                        gson.toJson(save)
+                    )
+                    apply()
+                }
+                Toast.makeText(this@DragStepActivity, "Saved success!", Toast.LENGTH_SHORT).show()
             }
-            save.positions = positions.toList().toTypedArray()
 
-            with(sharedPref.edit()) {
-                putString(getString(R.string.singleArrowsPos), gson.toJson(save))
-                apply()
+            drawArrows(false)
+            val saveGson = sharedPref.getString(getString(R.string.singleArrowsPos), "")
+            if (saveGson != "") {
+                val obj: ArrowsPositionPlace =
+                    gson.fromJson(saveGson, ArrowsPositionPlace::class.java)
+                binding.sizeBar.progress = obj.size - 50
+                obj.positions.forEachIndexed { index, pos ->
+                    arrows[index].x = pos.x.toFloat()
+                    arrows[index].y = pos.y.toFloat()
+                }
+            } else {
+                val params = binding.root.layoutParams
+                val sizeX = params.width
+                val size = (sizeX / 3).toInt()
+                val sizeY = params.height
+                //set 1
+                arrows[0].y = (sizeY - size).toFloat()
+                arrows[0].x = 0f
+                //set 7
+                arrows[1].y = (sizeY / 2).toFloat()
+                arrows[1].x = 0f
+                //set 5
+                arrows[2].y = ((sizeY / 2 - size) / 2 + sizeY / 2).toFloat()
+                arrows[2].x = ((sizeX - size) / 2).toFloat()
+                //set 9
+                arrows[3].y = (sizeY / 2).toFloat()
+                arrows[3].x = ((sizeX - size).toFloat())
+                //set 3
+                arrows[4].y = (sizeY - size).toFloat()
+                arrows[4].x = ((sizeX - size).toFloat())
+                //resizeArrows(pxToDp(size))
+                binding.sizeBar.progress = pxToDp(size) - 50
             }
-            Toast.makeText(this, "Saved success!", Toast.LENGTH_SHORT).show()
-        }
-
-        drawArrows(false)
-        val saveGson = sharedPref.getString(getString(R.string.singleArrowsPos), "")
-        if (saveGson != "") {
-            val obj: ArrowsPositionPlace = gson.fromJson(saveGson, ArrowsPositionPlace::class.java)
-            binding.sizeBar.progress = obj.size - 50
-            obj.positions.forEachIndexed { index, pos ->
-                arrows[index].x = pos.x.toFloat()
-                arrows[index].y = pos.y.toFloat()
-            }
-        } else {
-            val params = binding.root.layoutParams
-            val sizeX = params.width
-            val size = (sizeX / 3).toInt()
-            val sizeY = params.height
-            //set 1
-            arrows[0].y = (sizeY - size).toFloat()
-            arrows[0].x = 0f
-            //set 7
-            arrows[1].y = (sizeY / 2).toFloat()
-            arrows[1].x = 0f
-
-            //set 5
-
-            arrows[2].y = ((sizeY / 2 - size) / 2 + sizeY / 2).toFloat()
-            arrows[2].x = ((sizeX - size) / 2).toFloat()
-
-            //set 9
-            arrows[3].y = (sizeY / 2).toFloat()
-            arrows[3].x = ((sizeX - size).toFloat())
-            //set 3
-            arrows[4].y = (sizeY - size).toFloat()
-            arrows[4].x = ((sizeX - size).toFloat())
-            //resizeArrows(pxToDp(size))
-            binding.sizeBar.progress = pxToDp(size) - 50
         }
     }
 
@@ -125,15 +128,25 @@ class DragStepActivity : FullScreenActivity() {
     private fun drawArrows(isDouble: Boolean) {
 
         stepInfo.forEach { x ->
-            var iv = ImageView(this)
+
+            val iv = ImageView(this)
+
+            val params = RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+            )
+// Puedes definir la posición inicial aquí si lo deseas, por ejemplo:
+// params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE)
+            iv.layoutParams = params
             iv.setImageResource(x)
             iv.setOnTouchListener(move)
             arrows.add(iv)
             binding.root.addView(iv)
 
         }
-        if (isDouble) drawArrows(false)
+        //drawArrows(false)
     }
+
 
     private fun resizeArrows(value: Int) {
         val pixel = TypedValue.applyDimension(
