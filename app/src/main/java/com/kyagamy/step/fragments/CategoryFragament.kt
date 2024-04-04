@@ -93,9 +93,12 @@ class CategoryFragament : Fragment() {
                 }
             })
         }
+        binding.button.setOnClickListener{
+
+            mainActivity.changeCategory(adapter.myDataSet[0].name,0)
+
+        }
     }
-
-
 
 
 

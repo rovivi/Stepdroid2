@@ -22,7 +22,6 @@ class DragStepActivity : FullScreenActivity() {
 
     private lateinit var binding: ActivityDragStepBinding
 
-
     private var _xDelta = 0
     private var _yDelta = 0
     private var stepInfo: List<Int> = listOf(
@@ -49,13 +48,13 @@ class DragStepActivity : FullScreenActivity() {
         val gson = Gson()
 
         with(binding) {
-            sizeBar.max = 200
+            sizeBar.max = 230
             sizeBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 
                 override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
                     val value = 50 + i;
                     binding.sizeText.text = "Progress : $value dp"
-                    //resizeArrows(value)
+                    resizeArrows(value)
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar) {
@@ -94,7 +93,7 @@ class DragStepActivity : FullScreenActivity() {
                     arrows[index].y = pos.y.toFloat()
                 }
             } else {
-                val params = binding.root.layoutParams
+                val params = binding.relativeLayoutToDrag.layoutParams
                 val sizeX = params.width
                 val size = (sizeX / 3).toInt()
                 val sizeY = params.height
@@ -137,7 +136,7 @@ class DragStepActivity : FullScreenActivity() {
             )
 // Puedes definir la posición inicial aquí si lo deseas, por ejemplo:
 // params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE)
-            iv.layoutParams = params
+            //iv.layoutParams = params
             iv.setImageResource(x)
             iv.setOnTouchListener(move)
             arrows.add(iv)
@@ -154,11 +153,17 @@ class DragStepActivity : FullScreenActivity() {
             value + 0f, resources.displayMetrics
         ).toInt()
 
-        arrows.forEach { arrow ->
-            val lp = arrow.layoutParams as RelativeLayout.LayoutParams
-            lp.width = pixel
-            lp.height = pixel
-            arrow.layoutParams = lp
+        try {
+
+            arrows.forEach { arrow ->
+                val lp = arrow.layoutParams as RelativeLayout.LayoutParams
+                lp.width = pixel
+                lp.height = pixel
+                arrow.layoutParams = lp
+            }
+        }
+        catch (_:Exception){
+
         }
     }
 
