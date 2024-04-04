@@ -33,7 +33,7 @@ class MainActivity : FullScreenActivity() {
         )
         setContentView(binding.root)
 
-        fragmentCategory = CategoryFragament.newInstance(positionCategory)
+        fragmentCategory = CategoryFragament()
 
         showFragmentCategory()
 
