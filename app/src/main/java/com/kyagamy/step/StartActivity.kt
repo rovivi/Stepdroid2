@@ -5,80 +5,96 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.codekidlabs.storagechooser.StorageChooser
-//import com.gun0912.tedpermission.PermissionListener
-//import com.gun0912.tedpermission.TedPermission
+import com.gun0912.tedpermission.PermissionListener
+import com.gun0912.tedpermission.normal.TedPermission
 import com.kyagamy.step.databinding.ActivityStartBinding
+import kotlinx.coroutines.launch
 
-class StartActivity : FullScreenActivity() {
-    private lateinit var binding:ActivityStartBinding
+class StartActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityStartBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityStartBinding.inflate(layoutInflater)
-
-        setContentView(R.layout.activity_start)
-        val intentSongList = Intent(this, MainActivity::class.java)
-        val intent = Intent(this, LoadingSongActivity::class.java)
-        val intentDrag = Intent(this, DragStepActivity::class.java)
-        val intentDS = Intent(this, DownloadUpdateFiles::class.java)
-        this.binding.buttonStart.setOnClickListener { startActivity(intentSongList) }
-        this.binding.dragStartButton.setOnClickListener { startActivity(intentDrag) }
-        binding.reloadSings.setOnClickListener {  startActivity(intent) }
-        binding.buttonDS.setOnClickListener { startActivity(intentDS) }
-
-        //Se valida el permission
-//        val permissionListener: PermissionListener = object : PermissionListener {
-//            override fun onPermissionGranted() {
-//                Toast.makeText(this@StartActivity, "Permission Granted", Toast.LENGTH_SHORT).show()
-//            }
-//
-//            override fun onPermissionDenied(deniedPermissions: List<String>) {
-//                Toast.makeText(
-//                    this@StartActivity,
-//                    "Permission Denied\n$deniedPermissions",
-//                    Toast.LENGTH_SHORT
-//                ).show()
-//            }
-//        }
-//        TedPermission.with(this)
-//            .setPermissionListener(permissionListener)
-//            .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
-//            .setPermissions(
-//                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-//                Manifest.permission.READ_EXTERNAL_STORAGE
-//            )
-//            .check()
-        //Route validation
-        val sharedPref = this.getSharedPreferences("pref", Context.MODE_PRIVATE)
-        val basePath = sharedPref.getString(getString(R.string.base_path), "noPath")
-//        if (basePath == "noPath") {
-//            val chooser: StorageChooser = StorageChooser.Builder()
-//                .withActivity(this@StartActivity)
-//                .withFragmentManager(this.fragmentManager)
-//                .setDialogTitle("Choose StepDroid Destination Folder")
-//                .withMemoryBar(true)
-//                .build()
-//            chooser.show()
-//            chooser.setOnSelectListener { path ->
-//                lifecycleScope.run {
-//                    val paths = path + ""
-//                    with(sharedPref.edit()) {
-//                        putString(getString(R.string.base_path), paths)
-//                        commit()
-//                    }
-//                    startActivity(intent)
-//                }
-//            }
-//        } else {
-//            // Toast
-//            // startActivity(intent)
-//        }
-
-
+        setContentView(binding.root)
+        setupButtons()
+        checkPermissions()
+        validateRoute()
     }
 
+    private fun setupButtons() {
+        with(binding) {
+            buttonStart.setOnClickListener { navigateTo(MainActivity::class.java) }
+            dragStartButton.setOnClickListener { navigateTo(DragStepActivity::class.java) }
+            reloadSings.setOnClickListener { navigateTo(LoadingSongActivity::class.java) }
+            buttonDS.setOnClickListener { navigateTo(DownloadUpdateFiles::class.java) }
+        }
+    }
 
+    private fun navigateTo(destination: Class<*>) {
+        val intent = Intent(this, destination)
+        startActivity(intent)
+    }
+
+    private fun checkPermissions() {
+        val permissionListener = object : PermissionListener {
+            override fun onPermissionGranted() {
+                showToast("Permission Granted")
+            }
+
+            override fun onPermissionDenied(deniedPermissions: List<String>) {
+                showToast("Permission Denied\n$deniedPermissions")
+            }
+        }
+
+        TedPermission.create()
+            .setPermissionListener(permissionListener)
+            .setDeniedMessage("If you reject permission, you cannot use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
+            .setPermissions(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+            .check()
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun validateRoute() {
+        val sharedPref = getSharedPreferences("pref", Context.MODE_PRIVATE)
+        val basePath = sharedPref.getString(getString(R.string.base_path), "noPath")
+        if (basePath == "noPath") {
+            showStorageChooser()
+        }
+    }
+
+    private fun showStorageChooser() {
+        val chooser = StorageChooser.Builder()
+            .withActivity(this)
+            .withFragmentManager(fragmentManager) // Make sure you are using the correct fragmentManager here
+            .setDialogTitle("Choose Destination Folder")
+            .withMemoryBar(true)
+            .build()
+
+        chooser.show()
+        chooser.setOnSelectListener { path ->
+            lifecycleScope.launch {
+                saveBasePath(path)
+                navigateTo(LoadingSongActivity::class.java)
+            }
+        }
+    }
+
+    private fun saveBasePath(path: String) {
+        val sharedPref = getSharedPreferences("pref", Context.MODE_PRIVATE)
+        with(sharedPref.edit()) {
+            putString(getString(R.string.base_path), path)
+            apply()
+        }
+    }
 }

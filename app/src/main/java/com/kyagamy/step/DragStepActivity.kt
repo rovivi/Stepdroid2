@@ -6,23 +6,24 @@ import android.content.res.Resources
 import android.graphics.Point
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.Window
-import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.SeekBar
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.kyagamy.step.common.step.CommonGame.ArrowsPositionPlace
 import com.kyagamy.step.databinding.ActivityDragStepBinding
-import com.kyagamy.step.databinding.ActivityMainBinding
 
 
 class DragStepActivity : FullScreenActivity() {
-    private lateinit var binding: ActivityDragStepBinding
+
+    private val binding: ActivityDragStepBinding by lazy {
+        ActivityDragStepBinding.inflate(LayoutInflater.from(this))
+    }
+
     private var _xDelta = 0
     private var _yDelta = 0
     private var stepInfo: List<Int> = listOf(
@@ -64,7 +65,7 @@ class DragStepActivity : FullScreenActivity() {
         val gson = Gson()
         binding.saveArrows.setOnClickListener {
             val save = ArrowsPositionPlace()
-            save.size = binding.sizeBar.progress + 50+20
+            save.size = binding.sizeBar.progress + 50 + 20
             var positions = ArrayList<Point>()
             arrows.forEach { x ->
                 positions.add(Point(x.x.toInt(), x.y.toInt()))
@@ -96,27 +97,26 @@ class DragStepActivity : FullScreenActivity() {
             arrows[0].y = (sizeY - size).toFloat()
             arrows[0].x = 0f
             //set 7
-            arrows[1].y = (sizeY/2).toFloat()
+            arrows[1].y = (sizeY / 2).toFloat()
             arrows[1].x = 0f
 
             //set 5
 
-            arrows[2].y = ((sizeY/2-size)/2+sizeY/2).toFloat()
-            arrows[2].x = ((sizeX-size)/2).toFloat()
+            arrows[2].y = ((sizeY / 2 - size) / 2 + sizeY / 2).toFloat()
+            arrows[2].x = ((sizeX - size) / 2).toFloat()
 
             //set 9
-            arrows[3].y = (sizeY/2).toFloat()
-            arrows[3].x = ((sizeX-size).toFloat())
+            arrows[3].y = (sizeY / 2).toFloat()
+            arrows[3].x = ((sizeX - size).toFloat())
             //set 3
-            arrows[4].y =(sizeY - size).toFloat()
-            arrows[4].x = ((sizeX-size).toFloat())
+            arrows[4].y = (sizeY - size).toFloat()
+            arrows[4].x = ((sizeX - size).toFloat())
             //resizeArrows(pxToDp(size))
-            binding.sizeBar.progress =pxToDp(size)-50
+            binding.sizeBar.progress = pxToDp(size) - 50
         }
-
     }
 
-    fun pxToDp(px: Int): Int {
+    private fun pxToDp(px: Int): Int {
         return (px / Resources.getSystem().displayMetrics.density).toInt()
     }
 
@@ -158,6 +158,7 @@ class DragStepActivity : FullScreenActivity() {
                 _xDelta = X - v.left
                 _yDelta = Y - v.top
             }
+
             MotionEvent.ACTION_MOVE -> {
                 v.x = X - _xDelta + 0f
                 v.y = Y - _yDelta + 0f

@@ -186,7 +186,7 @@ class FragmentStartMenu : DialogFragment() {
                                     currentSong?.PATH_SONG + currentSong?.BANNER_SONG
                                 )
 
-                                startActivity(i)
+                                //startActivity(i)
                             } catch (ex: Exception) {
                                 ex.printStackTrace()
                             }

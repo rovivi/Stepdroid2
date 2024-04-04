@@ -1,18 +1,13 @@
 package com.kyagamy.step
 
 import android.content.DialogInterface
-import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
-import android.view.View
+import android.view.LayoutInflater
 import android.view.Window
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import com.kyagamy.step.databinding.ActivityMainBinding
 import com.kyagamy.step.fragments.CategoryFragament
 import com.kyagamy.step.fragments.songs.SongsList
@@ -20,11 +15,11 @@ import com.kyagamy.step.fragments.songs.SongsList
 
 class MainActivity : FullScreenActivity() {
     // Reference to "name" TextView using synthetic properties.
-    private  lateinit var binding :ActivityMainBinding
-// Reference to "name" TextView using the binding class instance.
+    private val binding: ActivityMainBinding by lazy {
+        ActivityMainBinding.inflate(LayoutInflater.from(this))
+    }
+    // Reference to "name" TextView using the binding class instance.
     private lateinit var fragmentCategory: CategoryFragament
-    private lateinit var text: TextView
-    private lateinit var button: Button
     private var positionCategory = 2
     private val manager = supportFragmentManager
 
@@ -36,12 +31,9 @@ class MainActivity : FullScreenActivity() {
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
 
         fragmentCategory = CategoryFragament.newInstance(positionCategory)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-
-
 
         showFragmentCategory()
 
@@ -91,7 +83,7 @@ class MainActivity : FullScreenActivity() {
 
     fun showFragmentCategory() {
         val transaction = manager.beginTransaction()
-       // transaction.setCustomAnimations(R.anim.fragment_fade_enter, R.anim.fragment_fade_exit)
+        // transaction.setCustomAnimations(R.anim.fragment_fade_enter, R.anim.fragment_fade_exit)
         transaction.replace(R.id.fragment_holder, fragmentCategory)
         transaction.addToBackStack(null)
         transaction.commit()
@@ -100,7 +92,7 @@ class MainActivity : FullScreenActivity() {
     private fun showFragmentSongList(category: String) {
         val transaction = manager.beginTransaction()
         val fragment = SongsList.newInstance(category, "")
-       // transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
+        // transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
         transaction.replace(R.id.fragment_holder, fragment)
         transaction.addToBackStack("changetocategory")
         transaction.commit()
@@ -111,7 +103,6 @@ class MainActivity : FullScreenActivity() {
         Toast.makeText(this, "value:${category}", Toast.LENGTH_SHORT).show()
         showFragmentSongList(category)
     }
-
 
 
 }
