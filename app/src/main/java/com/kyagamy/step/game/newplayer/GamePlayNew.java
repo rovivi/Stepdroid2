@@ -10,9 +10,7 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.os.Build;
@@ -25,19 +23,13 @@ import android.widget.VideoView;
 
 import androidx.annotation.RequiresApi;
 
-import com.kyagamy.step.PlayerBga;
+import com.kyagamy.step.views.gameplayactivity.GamePlayActivity;
 import com.kyagamy.step.R;
 import com.kyagamy.step.common.Common;
 import com.kyagamy.step.common.step.CommonGame.ParamsSong;
 import com.kyagamy.step.common.step.Game.GameRow;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
@@ -69,7 +61,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     public static int soundPullBeat;
     public static int soundPullMine;
     //    private Context ctx;
-    public PlayerBga playerBga;
+    public GamePlayActivity playerBga;
 
     //TEST
 
@@ -98,7 +90,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void build1Object(VideoView videoView, StepObject stepData, Context context, Point sizeScreen, PlayerBga playerBga, byte[] inputs) {
+    public void build1Object(VideoView videoView, StepObject stepData, Context context, Point sizeScreen, GamePlayActivity playerBga, byte[] inputs) {
         try {
             this.playerBga = playerBga;
             isLandScape = context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;

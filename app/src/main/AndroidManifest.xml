@@ -31,7 +31,7 @@
         android:supportsRtl="true"
         android:installLocation="preferExternal"
         android:theme="@style/AppTheme">
-        <activity android:name=".DownloadUpdateFiles" />
+        <activity android:name=".views.InstallFilesActivity" />
         <activity android:name=".game.newplayer.EvaluationActivity"
              android:exported="true"
             >
@@ -40,16 +40,16 @@
                 <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
             </intent-filter>
         </activity>
-        <activity android:name=".DragStepActivity" />
+        <activity android:name=".views.DragStepActivity" />
         <activity
-            android:name=".LoadingSongActivity"
+            android:name=".views.LoadingSongActivity"
             android:label="@string/title_activity_loading_song"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".SplashActivity"
+            android:name=".views.SplashActivity"
             android:label="@string/title_activity_splash"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".StartActivity"
+        <activity android:name=".views.StartActivity"
             android:exported="true"
             >
             <intent-filter>
@@ -58,10 +58,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" />
+        <activity android:name=".views.MainActivity" />
         <activity
             android:screenOrientation="fullSensor"
-            android:name=".PlayerBga"
+            android:name=".views.gameplayactivity.GamePlayActivity"
             android:keepScreenOn="true"
              />
 

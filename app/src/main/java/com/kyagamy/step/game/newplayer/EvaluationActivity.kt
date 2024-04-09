@@ -1,7 +1,6 @@
 package com.kyagamy.step.game.newplayer
 
 import android.graphics.BitmapFactory
-import android.graphics.Typeface
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.SoundPool
@@ -12,17 +11,14 @@ import android.view.Window
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.kyagamy.step.FullScreenActivity
+import com.kyagamy.step.views.FullScreenActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.adapters.LevelAdapter
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.databinding.ActivityEvaluation2Binding
-import com.kyagamy.step.databinding.ActivityEvaluationBinding
 import com.kyagamy.step.room.entities.Level
-import com.squareup.picasso.Picasso
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

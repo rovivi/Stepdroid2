@@ -1,4 +1,4 @@
-package com.kyagamy.step
+package com.kyagamy.step.views
 
 import android.Manifest
 import android.content.Context
@@ -14,6 +14,8 @@ import android.provider.Settings
 import com.codekidlabs.storagechooser.StorageChooser
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
+import com.kyagamy.step.BuildConfig
+import com.kyagamy.step.R
 import com.kyagamy.step.databinding.ActivityStartBinding
 import kotlinx.coroutines.launch
 
@@ -35,7 +37,7 @@ class StartActivity : AppCompatActivity() {
             buttonStart.setOnClickListener { navigateTo(MainActivity::class.java) }
             dragStartButton.setOnClickListener { navigateTo(DragStepActivity::class.java) }
             reloadSings.setOnClickListener { navigateTo(LoadingSongActivity::class.java) }
-            buttonDS.setOnClickListener { navigateTo(DownloadUpdateFiles::class.java) }
+            buttonDS.setOnClickListener { navigateTo(InstallFilesActivity::class.java) }
         }
     }
 

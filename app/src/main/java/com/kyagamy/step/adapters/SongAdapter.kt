@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.kyagamy.step.R
 import com.kyagamy.step.common.Common
 import com.kyagamy.step.room.entities.Song
-import com.kyagamy.step.viewModels.LevelViewModel
+import com.kyagamy.step.viewmodels.LevelViewModel
 import com.squareup.picasso.Picasso
 import java.io.File
 

@@ -1,4 +1,4 @@
-package com.kyagamy.step.viewModels
+package com.kyagamy.step.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

@@ -1,4 +1,4 @@
-package com.kyagamy.step
+package com.kyagamy.step.views
 
 import android.content.Context
 import android.os.Bundle
@@ -7,15 +7,16 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.kyagamy.step.R
 import com.kyagamy.step.common.Common
 import com.kyagamy.step.common.step.Parsers.FileSSC
 import com.kyagamy.step.databinding.ActivityLoadingSongBinding
 import com.kyagamy.step.room.entities.Category
 import com.kyagamy.step.room.entities.Level
 import com.kyagamy.step.room.entities.Song
-import com.kyagamy.step.viewModels.CategoryViewModel
-import com.kyagamy.step.viewModels.LevelViewModel
-import com.kyagamy.step.viewModels.SongViewModel
+import com.kyagamy.step.viewmodels.CategoryViewModel
+import com.kyagamy.step.viewmodels.LevelViewModel
+import com.kyagamy.step.viewmodels.SongViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File

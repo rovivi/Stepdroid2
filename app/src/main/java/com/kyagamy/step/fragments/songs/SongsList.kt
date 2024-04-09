@@ -9,18 +9,17 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Spinner
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.kyagamy.step.MainActivity
+import com.kyagamy.step.views.MainActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.adapters.SongAdapter
 import com.kyagamy.step.common.RecyclerItemClickListener
 import com.kyagamy.step.room.entities.Song
-import com.kyagamy.step.viewModels.LevelViewModel
-import com.kyagamy.step.viewModels.SongViewModel
+import com.kyagamy.step.viewmodels.LevelViewModel
+import com.kyagamy.step.viewmodels.SongViewModel
 
 
 private const val channel = "param1"

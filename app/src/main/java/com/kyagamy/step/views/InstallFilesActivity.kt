@@ -1,4 +1,4 @@
-package com.kyagamy.step
+package com.kyagamy.step.views
 
 import android.app.DownloadManager
 import android.content.Context
@@ -6,6 +6,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.kyagamy.step.R
+
 //import com.downloader.PRDownloader
 //import com.downloader.PRDownloaderConfig
 //import com.liulishuo.filedownloader.BaseDownloadTask
@@ -14,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 
 
-class DownloadUpdateFiles : AppCompatActivity() {
+class InstallFilesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_download_update_files)

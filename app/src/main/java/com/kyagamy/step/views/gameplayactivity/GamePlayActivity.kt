@@ -1,4 +1,4 @@
-package com.kyagamy.step
+package com.kyagamy.step.views.gameplayactivity
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -10,7 +10,6 @@ import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.os.Build
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.TypedValue
@@ -20,8 +19,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import com.google.gson.Gson
+import com.kyagamy.step.R
 import com.kyagamy.step.common.Common.Companion.convertStreamToString
 import com.kyagamy.step.common.step.CommonGame.ArrowsPositionPlace
 import com.kyagamy.step.common.step.CommonGame.ParamsSong
@@ -31,8 +30,6 @@ import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_HOLD_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_UNPRESSED
 import com.kyagamy.step.common.step.Parsers.FileSSC
-import com.kyagamy.step.databinding.ActivityMainBinding
-import com.kyagamy.step.databinding.ActivityPlayerbgaBinding
 import com.kyagamy.step.game.newplayer.EvaluationActivity
 import com.kyagamy.step.game.newplayer.Evaluator
 import com.kyagamy.step.game.newplayer.MainThreadNew
@@ -42,16 +39,15 @@ import java.io.File
 import java.io.FileInputStream
 import java.util.*
 import kotlin.collections.ArrayList
+import com.kyagamy.step.databinding.ActivityPlayerbgaBinding
 
 
-class PlayerBga : Activity() {
+class GamePlayActivity : Activity() {
     //private lateinit var binding :ActivityPlayerbgaBinding
 
     private val binding: ActivityPlayerbgaBinding by lazy {
         ActivityPlayerbgaBinding.inflate(LayoutInflater.from(this))
     }
-
-
 
     var hilo: MainThreadNew? = null
     var i: Intent? = null
@@ -98,7 +94,6 @@ class PlayerBga : Activity() {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     override fun onStart() {
         super.onStart()
         binding.gamePlay!!.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
@@ -111,7 +106,6 @@ class PlayerBga : Activity() {
         startGamePlay()
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private fun startGamePlay() {
         try {
             // gamePlay!!.top = 0

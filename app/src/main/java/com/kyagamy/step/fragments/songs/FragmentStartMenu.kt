@@ -28,15 +28,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.kyagamy.step.PlayerBga
+import com.kyagamy.step.views.gameplayactivity.GamePlayActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.adapters.LevelAdapter
 import com.kyagamy.step.common.RecyclerItemClickListener
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.databinding.FragmentFragmentStartMenuBinding
 import com.kyagamy.step.room.entities.Song
-import com.kyagamy.step.viewModels.LevelViewModel
-import com.kyagamy.step.viewModels.SongViewModel
+import com.kyagamy.step.viewmodels.LevelViewModel
+import com.kyagamy.step.viewmodels.SongViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -178,7 +178,7 @@ class FragmentStartMenu : DialogFragment() {
                     override fun onItemClick(view: View?, position: Int) {
                         lifecycleScope.run {
                             try {
-                                val i = Intent(requireActivity(), PlayerBga::class.java)
+                                val i = Intent(requireActivity(), GamePlayActivity::class.java)
 
                                 // root.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_out));
                                 releaseMediaPlayer()

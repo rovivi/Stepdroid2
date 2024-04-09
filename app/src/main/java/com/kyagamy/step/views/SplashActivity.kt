@@ -1,8 +1,8 @@
-package com.kyagamy.step
+package com.kyagamy.step.views
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-
+import com.kyagamy.step.R
 
 
 class SplashActivity : AppCompatActivity() {

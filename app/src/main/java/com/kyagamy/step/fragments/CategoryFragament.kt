@@ -10,11 +10,11 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager.widget.ViewPager
-import com.kyagamy.step.MainActivity
+import com.kyagamy.step.views.MainActivity
 import com.kyagamy.step.adapters.CategoryAdapter
 import com.kyagamy.step.databinding.FragmentCategoryFragamentBinding
 import com.kyagamy.step.room.entities.Category
-import com.kyagamy.step.viewModels.CategoryViewModel
+import com.kyagamy.step.viewmodels.CategoryViewModel
 import java.io.File
 
 
