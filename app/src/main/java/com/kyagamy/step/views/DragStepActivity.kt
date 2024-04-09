@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Point
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
 import android.view.MotionEvent
@@ -39,6 +40,11 @@ class DragStepActivity : FullScreenActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityDragStepBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        //initUI()
+    }
+
+    override fun onStart() {
+        super.onStart()
         initUI()
     }
 
@@ -52,8 +58,8 @@ class DragStepActivity : FullScreenActivity() {
             sizeBar.max = 230
             sizeBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 
-                override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
-                    val value = 50 + i;
+                override fun onProgressChanged(seekBar: SeekBar, value: Int, b: Boolean) {
+                    //val value = 50 + i;
                     sizeText.text = "Progress : $value dp"
                     resizeArrows(value)
                 }
@@ -102,27 +108,39 @@ class DragStepActivity : FullScreenActivity() {
     }
 
     private fun resetPanel() {
+
+
+
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        val height = displayMetrics.heightPixels
+        val width = displayMetrics.widthPixels
+
+
         val params = binding.relativeLayoutToDrag.layoutParams
-        val sizeX = params.width
-        val size = (sizeX / 3).toInt()
-        val sizeY = params.height
+        val sizeX = width
+        val sizeSquare = (sizeX.toFloat() / 3)// the size of the total square
+        val sizeY = height
+        Log.d("owo",sizeSquare.toString())
+        Log.d("owo",sizeX.toString())
+
         //set 1
-        arrows[0].y = (sizeY - size).toFloat()
+        arrows[0].y = (sizeY - sizeSquare)
         arrows[0].x = 0f
         //set 7
         arrows[1].y = (sizeY / 2).toFloat()
         arrows[1].x = 0f
         //set 5
-        arrows[2].y = ((sizeY / 2 - size) / 2 + sizeY / 2).toFloat()
-        arrows[2].x = ((sizeX - size) / 2).toFloat()
+        arrows[2].y = ((sizeY / 2 - sizeSquare) / 2 + sizeY / 2)
+        arrows[2].x = ((sizeX - sizeSquare) / 2)
         //set 9
         arrows[3].y = (sizeY / 2).toFloat()
-        arrows[3].x = ((sizeX - size).toFloat())
+        arrows[3].x = ((sizeX - sizeSquare))
         //set 3
-        arrows[4].y = (sizeY - size).toFloat()
-        arrows[4].x = ((sizeX - size).toFloat())
+        arrows[4].y = (sizeY - sizeSquare)
+        arrows[4].x = ((sizeX - sizeSquare))
         //resizeArrows(pxToDp(size))
-        binding.sizeBar.progress = pxToDp(size) - 50
+        binding.sizeBar.progress = pxToDp(sizeSquare.toInt()*2)
 
     }
 
@@ -138,10 +156,6 @@ class DragStepActivity : FullScreenActivity() {
 
             val iv = ImageView(this)
 
-            val params = RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-            )
 // Puedes definir la posición inicial aquí si lo deseas, por ejemplo:
 // params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE)
             //iv.layoutParams = params
@@ -163,8 +177,8 @@ class DragStepActivity : FullScreenActivity() {
 
         arrows.forEach { arrow ->
             val lp = arrow.layoutParams as RelativeLayout.LayoutParams
-            lp.width = pixel
-            lp.height = pixel
+            lp.width = value
+            lp.height = value
             arrow.layoutParams = lp
         }
     }
@@ -181,19 +195,12 @@ class DragStepActivity : FullScreenActivity() {
                 _yDelta = y - view.top
                 Log.d("owo", "action DOWN-- xDelta: ${_xDelta}, yDelta: ${_yDelta}")
             }
-
             MotionEvent.ACTION_MOVE -> {
                 val valueX = x - _xDelta + _xDelta
                 val valueY = y - _yDelta
 
                 view.x = valueX.toFloat()
                 view.y = valueY.toFloat()
-//                val lp = v.layoutParams as RelativeLayout.LayoutParams
-//                lp.leftMargin = X - _xDelta
-//                lp.topMargin = Y - _yDelta
-//                lp.rightMargin = v.width - lp.leftMargin - windowWidth
-//                lp.bottomMargin = v.height - lp.topMargin - windowHeight
-//                v.layoutParams = lp
                 binding.sizeText.text = "${x - _xDelta + 0f} ,${y - _yDelta + 0f}"
 
                 Log.d("owo", "action MOVE-- xDelta: ${valueX}, yDelta: ${valueY}")

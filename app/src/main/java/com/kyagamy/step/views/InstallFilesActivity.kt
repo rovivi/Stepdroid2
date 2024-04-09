@@ -48,8 +48,6 @@ class InstallFilesActivity : AppCompatActivity() {
 
 
         val path = getExternalFilesDir("/pathhxx");
-
-
 //
 //
 //        FileDownloader.getImpl().create(urlCon)
@@ -107,14 +105,10 @@ class InstallFilesActivity : AppCompatActivity() {
 
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
         request.setDestinationInExternalFilesDir(this,"downloa", "fil.zip");
-
         //request.setDestinationInExternalPublicDir("/", "rar.zip");
-
          val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         manager.enqueue(request)
-
     }
-
 
     fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
