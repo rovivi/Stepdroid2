@@ -11,7 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import com.kyagamy.step.R
 import com.kyagamy.step.databinding.ActivityMainBinding
 import com.kyagamy.step.fragments.CategoryFragament
-import com.kyagamy.step.fragments.songs.SongsList
+import com.kyagamy.step.fragments.songs.SongsListFragment
 
 
 class MainActivity : FullScreenActivity() {
@@ -92,7 +92,7 @@ class MainActivity : FullScreenActivity() {
 
     private fun showFragmentSongList(category: String) {
         val transaction = manager.beginTransaction()
-        val fragment = SongsList.newInstance(category, "")
+        val fragment = SongsListFragment(category)
         // transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
         transaction.replace(R.id.fragment_holder, fragment)
         transaction.addToBackStack("changetocategory")

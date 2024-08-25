@@ -210,21 +210,7 @@ class FragmentStartMenu : DialogFragment() {
                 level?.let { levelAdapter.setLevels(it) }
             }
 
-        //animaciones
-//        view.image_arrow_l.startAnimation(
-//            AnimationUtils.loadAnimation(
-//                context,
-//                R.anim.translate_left
-//            )
-//        )
-//        view.image_arrow_r.startAnimation(
-//            AnimationUtils.loadAnimation(
-//                context,
-//                R.anim.translate_right
-//            )
-//        )
 
-//Sizes
         val displayMetrics = DisplayMetrics()
         activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
         val height = displayMetrics.heightPixels
