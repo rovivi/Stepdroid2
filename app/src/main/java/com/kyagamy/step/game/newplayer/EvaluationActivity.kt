@@ -1,10 +1,8 @@
 package com.kyagamy.step.game.newplayer
 
 import android.graphics.BitmapFactory
-import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.SoundPool
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.Window
@@ -13,23 +11,21 @@ import android.view.animation.AnimationUtils
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.kyagamy.step.views.FullScreenActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.adapters.LevelAdapter
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.databinding.ActivityEvaluation2Binding
 import com.kyagamy.step.room.entities.Level
-
+import com.kyagamy.step.views.FullScreenActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class EvaluationActivity : FullScreenActivity() {
     private lateinit var binding: ActivityEvaluation2Binding
-    
+
     lateinit var mediaPlayer: MediaPlayer
     lateinit var soundPool: SoundPool
     private var soundPullTick: Int = 0
-    private var soundPullExplotion: Int = 0
 
     private val timeToDisplayMs = 160L
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,16 +37,12 @@ class EvaluationActivity : FullScreenActivity() {
         )
         setContentView(R.layout.activity_evaluation2)
         //setSounds
-        soundPool = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        soundPool =
             SoundPool.Builder()
                 .setMaxStreams(35)
                 .build()
-        } else {
-            SoundPool(35, AudioManager.STREAM_MUSIC, 1)
-        }
 
         soundPullTick = soundPool.load(applicationContext, R.raw.grade_tick, 1)
-
 
         //
         binding.exitButton.setOnClickListener { finish() }
@@ -62,17 +54,17 @@ class EvaluationActivity : FullScreenActivity() {
         )
 //        levelRecycl
         //ADAPTERS
-        val levelAdapter =LevelAdapter(this)
-        var lvl =  Level(1,1, "22","me","pump-single","asdasd","name",1,null)
+        val levelAdapter = LevelAdapter(this)
+        var lvl = Level(1, 1, "22", "me", "pump-single", "asdasd", "name", 1, null)
 
         var level = listOf(lvl)
-        levelAdapter.setLevels(level )
-        levelAdapter.bigMode=true
-        binding.levelViewRank.adapter= levelAdapter
+        levelAdapter.setLevels(level)
+        levelAdapter.bigMode = true
+        binding.levelViewRank.adapter = levelAdapter
         levelAdapter.notifyDataSetChanged()
 
-    
-        if (Evaluator.bitmap!=null){
+
+        if (Evaluator.bitmap != null) {
             binding.bgTitleGrade.setImageBitmap(Evaluator.bitmap)
 
         }
@@ -98,9 +90,14 @@ class EvaluationActivity : FullScreenActivity() {
 
         val anim_down = AnimationUtils.loadAnimation(applicationContext, R.anim.slide_down)
 
-        binding.levelViewRank.startAnimation(AnimationUtils.loadAnimation(applicationContext,R.anim.translate_up))
-        val anim_move = AnimationUtils.loadAnimation(this,R.anim.translate_down_static)
-        binding.titleEvaluation2.startAnimation(AnimationUtils.loadAnimation(this,R.anim.zoom_in))
+        binding.levelViewRank.startAnimation(
+            AnimationUtils.loadAnimation(
+                applicationContext,
+                R.anim.translate_up
+            )
+        )
+        val anim_move = AnimationUtils.loadAnimation(this, R.anim.translate_down_static)
+        binding.titleEvaluation2.startAnimation(AnimationUtils.loadAnimation(this, R.anim.zoom_in))
         val animDuration = 70L
         anim_down.duration = animDuration
 
@@ -227,36 +224,43 @@ class EvaluationActivity : FullScreenActivity() {
                 res2 = R.raw.rank_0_b
                 binding.imgRankGrade.setImageBitmap(lettersArray[0])
             }
+
             "SS" -> {
                 res = R.raw.rank_1
                 res2 = R.raw.rank_1_b
                 binding.imgRankGrade.setImageBitmap(lettersArray[1])
             }
+
             "S" -> {
                 res = R.raw.rank_2
                 res2 = R.raw.rank_2_b
                 binding.imgRankGrade.setImageBitmap(lettersArray[2])
             }
+
             "A" -> {
                 res = R.raw.rank_3
                 res2 = R.raw.rank_3_b
                 binding.imgRankGrade.setImageBitmap(lettersArray[3])
             }
+
             "B" -> {
                 res = R.raw.rank_4
                 res2 = R.raw.rank_4_b
                 binding.imgRankGrade.setImageBitmap(lettersArray[4])
             }
+
             "C" -> {
                 res = R.raw.rank_5
                 res2 = R.raw.rank_5_b
                 binding.imgRankGrade.setImageBitmap(lettersArray[5])
             }
+
             "D" -> {
                 res = R.raw.rank_6
                 res2 = R.raw.rank_6_b
                 binding.imgRankGrade.setImageBitmap(lettersArray[6])
             }
+
             "F" -> {
                 res = R.raw.rank_7
                 res2 = R.raw.rank_7_b

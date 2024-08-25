@@ -144,17 +144,15 @@ fun AnimateText(
 fun calculateScore(): String {
     // Ejemplo de cómo se puede calcular el puntaje siguiendo la fórmula proporcionada en la imagen
     val perfect = 1195
-    val great = 235
-    val good = 124
-    val bad = 73
-    val miss = 73
-    val maxCombo = 229
+    val great = 1
+    val good = 0
+    val bad = 0
+    val miss = 0
+    val maxCombo = 1195
     val totalNotes = perfect + great + good + bad + miss
-
-    val noteWeights = (1.0 * perfect) + (0.6 * great) + (0.2 * good) + (0.1 * bad) + (0.0 * miss)
-    val score = ((99.5 * noteWeights + 0.5 * maxCombo) / totalNotes) * 1000000
-
-    return score.toInt().toString().padStart(7, '0')
+    val noteWeights = (1.0 * perfect) + (0.6 * great) + (0.2 * good) + (0.1 * bad)
+    val score = ((99.5 * noteWeights + 0.5 * maxCombo) / totalNotes) * 10000
+    return score.toInt().toString()
 }
 
 
@@ -167,6 +165,6 @@ fun StatRow(label: String, value: String, color: Color, delayMillis: Int) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         AnimateText(text = label, fontSize = 24, delayMillis = delayMillis, color)
-        AnimateText(text = value, fontSize = 24, delayMillis = delayMillis, color, true)
+        AnimateText(text = value, fontSize = 24, delayMillis = delayMillis, Color.White, true)
     }
 }

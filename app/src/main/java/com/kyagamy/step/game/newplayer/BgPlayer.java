@@ -18,7 +18,7 @@ public class BgPlayer {
     private Context context;
     boolean changeVideo = false, isRunning = false;
     private String path;
-    private Double BPM ;
+    private Double BPM;
 
     public BgPlayer(String path, String data, VideoView player, Context context, Double BPM) {
         assert data != null;
@@ -28,7 +28,7 @@ public class BgPlayer {
         this.context = context;
         this.path = path;
         this.player = player;
-        this.BPM =BPM;
+        this.BPM = BPM;
         String[] listBG = data.replace("\n", "").replace("\r", "").split(",");
         for (String bg : listBG) {
             BGList.add(new bgChange(bg));
@@ -44,45 +44,45 @@ public class BgPlayer {
                     SharedPreferences sharedPref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
                     String basePath = sharedPref.getString(context.getString(R.string.base_path), "Error path");
 
-                    if (bg.fileName.contains(".")){
-                    String ext = bg.fileName.substring(bg.fileName.lastIndexOf("."));
-                    ext = ext.toLowerCase();
-                    switch (ext) {
-                        case ".avi":
-                        case ".mov":
-                        case ".mp4":
-                        case ".3gp":
-                        case ".ogg":
-                        case ".mpeg":
-                        case ".mpg":
-                        case ".flv":
-                            String bgaDir = Common.Companion.checkBGADir(path, bg.fileName, basePath);
-                            player.setBackground(null);
-                            if (bgaDir != null) {
-                                player.setVideoPath(bgaDir);
-                                if (bg.beat<0)
-                                    player.seekTo((int) Math.abs(Common.Companion.beat2Second(bg.beat,BPM)*1000  +100));
-                                player.start();
-                            }
-                            else
-                                playBgaOff();
-                            break;
-                        case ".png":
-                        case ".webp":
-                        case ".jpg":
-                        case ".bpm":
-                        case ".tiff":
-                            bgaDir = Common.Companion.checkBGADir(path, bg.fileName, basePath);
-                            if (bgaDir != null) {
-                                player.setBackground(new BitmapDrawable(BitmapFactory.decodeFile(bgaDir)));
-                            } else
-                            //no se utilizo owo
+                    if (bg.fileName.contains(".")) {
+                        String ext = bg.fileName.substring(bg.fileName.lastIndexOf("."));
+                        ext = ext.toLowerCase();
+                        switch (ext) {
+                            case ".avi":
+                            case ".mov":
+                            case ".mp4":
+                            case ".3gp":
+                            case ".ogg":
+                            case ".mpeg":
+                            case ".mpg":
+                            case ".flv":
+                                String bgaDir = Common.Companion.checkBGADir(path, bg.fileName, basePath);
+                                player.setBackground(null);
+                                if (bgaDir != null) {
+                                    player.setVideoPath(bgaDir);
+                                    if (bg.beat < 0)
+                                        player.seekTo((int) Math.abs(Common.Companion.beat2Second(bg.beat, BPM) * 1000 + 100));
+                                    player.start();
+                                } else
+                                    playBgaOff();
+                                break;
+                            case ".png":
+                            case ".webp":
+                            case ".jpg":
+                            case ".bpm":
+                            case ".tiff":
+                                bgaDir = Common.Companion.checkBGADir(path, bg.fileName, basePath);
+                                if (bgaDir != null) {
+                                    player.setBackground(new BitmapDrawable(BitmapFactory.decodeFile(bgaDir)));
+                                } else
+                                    //no se utilizo owo
 
-                                playBgaOff();
-                            break;
-                        default:
-                            break;
-                    }}
+                                    playBgaOff();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 } finally {
@@ -136,8 +136,7 @@ public class BgPlayer {
                     if (info[0] != null && info[0] != "") {
                         fileName = info[0];
                     }
-                }
-                catch (Exception ex){
+                } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             }

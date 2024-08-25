@@ -14,22 +14,18 @@ public class Common {
         var WIDTH: Double = 720.0
         var HEIGHT = 1080
 
-        fun getSize (context: Context):Point{
+        fun getSize(context: Context): Point {
 
-            val d =(context.getSystemService(Context.WINDOW_SERVICE) as WindowManager?)!!.defaultDisplay
+            val d =
+                (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager?)!!.defaultDisplay
             val width = d.width
             val height = d.height
-            return  Point(width,height)
-
-
-
-
+            return Point(width, height)
 
         }
 
 
-
-        val commonTime = 41.6f/2
+        val commonTime = 41.6f / 2
 
         var HIDE_PAD = false
 
@@ -50,17 +46,17 @@ public class Common {
 
         val PIU_ARROW_NAMES =
             arrayOf("down_left_", "up_left_", "center_", "up_right_", "down_right_")
-         val JudgeSJ = doubleArrayOf(41.6, 41.6, 41.6, 83.3 + commonTime)
-         val JudgeEJ = doubleArrayOf(41.6, 41.6, 41.6, 58.3 + commonTime)
-         val JudgeNJ = doubleArrayOf(41.6, 41.6, 41.6, 41.6 + commonTime)
-         val JudgeHJ = doubleArrayOf(41.6, 41.6, 41.6, 25.5 + commonTime)
-         val JudgeVJ = doubleArrayOf(33.3, 33.3, 33.3, 8.5 + commonTime)
-         val JudgeXJ =
+        val JudgeSJ = doubleArrayOf(41.6, 41.6, 41.6, 83.3 + commonTime)
+        val JudgeEJ = doubleArrayOf(41.6, 41.6, 41.6, 58.3 + commonTime)
+        val JudgeNJ = doubleArrayOf(41.6, 41.6, 41.6, 41.6 + commonTime)
+        val JudgeHJ = doubleArrayOf(41.6, 41.6, 41.6, 25.5 + commonTime)
+        val JudgeVJ = doubleArrayOf(33.3, 33.3, 33.3, 8.5 + commonTime)
+        val JudgeXJ =
             doubleArrayOf(16.6, 16.6, 16.6, 16.6, 16.6 + commonTime)
         private val JudgeUJ = doubleArrayOf(
             8.3, 8.3, 8.3, 8.3, 8.3 + commonTime
         )
-         val JUDMENT =
+        val JUDMENT =
             arrayOf(JudgeSJ, JudgeEJ, JudgeNJ, JudgeHJ, JudgeVJ, JudgeXJ, JudgeUJ)
 
 

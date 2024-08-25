@@ -1,5 +1,6 @@
 package com.kyagamy.step.game.newplayer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
@@ -89,7 +90,6 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
     };
 
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void build1Object(VideoView videoView, StepObject stepData, Context context, Point sizeScreen, GamePlayActivity playerBga, byte[] inputs) {
         try {
             this.playerBga = playerBga;
@@ -382,6 +382,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     public boolean onTouchEvent(MotionEvent event) {
         try {
             int maskedAction = event.getActionMasked();
