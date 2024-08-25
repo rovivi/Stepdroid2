@@ -14,6 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,14 +44,14 @@ class EvaluationActivity : ComponentActivity() {
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 ResultScreen(
                     modifier = Modifier.padding(innerPadding)
-                )
+                ) { finish() }
             }
         }
     }
 }
 
 @Composable
-fun ResultScreen(modifier: Modifier = Modifier) {
+fun ResultScreen(modifier: Modifier = Modifier, onContinueClicked: () -> Unit) {
     val baseDelay = 100
 
     Column(
@@ -56,7 +63,7 @@ fun ResultScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         AnimateText(text = "SCORE", fontSize = 28, delayMillis = baseDelay * 0)
-        AnimateText(text = "0801414", fontSize = 40, delayMillis = baseDelay * 1)
+        AnimateText(text = calculateScore(), fontSize = 40, delayMillis = baseDelay * 1)
         AnimateText(text = "A", fontSize = 100, delayMillis = baseDelay * 12)
 
         StatRow(label = "PERFECT", value = "1195", color = Color.Cyan, delayMillis = baseDelay * 3)
@@ -64,12 +71,31 @@ fun ResultScreen(modifier: Modifier = Modifier) {
         StatRow(label = "GOOD", value = "124", color = Color.Yellow, delayMillis = baseDelay * 5)
         StatRow(label = "BAD", value = "073", color = Color.Magenta, delayMillis = baseDelay * 6)
         StatRow(label = "MISS", value = "073", color = Color.Red, delayMillis = baseDelay * 7)
-        StatRow(label = "MAX COMBO", value = "229", color = Color.White, delayMillis = baseDelay * 8)
+        StatRow(
+            label = "MAX COMBO",
+            value = "229",
+            color = Color.White,
+            delayMillis = baseDelay * 8
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        IconButton(
+            onClick = {onContinueClicked() },
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(Color.Gray)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Continue",
+                tint = Color.White
+            )
+        }
     }
 }
-
 
 @Composable
 fun AnimateText(
@@ -115,6 +141,23 @@ fun AnimateText(
     )
 }
 
+fun calculateScore(): String {
+    // Ejemplo de cómo se puede calcular el puntaje siguiendo la fórmula proporcionada en la imagen
+    val perfect = 1195
+    val great = 235
+    val good = 124
+    val bad = 73
+    val miss = 73
+    val maxCombo = 229
+    val totalNotes = perfect + great + good + bad + miss
+
+    val noteWeights = (1.0 * perfect) + (0.6 * great) + (0.2 * good) + (0.1 * bad) + (0.0 * miss)
+    val score = ((99.5 * noteWeights + 0.5 * maxCombo) / totalNotes) * 1000000
+
+    return score.toInt().toString().padStart(7, '0')
+}
+
+
 @Composable
 fun StatRow(label: String, value: String, color: Color, delayMillis: Int) {
     Row(
@@ -124,6 +167,6 @@ fun StatRow(label: String, value: String, color: Color, delayMillis: Int) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         AnimateText(text = label, fontSize = 24, delayMillis = delayMillis, color)
-        AnimateText(text = value, fontSize = 24, delayMillis = delayMillis, color,true)
+        AnimateText(text = value, fontSize = 24, delayMillis = delayMillis, color, true)
     }
 }
