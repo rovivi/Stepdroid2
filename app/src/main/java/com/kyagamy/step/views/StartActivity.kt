@@ -7,16 +7,17 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import android.provider.Settings
 import com.codekidlabs.storagechooser.StorageChooser
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
 import com.kyagamy.step.BuildConfig
 import com.kyagamy.step.R
 import com.kyagamy.step.databinding.ActivityStartBinding
+import com.kyagamy.step.ui.EvaluationActivity
 import kotlinx.coroutines.launch
 
 class StartActivity : AppCompatActivity() {
@@ -38,6 +39,7 @@ class StartActivity : AppCompatActivity() {
             dragStartButton.setOnClickListener { navigateTo(DragStepActivity::class.java) }
             reloadSings.setOnClickListener { navigateTo(LoadingSongActivity::class.java) }
             buttonDS.setOnClickListener { navigateTo(InstallFilesActivity::class.java) }
+            evaluation.setOnClickListener { navigateTo(EvaluationActivity::class.java) }
         }
     }
 
@@ -45,8 +47,6 @@ class StartActivity : AppCompatActivity() {
         val intent = Intent(this, destination)
         startActivity(intent)
     }
-
-
 
 
     private fun checkPermissions() {

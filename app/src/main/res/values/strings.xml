@@ -16,5 +16,6 @@
     <string name="title_activity_loading_song">LoadingSongActivity</string>
     <string name="todo">TODO</string>
     <string name="singleArrowsPos">singlearrowspos</string>
+    <string name="title_activity_evaluation">EvaluationActivity</string>
 
 </resources>
