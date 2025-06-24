@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.kyagamy.step.R
 import com.kyagamy.step.common.Common
 import com.kyagamy.step.common.step.Parsers.FileSSC
+import com.kyagamy.step.common.io.LocalFileSource
 import com.kyagamy.step.databinding.ActivityLoadingSongBinding
 import com.kyagamy.step.room.entities.Category
 import com.kyagamy.step.room.entities.Level
@@ -20,7 +21,6 @@ import com.kyagamy.step.viewmodels.SongViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileInputStream
 import java.lang.Exception
 
 class LoadingSongActivity : AppCompatActivity() {
@@ -120,8 +120,9 @@ class LoadingSongActivity : AppCompatActivity() {
                             hasSong = true
                             try {
                                 //parse and save songs info
-                                val data: String =
-                                    Common.convertStreamToString(FileInputStream(songFile.path))!!
+                                val source = LocalFileSource(songFile)
+                                val data: String = source.readText()
+                                source.close()
                                 val stepFileLoaded = FileSSC(data, count++)
                                 val parsedFile = stepFileLoaded.parseData(true)
                                 val song = Song(
