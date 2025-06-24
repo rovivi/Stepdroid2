@@ -8,6 +8,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicBlur
 import androidx.annotation.RequiresApi
+import androidx.core.graphics.createBitmap
 
 
 class TransformBitmap {
@@ -19,7 +20,7 @@ class TransformBitmap {
             val width = src.width
             val height = src.height
             // create output bitmap
-            val bmOut = Bitmap.createBitmap(width, height, src.config)
+            val bmOut = src.config?.let { createBitmap(width, height, it) }
             // color information
             var A: Int
             var R: Int
@@ -58,7 +59,7 @@ class TransformBitmap {
                     }
 
                     // apply new pixel color to output bitmap
-                    bmOut.setPixel(x, y, Color.argb(A, R, G, B))
+                    bmOut?.setPixel(x, y, Color.argb(A, R, G, B))
                 }
             }
 
@@ -183,9 +184,9 @@ class TransformBitmap {
         }
         @JvmStatic
         fun overlay(bmp2: Bitmap?, bmp1: Bitmap): Bitmap {
-            val bmOverlay = Bitmap.createBitmap(200, 200, bmp1.config)
-            val canvas = Canvas(bmOverlay)
-            canvas.drawBitmap(
+            val bmOverlay = bmp1.config?.let { createBitmap(200, 200, it) }
+            val canvas = bmOverlay?.let { Canvas(it) }
+            canvas!!.drawBitmap(
                 bmp2!!,
                 null,
                 Rect(0, 0, canvas.width, canvas.height),
@@ -208,7 +209,7 @@ class TransformBitmap {
             // create output bitmap
 
             // create a mutable empty bitmap
-            val bmOut = Bitmap.createBitmap(width, height, src.config)
+            val bmOut = src.config?.let { createBitmap(width, height, it) }
 
             // create a canvas so that we can draw the bmOut Bitmap from source bitmap
             val c = Canvas()
@@ -257,10 +258,10 @@ class TransformBitmap {
                     }
 
                     // set new pixel color to output bitmap
-                    bmOut.setPixel(x, y, Color.argb(A, R, G, B))
+                    bmOut?.setPixel(x, y, Color.argb(A, R, G, B))
                 }
             }
-            return bmOut
+            return bmOut!!
         }
 
         @JvmStatic
@@ -271,7 +272,7 @@ class TransformBitmap {
              Bitmap mask = BitmapFactory.decodeResource(getResources(),R.drawable.mask);
             */
             val result =
-                Bitmap.createBitmap(original.width, original.height, Bitmap.Config.ARGB_8888)
+                createBitmap(original.width, original.height)
             val mCanvas = Canvas(result)
             val paint =
                 Paint(Paint.ANTI_ALIAS_FLAG)
@@ -356,17 +357,17 @@ class TransformBitmap {
 
         @JvmStatic
         fun replaceColor(b: Bitmap, fromColor: Int, toColor: Int): Bitmap {
-            val out = Bitmap.createBitmap(b.width, b.height, b.config)
+            val out = b.config?.let { createBitmap(b.width, b.height, it) }
             for (x in 0 until b.width) {
                 for (y in 0 until b.height) {
                     if (b.getPixel(x, y) == fromColor) {
-                        out.setPixel(x, y, toColor)
+                        out?.setPixel(x, y, toColor)
                     } else {
-                        out.setPixel(x, y, b.getPixel(x, y))
+                        out?.setPixel(x, y, b.getPixel(x, y))
                     }
                 }
             }
-            return out
+            return out!!
         }
 
 
