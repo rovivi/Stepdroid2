@@ -114,7 +114,7 @@ class LoadingSongActivity : AppCompatActivity() {
                         text.text = subFolder.name
                         val fileSong = subFolder.listFiles()
                         val songFile = fileSong.firstOrNull { ssc ->
-                            ssc.name.toLowerCase().endsWith("ssc")
+                            ssc.name.lowercase().endsWith("ssc")
                         }
                         if (songFile != null && songFile.isFile) {
                             hasSong = true

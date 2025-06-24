@@ -66,19 +66,19 @@ class LevelAdapter internal constructor(
 
         Picasso.get().load(R.drawable.level_levelblack).into(holder.levelStaticGlow)
 
-        if (current.STEPSTYPE.toLowerCase(Locale.ROOT).contains("pump-single")) {
-            if (current.DESCRIPTION.toLowerCase(Locale.ROOT).contains("dp"))
+        if (current.STEPSTYPE.lowercase(Locale.ROOT).contains("pump-single")) {
+            if (current.DESCRIPTION.lowercase(Locale.ROOT).contains("dp"))
                 Picasso.get().load(R.drawable.level_single_perf).into(holder.typeLevel)
             else
                 Picasso.get().load(R.drawable.level_single).into(holder.typeLevel)
 
-        } else if (current.STEPSTYPE.toLowerCase(Locale.ROOT).contains("pump-double")||current.STEPSTYPE.toLowerCase(Locale.ROOT).contains("half-double")) {
+        } else if (current.STEPSTYPE.lowercase(Locale.ROOT).contains("pump-double")||current.STEPSTYPE.lowercase(Locale.ROOT).contains("half-double")) {
             //COOP
-            if (current.CHARTNAME.toLowerCase(Locale.ROOT).contains("coop")) {
+            if (current.CHARTNAME.lowercase(Locale.ROOT).contains("coop")) {
                 Picasso.get().load(R.drawable.level_coop).into(holder.typeLevel)
             } else {
 
-                if (current.DESCRIPTION.toLowerCase(Locale.ROOT).contains("dp"))
+                if (current.DESCRIPTION.lowercase(Locale.ROOT).contains("dp"))
                     Picasso.get().load(R.drawable.level_double_perf).into(holder.typeLevel)
                 else
                     Picasso.get().load(R.drawable.level_double).into(holder.typeLevel)
