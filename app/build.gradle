@@ -83,6 +83,7 @@ dependencies {
     // Navigation
     implementation 'androidx.navigation:navigation-fragment-ktx:2.9.0'
     implementation 'androidx.navigation:navigation-ui-ktx:2.9.0'
+    implementation 'androidx.navigation:navigation-compose:2.9.0'
 
     // Room
     implementation "androidx.room:room-runtime:${rootProject.roomVersion}"
