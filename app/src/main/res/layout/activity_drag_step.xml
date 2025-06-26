@@ -65,6 +65,37 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/sizeBar" />
 
+    <LinearLayout
+        android:id="@+id/presetContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/textView3"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/buttonPresetPump"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pump" />
+
+        <Button
+            android:id="@+id/buttonPresetGuitar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Guitar" />
+
+        <Button
+            android:id="@+id/buttonPresetPad"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Pad" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/saveArrows"
         android:layout_width="wrap_content"

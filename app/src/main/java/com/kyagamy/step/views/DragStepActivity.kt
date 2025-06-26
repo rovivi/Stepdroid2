@@ -35,6 +35,12 @@ class DragStepActivity : FullScreenActivity() {
     )
     private var arrows: ArrayList<ImageView> = ArrayList()
 
+    enum class Preset {
+        PUMP,
+        GUITAR,
+        PAD
+    }
+
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,6 +97,10 @@ class DragStepActivity : FullScreenActivity() {
 
             buttonReset.setOnClickListener { resetPanel() }
 
+            buttonPresetPump.setOnClickListener { applyPreset(Preset.PUMP) }
+            buttonPresetGuitar.setOnClickListener { applyPreset(Preset.GUITAR) }
+            buttonPresetPad.setOnClickListener { applyPreset(Preset.PAD) }
+
             drawArrows(false)
             val saveGson = sharedPref.getString(getString(R.string.singleArrowsPos), "")
             if (saveGson != "") {
@@ -108,44 +118,73 @@ class DragStepActivity : FullScreenActivity() {
     }
 
     private fun resetPanel() {
-
-
-
-        val displayMetrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(displayMetrics)
-        val height = displayMetrics.heightPixels
-        val width = displayMetrics.widthPixels
-
-
-        val params = binding.relativeLayoutToDrag.layoutParams
-        val sizeX = width
-        val sizeSquare = (sizeX.toFloat() / 3)// the size of the total square
-        val sizeY = height
-        Log.d("owo",sizeSquare.toString())
-        Log.d("owo",sizeX.toString())
-
-        //set 1
-        arrows[0].y = (sizeY - sizeSquare)
-        arrows[0].x = 0f
-        //set 7
-        arrows[1].y = (sizeY / 2).toFloat()
-        arrows[1].x = 0f
-        //set 5
-        arrows[2].y = ((sizeY / 2 - sizeSquare) / 2 + sizeY / 2)
-        arrows[2].x = ((sizeX - sizeSquare) / 2)
-        //set 9
-        arrows[3].y = (sizeY / 2).toFloat()
-        arrows[3].x = ((sizeX - sizeSquare))
-        //set 3
-        arrows[4].y = (sizeY - sizeSquare)
-        arrows[4].x = ((sizeX - sizeSquare))
-        //resizeArrows(pxToDp(size))
-        binding.sizeBar.progress = pxToDp(sizeSquare.toInt()*2)
-
+        applyPreset(Preset.PUMP)
     }
 
     private fun pxToDp(px: Int): Int {
         return (px / Resources.getSystem().displayMetrics.density).toInt()
+    }
+
+    private fun applyPreset(preset: Preset) {
+        val layout = binding.relativeLayoutToDrag
+        val width = layout.width
+        val height = layout.height
+        if (width == 0 || height == 0) {
+            layout.post { applyPreset(preset) }
+            return
+        }
+        when (preset) {
+            Preset.PUMP -> {
+                val sizeSquare = width / 3f
+                arrows[0].x = 0f
+                arrows[0].y = height - sizeSquare
+
+                arrows[1].x = 0f
+                arrows[1].y = height / 2f
+
+                arrows[2].x = (width - sizeSquare) / 2f
+                arrows[2].y = (height / 2f - sizeSquare) / 2f + height / 2f
+
+                arrows[3].x = width - sizeSquare
+                arrows[3].y = height / 2f
+
+                arrows[4].x = width - sizeSquare
+                arrows[4].y = height - sizeSquare
+
+                binding.sizeBar.progress = pxToDp((sizeSquare * 2).toInt())
+            }
+
+            Preset.GUITAR -> {
+                val size = width / 6f
+                val startX = (width - size * 5) / 2f
+                val posY = height - size * 1.2f
+                for (i in 0 until 5) {
+                    arrows[i].x = startX + i * size
+                    arrows[i].y = posY
+                }
+                binding.sizeBar.progress = pxToDp(size.toInt())
+            }
+
+            Preset.PAD -> {
+                val sizeSquare = width / 3f
+                arrows[0].x = 0f
+                arrows[0].y = height - sizeSquare
+
+                arrows[1].x = 0f
+                arrows[1].y = 0f
+
+                arrows[2].x = (width - sizeSquare) / 2f
+                arrows[2].y = (height - sizeSquare) / 2f
+
+                arrows[3].x = width - sizeSquare
+                arrows[3].y = 0f
+
+                arrows[4].x = width - sizeSquare
+                arrows[4].y = height - sizeSquare
+
+                binding.sizeBar.progress = pxToDp((sizeSquare * 2).toInt())
+            }
+        }
     }
 
 
@@ -188,23 +227,18 @@ class DragStepActivity : FullScreenActivity() {
         val x = event.rawX.toInt()
         val y = event.rawY.toInt()
 
-
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                _xDelta = x - view.left
-                _yDelta = y - view.top
-                Log.d("owo", "action DOWN-- xDelta: ${_xDelta}, yDelta: ${_yDelta}")
+                _xDelta = (event.rawX - view.x).toInt()
+                _yDelta = (event.rawY - view.y).toInt()
             }
             MotionEvent.ACTION_MOVE -> {
-                val valueX = x - _xDelta + _xDelta
-                val valueY = y - _yDelta
-
-                view.x = valueX.toFloat()
-                view.y = valueY.toFloat()
-                binding.sizeText.text = "${x - _xDelta + 0f} ,${y - _yDelta + 0f}"
-
-                Log.d("owo", "action MOVE-- xDelta: ${valueX}, yDelta: ${valueY}")
-
+                val newX = event.rawX - _xDelta
+                val newY = event.rawY - _yDelta
+                val maxX = binding.relativeLayoutToDrag.width - view.width
+                val maxY = binding.relativeLayoutToDrag.height - view.height
+                view.x = newX.coerceIn(0f, maxX.toFloat())
+                view.y = newY.coerceIn(0f, maxY.toFloat())
             }
         }
         true
