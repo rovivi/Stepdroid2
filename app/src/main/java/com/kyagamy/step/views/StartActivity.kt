@@ -1,225 +1,123 @@
 package com.kyagamy.step.views
 
 import android.Manifest
-import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.codekidlabs.storagechooser.StorageChooser
+import com.gun0912.tedpermission.PermissionListener
+import com.gun0912.tedpermission.normal.TedPermission
 import com.kyagamy.step.BuildConfig
+import com.kyagamy.step.R
+import com.kyagamy.step.databinding.ActivityStartBinding
 import com.kyagamy.step.ui.EvaluationActivity
-import com.kyagamy.step.viewmodels.StartViewModel
-import com.kyagamy.step.ui.ui.theme.StepDroidTheme
+import kotlinx.coroutines.launch
 
-class StartActivity : ComponentActivity() {
-    private val viewModel: StartViewModel by viewModels()
+class StartActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityStartBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            StepDroidTheme {
-                val navController = rememberNavController()
-                NavHost(navController, startDestination = "splash") {
-                    composable("splash") {
-                        SplashScreen { navController.navigate("home") { popUpTo("splash") { inclusive = true } } }
-                    }
-                    composable("home") {
-                        StartScreen(viewModel)
-                    }
+        binding = ActivityStartBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setupButtons()
+        checkPermissions()
+        validateRoute()
+    }
+
+    private fun setupButtons() {
+        with(binding) {
+            buttonStart.setOnClickListener { navigateTo(MainActivity::class.java) }
+            dragStartButton.setOnClickListener { navigateTo(DragStepActivity::class.java) }
+            reloadSings.setOnClickListener { navigateTo(LoadingSongActivity::class.java) }
+            buttonDS.setOnClickListener { navigateTo(InstallFilesActivity::class.java) }
+            evaluation.setOnClickListener { navigateTo(EvaluationActivity::class.java) }
+        }
+    }
+
+    private fun navigateTo(destination: Class<*>) {
+        val intent = Intent(this, destination)
+        startActivity(intent)
+    }
+
+
+    private fun checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Para Android 11 (API 30) y superior
+            if (!Environment.isExternalStorageManager()) {
+                // El permiso MANAGE_EXTERNAL_STORAGE no está concedido, solicitar...
+                val uri = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
+                startActivity(intent) // Considera usar un ActivityResultLauncher para manejar el resultado
+            } else {
+                // Permiso concedido, continuar con la operación
+                showToast("Permission Granted")
+            }
+        } else {
+            // Para Android 10 (API 29) y versiones anteriores
+            val permissionListener = object : PermissionListener {
+                override fun onPermissionGranted() {
+                    showToast("Permission Granted")
+                }
+
+                override fun onPermissionDenied(deniedPermissions: List<String>) {
+                    showToast("Permission Denied\n$deniedPermissions")
                 }
             }
+
+            TedPermission.create()
+                .setPermissionListener(permissionListener)
+                .setDeniedMessage("If you reject permission, you cannot use this service\n\nPlease turn on permissions at [Settings] > [Permissions]")
+                .setPermissions(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+                .check()
         }
     }
-}
 
-@Composable
-fun SplashScreen(onTimeout: () -> Unit) {
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(1000)
-        onTimeout()
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "StepDroid", style = MaterialTheme.typography.headlineMedium)
+
+    private fun validateRoute() {
+        val sharedPref = getSharedPreferences("pref", Context.MODE_PRIVATE)
+        val basePath = sharedPref.getString(getString(R.string.base_path), "noPath")
+        if (basePath == "noPath") {
+            showStorageChooser()
+        }
     }
-}
 
-@Composable
-fun StartScreen(viewModel: StartViewModel) {
-    val context = LocalContext.current
-    val activity = context as Activity
-    val state by viewModel.uiState.collectAsState()
-    var showSettingsDialog by remember { mutableStateOf(false) }
+    private fun showStorageChooser() {
+        val chooser = StorageChooser.Builder()
+            .withActivity(this)
+            .withFragmentManager(fragmentManager) // Make sure you are using the correct fragmentManager here
+            .setDialogTitle("Choose Destination Folder")
+            .withMemoryBar(true)
+            .build()
 
-    val permissionsLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { perms ->
-        val allGranted = perms.values.all { it }
-        if (allGranted) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-                openManageStorage(activity)
-            } else {
-                viewModel.setPermissionsGranted(true)
+        chooser.show()
+        chooser.setOnSelectListener { path ->
+            lifecycleScope.launch {
+                saveBasePath(path)
+                navigateTo(LoadingSongActivity::class.java)
             }
-        } else {
-            val rationale = perms.entries.any { !it.value && ActivityCompat.shouldShowRequestPermissionRationale(activity, it.key) }
-            if (rationale) {
-                viewModel.showRationale(true)
-            } else {
-                showSettingsDialog = true
-            }
         }
     }
 
-    val permissions = if (Build.VERSION.SDK_INT >= 33) {
-        arrayOf(
-            Manifest.permission.READ_MEDIA_AUDIO,
-            Manifest.permission.READ_MEDIA_IMAGES,
-            Manifest.permission.READ_MEDIA_VIDEO
-        )
-    } else {
-        arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        )
-    }
-
-    LaunchedEffect(Unit) {
-        val notGranted = permissions.filter { ContextCompat.checkSelfPermission(context, it) != android.content.pm.PackageManager.PERMISSION_GRANTED }
-        if (notGranted.isNotEmpty()) {
-            permissionsLauncher.launch(notGranted.toTypedArray())
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-            openManageStorage(activity)
-        } else {
-            viewModel.setPermissionsGranted(true)
+    private fun saveBasePath(path: String) {
+        val sharedPref = getSharedPreferences("pref", Context.MODE_PRIVATE)
+        with(sharedPref.edit()) {
+            putString(getString(R.string.base_path), path)
+            apply()
         }
     }
-
-    if (state.showRationale) {
-        AlertDialog(
-            onDismissRequest = { viewModel.showRationale(false) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.showRationale(false)
-                    permissionsLauncher.launch(permissions)
-                }) { Text("Reintentar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.showRationale(false) }) { Text("Cancelar") }
-            },
-            title = { Text("Permiso requerido") },
-            text = { Text("Se necesitan permisos de almacenamiento para continuar") }
-        )
-    }
-
-    if (showSettingsDialog) {
-        AlertDialog(
-            onDismissRequest = { showSettingsDialog = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    showSettingsDialog = false
-                    openAppSettings(activity)
-                }) { Text("Abrir ajustes") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSettingsDialog = false }) { Text("Cancelar") }
-            },
-            title = { Text("Permiso requerido") },
-            text = { Text("Otorga permisos desde ajustes para continuar") }
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Button(onClick = { context.startActivity(Intent(context, MainActivity::class.java)) }) {
-            Text("Start")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, DragStepActivity::class.java)) }) {
-            Text("Drag System")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, LoadingSongActivity::class.java)) }) {
-            Text("Reload Songs")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, InstallFilesActivity::class.java)) }) {
-            Text("DS")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, EvaluationActivity::class.java)) }) {
-            Text("Evaluation")
-        }
-    }
-
-    LaunchedEffect(state.basePath) {
-        if (state.basePath == null) {
-            showStorageChooser(activity) { viewModel.saveBasePath(it) }
-        }
-    }
-}
-
-private fun showStorageChooser(activity: Activity, onSelect: (String) -> Unit) {
-    val chooser = StorageChooser.Builder()
-        .withActivity(activity)
-        .withFragmentManager(activity.fragmentManager)
-        .setDialogTitle("Choose Destination Folder")
-        .withMemoryBar(true)
-        .build()
-    chooser.show()
-    chooser.setOnSelectListener { path -> onSelect(path) }
-}
-
-private fun openManageStorage(activity: Activity) {
-    val uri = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
-    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
-    activity.startActivity(intent)
-}
-
-private fun openAppSettings(activity: Activity) {
-    val intent = Intent(
-        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.fromParts("package", activity.packageName, null)
-    )
-    activity.startActivity(intent)
 }
