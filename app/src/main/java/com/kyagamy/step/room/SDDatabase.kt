@@ -36,11 +36,14 @@ import kotlinx.coroutines.launch
                     SDDatabase::class.java,
                     "sd_database"
                 )
+                    // Wipes and rebuilds instead of migrating if no Migration object.
+                    // Migration is not part of this codelab.
                     .allowMainThreadQueries()
                     .fallbackToDestructiveMigration()
                     .addCallback(SDDatabaseCallback(scope))
                     .build()
                 INSTANCE = instance
+                // return instance
                 instance
             }
         }
