@@ -10,6 +10,8 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.view.Display;
+import android.view.WindowManager;
 import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -79,6 +81,21 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         super(context, attrs);
     }
 
+    private static int getDisplayRefreshRate(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Display display = context.getDisplay();
+            if (display != null) {
+                return Math.round(display.getRefreshRate());
+            }
+        }
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (wm != null) {
+            Display d = wm.getDefaultDisplay();
+            return Math.round(d.getRefreshRate());
+        }
+        return 60;
+    }
+
     private Runnable musicRun = new Runnable() {
         @Override
         public void run() {
@@ -103,7 +120,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             mpMusic = new MediaPlayer();
             clearPaint = new Paint();
             clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-            mainTread = new MainThreadNew(getHolder(), this);
+            int maxFps = getDisplayRefreshRate(context);
+            mainTread = new MainThreadNew(getHolder(), this, maxFps);
             mainTread.setRunning(true);
             bgPlayer = new BgPlayer(stepData.getPath(), stepData.getBgChanges(), videoView, getContext(), gameState.BPM);
             fps = 0d;

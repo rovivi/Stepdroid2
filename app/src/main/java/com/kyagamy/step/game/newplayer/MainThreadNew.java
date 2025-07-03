@@ -4,60 +4,65 @@ import android.graphics.Canvas;
 import android.view.SurfaceHolder;
 
 public class MainThreadNew extends Thread {
-    public static final int MAXFPS =1000;
+    private final int maxFps;
+    private final int framePeriod;
+
     private double avergeFPS;
-    public  SurfaceHolder sulrfaceHolder;
-    private GamePlayNew game;
+    public final SurfaceHolder sulrfaceHolder;
+    private final GamePlayNew game;
     public boolean running;
     public static Canvas canvas;
+
+    private final RenderThread renderThread;
 
 
     public void setRunning(Boolean running) {
         this.running = running;
     }
 
-    MainThreadNew(SurfaceHolder holder, GamePlayNew game) {
-        super();
+    MainThreadNew(SurfaceHolder holder, GamePlayNew game, int maxFps) {
+        super("GameLoopThread");
         this.sulrfaceHolder = holder;
         this.game = game;
+        this.maxFps = maxFps > 0 ? maxFps : 60;
+        this.framePeriod = 1000 / this.maxFps;
+        this.renderThread = new RenderThread(holder, game);
     }
     @Override
     public void run() {
-        long startTime, waitTime,  timeLapsed ;
+        long startTime;
+        long timeMillis;
+        long waitTime;
+        long totalTime = 0;
         int frameCount = 0;
-        waitTime = 0;
-        startTime = System.nanoTime();
+
+        renderThread.startRendering();
+
         while (running) {
+            startTime = System.nanoTime();
+            this.game.update();
+            renderThread.postRender();
 
-            canvas = null;
-            try {
-                canvas = this.sulrfaceHolder.lockCanvas();
-                synchronized (sulrfaceHolder) {
-                    this.game.update();
-                    this.game.draw(canvas);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
+            timeMillis = (System.nanoTime() - startTime) / 1_000_000L;
+            waitTime = framePeriod - timeMillis;
+            if (waitTime > 0) {
                 try {
-                    if (canvas != null) {
-                        sulrfaceHolder.unlockCanvasAndPost(canvas);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    sleep(waitTime);
+                } catch (InterruptedException ignored) {
                 }
             }
-            timeLapsed = System.nanoTime() - startTime;
+
+            totalTime += System.nanoTime() - startTime;
             frameCount++;
-            if (timeLapsed>1000000000){
-                avergeFPS =frameCount;
-                frameCount=0;
-                startTime=System.nanoTime();
+            if (frameCount == maxFps) {
+                avergeFPS = 1000.0 / ((totalTime / frameCount) / 1_000_000.0);
+                frameCount = 0;
+                totalTime = 0;
             }
-            game.fps= avergeFPS;
-
-
+            game.fps = avergeFPS;
         }
+
+        renderThread.stopRendering();
     }
 
 
