@@ -4,13 +4,14 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Point
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
-import android.widget.ImageView
+import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.SeekBar
 import android.widget.Toast
@@ -38,7 +39,7 @@ class DragStepActivity : FullScreenActivity() {
         R.drawable.selector_up_right,
         R.drawable.selector_down_right
     )
-    private var arrows: ArrayList<ImageView> = ArrayList()
+    private var arrows: ArrayList<Button> = ArrayList()
 
     enum class Preset {
         PUMP,
@@ -141,6 +142,10 @@ class DragStepActivity : FullScreenActivity() {
             saveArrows.setOnClickListener {
                 val save = ArrowsPositionPlace()
                 save.size = sizeBar.progress + 50 + 20
+                save.heightOffset = heightOffset
+                save.horizontalOffset = horizontalOffset
+                save.spacingMultiplier = spacingMultiplier
+                save.currentPreset = currentPreset.name
                 val positions = ArrayList<Point>()
                 arrows.forEach { x ->
                     positions.add(Point(x.x.toInt(), x.y.toInt()))
@@ -177,7 +182,17 @@ class DragStepActivity : FullScreenActivity() {
             if (saveGson != "") {
                 val obj: ArrowsPositionPlace =
                     gson.fromJson(saveGson, ArrowsPositionPlace::class.java)
-                sizeBar.progress = obj.size - 50
+                sizeBar.progress = obj.size - 50 - 20
+                heightOffset = obj.heightOffset
+                heightBar.progress = (heightOffset * 100).toInt()
+                heightText.text = "Height: ${(heightOffset * 100).toInt()}%"
+                horizontalOffset = obj.horizontalOffset
+                verticalBar.progress = (horizontalOffset * 100).toInt()
+                verticalText.text = "Horizontal: ${(horizontalOffset * 100).toInt()}%"
+                spacingMultiplier = obj.spacingMultiplier
+                spacingBar.progress = (spacingMultiplier * 100).toInt()
+                spacingText.text = "Spacing: ${(spacingMultiplier * 100).toInt()}%"
+                currentPreset = Preset.valueOf(obj.currentPreset)
                 obj.positions.forEachIndexed { index, pos ->
                     arrows[index].x = pos.x.toFloat()
                     arrows[index].y = pos.y.toFloat()
@@ -312,23 +327,29 @@ class DragStepActivity : FullScreenActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun drawArrows(isDouble: Boolean) {
+        // Limpiar flechas existentes antes de crear nuevas
+        clearArrows()
 
         stepInfo.forEach { x ->
-
-            val iv = ImageView(this)
-
-// Puedes definir la posición inicial aquí si lo deseas, por ejemplo:
-// params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE)
-            //iv.layoutParams = params
-            iv.setImageResource(x)
+            val iv = Button(this)
+            iv.background = Drawable.createFromXml(resources, resources.getXml(x))
             iv.setOnTouchListener(move)
             arrows.add(iv)
             binding.relativeLayoutToDrag.addView(iv)
-
         }
-        //drawArrows(false)
+
+        // Aplicar el tamaño actual después de crear las flechas
+        resizeArrows(currentSize)
     }
 
+    private fun clearArrows() {
+        // Remover todas las flechas del layout
+        arrows.forEach { arrow ->
+            binding.relativeLayoutToDrag.removeView(arrow)
+        }
+        // Limpiar la lista
+        arrows.clear()
+    }
 
     private fun resizeArrows(size: Int) {
         val pixel = TypedValue.applyDimension(

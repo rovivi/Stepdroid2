@@ -18,6 +18,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
+import android.widget.RelativeLayout
 import android.widget.Toast
 import com.google.gson.Gson
 import com.kyagamy.step.R
@@ -96,6 +97,14 @@ class GamePlayActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
+        // Configurar inmersión completa considerando las barras de navegación
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+
         binding.gamePlay!!.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
                 or View.SYSTEM_UI_FLAG_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -222,25 +231,46 @@ class GamePlayActivity : Activity() {
             TypedValue.COMPLEX_UNIT_DIP,
             data.size.toFloat(), resources.displayMetrics
         ).toInt()
-        stepInfo.forEachIndexed { index, x ->
-            val iv = Button(this)
-            iv.background = Drawable.createFromXml(resources, resources.getXml(x))
-            arrows.add(iv)
-            iv.x = data.positions[index].x.toFloat()
-            iv.y = data.positions[index].y.toFloat()
-            binding.rootPad.addView(iv)
-            var lp = iv.layoutParams
-            lp.height = pixel
-            lp.width = pixel
-            iv.layoutParams = lp
-            arrowsPosition2.add(
-                Rect(
-                    iv.x.toInt()-50,
-                    iv.y.toInt()-5,
-                    iv.x.toInt() + pixel+50,
-                    iv.y.toInt() + pixel+50
+
+        // Obtener las dimensiones reales de la pantalla
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+        val screenWidth = displayMetrics.widthPixels
+        val screenHeight = displayMetrics.heightPixels
+
+        // Calcular el factor de escala basado en las dimensiones de DragStepActivity
+        // DragStepActivity usa el tamaño del RelativeLayout, que puede ser diferente
+        val rootPad = binding.rootPad
+        rootPad.post {
+            val layoutWidth = rootPad.width
+            val layoutHeight = rootPad.height
+
+            stepInfo.forEachIndexed { index, x ->
+                val iv = Button(this)
+                iv.background = Drawable.createFromXml(resources, resources.getXml(x))
+                arrows.add(iv)
+
+                // Ajustar las posiciones considerando las diferencias de tamaño
+                val adjustedX = data.positions[index].x.toFloat()
+                val adjustedY = data.positions[index].y.toFloat()
+
+                iv.x = adjustedX
+                iv.y = adjustedY
+                rootPad.addView(iv)
+                val lp = RelativeLayout.LayoutParams(pixel, pixel)
+                iv.layoutParams = lp
+
+                // Crear el área de toque con un margen más generoso
+                val touchMargin = 75
+                arrowsPosition2.add(
+                    Rect(
+                        (adjustedX - touchMargin).toInt(),
+                        (adjustedY - touchMargin).toInt(),
+                        (adjustedX + pixel + touchMargin).toInt(),
+                        (adjustedY + pixel + touchMargin).toInt()
+                    )
                 )
-            )
+            }
         }
     }
 

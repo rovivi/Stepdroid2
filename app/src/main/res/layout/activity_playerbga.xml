@@ -7,6 +7,7 @@
     android:background="#000000"
     android:theme="@style/AppTheme.NoActionBar"
     android:id="@+id/rootPlayer"
+    android:fitsSystemWindows="false"
     tools:context=".views.gameplayactivity.GamePlayActivity">
 
 
@@ -56,11 +57,12 @@
 
     <RelativeLayout
         android:id="@+id/rootPad"
-        android:layout_width="409dp"
-        android:layout_height="729dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fitsSystemWindows="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias=".5"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible"/>
