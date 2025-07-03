@@ -13,7 +13,6 @@ public class MainThreadNew extends Thread {
     public boolean running;
     public static Canvas canvas;
 
-    private final RenderThread renderThread;
 
 
     public void setRunning(Boolean running) {
@@ -26,7 +25,6 @@ public class MainThreadNew extends Thread {
         this.game = game;
         this.maxFps = maxFps > 0 ? maxFps : 60;
         this.framePeriod = 1000 / this.maxFps;
-        this.renderThread = new RenderThread(holder, game);
     }
     @Override
     public void run() {
@@ -36,12 +34,26 @@ public class MainThreadNew extends Thread {
         long totalTime = 0;
         int frameCount = 0;
 
-        renderThread.startRendering();
-
         while (running) {
             startTime = System.nanoTime();
-            this.game.update();
-            renderThread.postRender();
+            canvas = null;
+            try {
+                canvas = this.sulrfaceHolder.lockCanvas();
+                synchronized (sulrfaceHolder) {
+                    this.game.update();
+                    this.game.draw(canvas);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (canvas != null) {
+                    try {
+                        sulrfaceHolder.unlockCanvasAndPost(canvas);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
 
             timeMillis = (System.nanoTime() - startTime) / 1_000_000L;
             waitTime = framePeriod - timeMillis;
@@ -62,7 +74,6 @@ public class MainThreadNew extends Thread {
             game.fps = avergeFPS;
         }
 
-        renderThread.stopRendering();
     }
 
 
