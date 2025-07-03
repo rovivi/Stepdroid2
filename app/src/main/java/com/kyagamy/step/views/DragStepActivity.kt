@@ -120,7 +120,7 @@ class DragStepActivity : FullScreenActivity() {
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                 }
             })
-            spacingBar.max = 500
+            spacingBar.max = 1000
             spacingBar.progress = (spacingMultiplier * 100).toInt()
             spacingBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 

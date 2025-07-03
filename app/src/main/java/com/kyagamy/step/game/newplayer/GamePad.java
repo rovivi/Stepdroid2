@@ -22,7 +22,11 @@ public class GamePad {
     private Point posPanel = new Point(0, 0);
     public byte pad[];
     private Bitmap bg = null;
+    private GamePlayNew gamePlayNew; // Referencia para notificar cambios
 
+    public void setGamePlayNew(GamePlayNew gamePlayNew) {
+        this.gamePlayNew = gamePlayNew;
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public GamePad(Context context, String type, byte[] pad,int x,int y) {
@@ -73,11 +77,11 @@ public class GamePad {
                     float heightStep7 = 0.174f;
                     float heightStep5 = 0.202f;
 
-    arrowsPosition2[0] = new Rect((int) (width * startx1), (int) (height * starty1), (int) (width * (startx1 + widthStep7)), (int) (height * (starty1 + heightStep7)));
-                        arrowsPosition2[1] = new Rect((int) (width * startx1), (int) (height * starty2), (int) (width * (startx1 + widthStep7)), (int) (height * (starty2 + heightStep7)));
-                        arrowsPosition2[2] = new Rect((int) (width * startx3), (int) (height * starty3), (int) (width * (startx3 + widthStep5)), (int) (height * (starty3 + heightStep5)));
-                        arrowsPosition2[3] = new Rect((int) (width * startx2), (int) (height * starty2), (int) (width * (startx2 + widthStep7)), (int) (height * (starty2 + heightStep7)));
-                        arrowsPosition2[4] = new Rect((int) (width * startx2), (int) (height * starty1), (int) (width * (startx2 + widthStep7)), (int) (height * (starty1 + heightStep7)));
+                    arrowsPosition2[0] = new Rect((int) (width * startx1), (int) (height * starty1), (int) (width * (startx1 + widthStep7)), (int) (height * (starty1 + heightStep7)));
+                    arrowsPosition2[1] = new Rect((int) (width * startx1), (int) (height * starty2), (int) (width * (startx1 + widthStep7)), (int) (height * (starty2 + heightStep7)));
+                    arrowsPosition2[2] = new Rect((int) (width * startx3), (int) (height * starty3), (int) (width * (startx3 + widthStep5)), (int) (height * (starty3 + heightStep5)));
+                    arrowsPosition2[3] = new Rect((int) (width * startx2), (int) (height * starty2), (int) (width * (startx2 + widthStep7)), (int) (height * (starty2 + heightStep7)));
+                    arrowsPosition2[4] = new Rect((int) (width * startx2), (int) (height * starty1), (int) (width * (startx2 + widthStep7)), (int) (height * (starty1 + heightStep7)));
                     panel2 = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
                     Canvas c = new Canvas(panel2);
@@ -229,39 +233,61 @@ public class GamePad {
     //Controles
 
     public void clearPad() {
+        boolean hasChanged = false;
         for (int j = 0; j < pad.length; j++) {
+            if (pad[j] != 0) {
+                hasChanged = true;
+            }
             pad[j] = 0;
         }
-        // change= true;
-    }
-    public void checkInputs(int[][] positions,boolean isDownMove) {
-//        for (int j = 0; j < arrows.length; j++) {
-//            boolean wasPressed = false;
-//            for (int[] k : positions) {
-//                int x = k[0];
-//                int y = k[1];
-//                if (arrowsPosition2[j].contains(x, y)) {
-//                    if (pad[j] == 0  || (isDownMove&& pad[j]==2)) { //by this way confirm if the curret pad is off
-//                        pad[j] = 1;
-//                        StepsDrawer.noteSkins[0].tapsEffect[j].play();
-//                    }
-//                    wasPressed = true;
-//                    break;
-//                }
-//            }
-//            if (!wasPressed) {
-//                pad[j] = 0;
-//            }
-//        }
-        //  change= true;
+        if (hasChanged) {
+            notifyPadStateChanged();
+        }
     }
 
+    public void checkInputs(int[][] positions,boolean isDownMove) {
+        for (int j = 0; j < arrows.length; j++) {
+            boolean wasPressed = false;
+            byte oldValue = pad[j];
+            for (int[] k : positions) {
+                int x = k[0];
+                int y = k[1];
+                if (arrowsPosition2[j].contains(x, y)) {
+                    if (pad[j] == 0 || (isDownMove && pad[j] == 2)) {
+                        pad[j] = 1;
+                        StepsDrawer.noteSkins[0].tapsEffect[j].play();
+                    }
+                    wasPressed = true;
+                    break;
+                }
+            }
+            if (!wasPressed) {
+                pad[j] = 0;
+            }
+
+            // Notificar si el estado cambió
+            if (pad[j] != oldValue) {
+                notifyPadStateChanged();
+            }
+        }
+    }
 
     public void unpress(float x, float y) {
-        for (int j = 0; j < arrows.length; j++) {//checa cada felcha
+        for (int j = 0; j < arrows.length; j++) {
             if (arrowsPosition2[j].contains((int) x, (int) y)) {
-                 pad[j]=0;
+                byte oldValue = pad[j];
+                pad[j] = 0;
+                if (oldValue != pad[j]) {
+                    notifyPadStateChanged();
+                }
             }
+        }
+    }
+
+    // Método para notificar cambios en el estado del pad
+    private void notifyPadStateChanged() {
+        if (gamePlayNew != null) {
+            gamePlayNew.notifyPadStateChanged();
         }
     }
 }

@@ -139,6 +139,7 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             bar = new LifeBar(context, stepsDrawer);
             combo = new Combo(getContext(), stepsDrawer);
             touchPad = new GamePad(context, stepData.getStepType(), gameState.inputs, sizeScreen.x, size.y);
+            touchPad.setGamePlayNew(this); // Establecer la referencia para las notificaciones
             combo.setLifeBar(bar);
             gameState.setCombo(combo);
             gameState.setStepsDrawer(stepsDrawer);
@@ -423,5 +424,15 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             e.printStackTrace();
         }
         return true;
+    }
+
+    public GamePad getTouchPad() {
+        return touchPad;
+    }
+
+    public void notifyPadStateChanged() {
+        if (playerBga != null) {
+            playerBga.syncPadState();
+        }
     }
 }

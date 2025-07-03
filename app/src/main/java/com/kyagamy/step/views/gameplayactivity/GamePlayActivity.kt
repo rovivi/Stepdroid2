@@ -346,6 +346,45 @@ class GamePlayActivity : Activity() {
                 }
             }
         }
+        // Actualizar la apariencia visual de los selectores
+        updateArrowsVisualState()
+    }
+
+    private fun updateArrowsVisualState() {
+        // Buscar el GamePad en el GamePlayNew para obtener el estado del pad[]
+        val gamePlayNew = binding.gamePlay
+        if (gamePlayNew != null) {
+            val touchPad = gamePlayNew.touchPad
+            if (touchPad != null && touchPad.pad != null) {
+                // Sincronizar con el estado del GamePad
+                arrows.forEachIndexed { index, arrow ->
+                    if (index < touchPad.pad.size) {
+                        // Cambiar el estado visual del botón según el estado del pad
+                        val isPadPressed = touchPad.pad[index].toInt() != 0
+                        arrow.isPressed = isPadPressed
+                        arrow.isSelected = isPadPressed
+                        // También actualizar el array inputs para mantener coherencia
+                        inputs[index] = if (isPadPressed) ARROW_PRESSED else ARROW_UNPRESSED
+                        // Forzar el refresco visual
+                        arrow.refreshDrawableState()
+                    }
+                }
+            } else {
+                // Fallback: usar el estado de inputs si no hay GamePad disponible
+                arrows.forEachIndexed { index, arrow ->
+                    if (index < inputs.size) {
+                        arrow.isPressed = inputs[index] == ARROW_PRESSED
+                        arrow.isSelected = inputs[index] == ARROW_PRESSED
+                        arrow.refreshDrawableState()
+                    }
+                }
+            }
+        }
+    }
+
+    // Método para sincronizar el estado desde GamePad
+    fun syncPadState() {
+        updateArrowsVisualState()
     }
 
     private fun unPress(x: Float, y: Float) {
