@@ -2,7 +2,6 @@ package com.kyagamy.step.views
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
