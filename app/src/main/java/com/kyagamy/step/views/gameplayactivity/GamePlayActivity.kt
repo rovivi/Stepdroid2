@@ -30,7 +30,7 @@ import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_HOLD_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.ARROW_UNPRESSED
 import com.kyagamy.step.common.step.Parsers.FileSSC
-import com.kyagamy.step.game.newplayer.EvaluationActivity
+import com.kyagamy.step.ui.EvaluationActivity
 import com.kyagamy.step.game.newplayer.Evaluator
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.kyagamy.step.game.newplayer.StepsDrawer
@@ -327,6 +327,16 @@ class GamePlayActivity : Activity() {
     }
 
     fun startEvaluation() {
+        i!!.putExtra("perfect", Evaluator.PERFECT)
+        i!!.putExtra("great", Evaluator.GREAT)
+        i!!.putExtra("good", Evaluator.GOOD)
+        i!!.putExtra("bad", Evaluator.BAD)
+        i!!.putExtra("miss", Evaluator.MISS)
+        i!!.putExtra("maxCombo", Evaluator.MAX_COMBO)
+        i!!.putExtra("totalScore", Evaluator.getTotalScore())
+        i!!.putExtra("rank", Evaluator.getRank())
+        i!!.putExtra("songName", Evaluator.songName)
+        i!!.putExtra("imagePath", Evaluator.imagePath)
         startActivity(i)
     }
 }

@@ -2,6 +2,7 @@ package com.kyagamy.step.views
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -30,8 +31,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -46,7 +50,11 @@ import com.codekidlabs.storagechooser.StorageChooser
 import com.kyagamy.step.BuildConfig
 import com.kyagamy.step.ui.EvaluationActivity
 import com.kyagamy.step.viewmodels.StartViewModel
+import com.kyagamy.step.viewmodels.SongViewModel
+import com.kyagamy.step.viewmodels.LevelViewModel
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
+import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class StartActivity : ComponentActivity() {
     private val viewModel: StartViewModel by viewModels()
@@ -58,7 +66,13 @@ class StartActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(navController, startDestination = "splash") {
                     composable("splash") {
-                        SplashScreen { navController.navigate("home") { popUpTo("splash") { inclusive = true } } }
+                        SplashScreen {
+                            navController.navigate("home") {
+                                popUpTo("splash") {
+                                    inclusive = true
+                                }
+                            }
+                        }
                     }
                     composable("home") {
                         StartScreen(viewModel)
@@ -120,6 +134,16 @@ fun StartScreen(viewModel: StartViewModel) {
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showFileInfoDialog by remember { mutableStateOf(false) }
 
+    // SongViewModel y LevelViewModel para acceso a Room
+    val songViewModel = ViewModelProvider(activity as ComponentActivity)[SongViewModel::class.java]
+    val levelViewModel =
+        ViewModelProvider(activity as ComponentActivity)[LevelViewModel::class.java]
+
+    val allSongs by songViewModel.allSong.observeAsState(emptyList())
+    val allLevels by levelViewModel.allLevel.observeAsState(emptyList())
+    val coroutineScope = rememberCoroutineScope()
+    var isLoadingRandom by remember { mutableStateOf(false) }
+
     val manageStorageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -144,7 +168,12 @@ fun StartScreen(viewModel: StartViewModel) {
                 viewModel.setPermissionsGranted(true)
             }
         } else {
-            val rationale = perms.entries.any { !it.value && ActivityCompat.shouldShowRequestPermissionRationale(activity, it.key) }
+            val rationale = perms.entries.any {
+                !it.value && ActivityCompat.shouldShowRequestPermissionRationale(
+                    activity,
+                    it.key
+                )
+            }
             if (rationale) {
                 viewModel.showRationale(true)
             } else {
@@ -260,7 +289,7 @@ fun StartScreen(viewModel: StartViewModel) {
                                 "$expectedPath${File.separator}[Categoría]${File.separator}[Canción]${File.separator}archivo.ssc\n\n" +
                                 "Ejemplo:\n" +
                                 "$expectedPath${File.separator}Pop${File.separator}My Song${File.separator}mysong.ssc\n\n" +
-                                "Usa 'DS' para instalar archivos automáticamente."
+                                "Usa 'DS' para instalar archivos automáticamente o 'Reload Songs' para cargar las canciones."
                     } else {
                         "No se ha seleccionado una ruta base. Por favor, selecciona una carpeta donde colocar los archivos de StepMania."
                     }
@@ -301,6 +330,54 @@ fun StartScreen(viewModel: StartViewModel) {
         }) {
             Text("Start")
         }
+        Spacer(Modifier.height(8.dp))
+
+        // Botón para abrir una canción random usando Room, filtrando por niveles > 19
+        Button(
+            onClick = {
+                // Filtrar canciones que tengan al menos un nivel > 19
+                val songIdsWithHighLevel = allLevels
+                    .filter { level ->
+                        try {
+                            level.METER.toInt() > 19
+                        } catch (e: NumberFormatException) {
+                            false
+                        }
+                    }
+                    .map { it.song_fkid }
+                    .toSet()
+
+                val filteredSongs = allSongs.filter { song ->
+                    song.song_id in songIdsWithHighLevel
+                }
+
+                if (filteredSongs.isNotEmpty()) {
+                    isLoadingRandom = true
+                    coroutineScope.launch {
+                        // Elegir una canción random del filtro
+                        val randomSong = filteredSongs[Random.nextInt(filteredSongs.size)]
+                        val sscPath = randomSong.PATH_File
+                        val folderPath = randomSong.PATH_SONG
+                        val intent = Intent(
+                            context,
+                            com.kyagamy.step.views.gameplayactivity.GamePlayActivity::class.java
+                        ).apply {
+                            putExtra("ssc", sscPath)
+                            putExtra("path", folderPath)
+                            putExtra("nchar", 0) // Default character/level
+                        }
+                        isLoadingRandom = false
+                        context.startActivity(intent)
+                    }
+                } else {
+                    showFileInfoDialog = true
+                }
+            },
+            enabled = !isLoadingRandom
+        ) {
+            Text(if (isLoadingRandom) "Loading..." else "Random 500AV >19")
+        }
+
         Spacer(Modifier.height(8.dp))
         Button(onClick = { context.startActivity(Intent(context, DragStepActivity::class.java)) }) {
             Text("Drag System")

@@ -1,12 +1,19 @@
 package com.kyagamy.step.ui
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,12 +37,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import java.io.File
 
 class EvaluationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +56,17 @@ class EvaluationActivity : ComponentActivity() {
         setContent {
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 ResultScreen(
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(innerPadding),
+                    perfect = intent.getIntExtra("perfect", 0),
+                    great = intent.getIntExtra("great", 0),
+                    good = intent.getIntExtra("good", 0),
+                    bad = intent.getIntExtra("bad", 0),
+                    miss = intent.getIntExtra("miss", 0),
+                    maxCombo = intent.getIntExtra("maxCombo", 0),
+                    totalScore = intent.getFloatExtra("totalScore", 0f),
+                    rank = intent.getStringExtra("rank") ?: "F",
+                    songName = intent.getStringExtra("songName") ?: "Unknown Song",
+                    imagePath = intent.getStringExtra("imagePath")
                 ) { finish() }
             }
         }
@@ -51,48 +74,128 @@ class EvaluationActivity : ComponentActivity() {
 }
 
 @Composable
-fun ResultScreen(modifier: Modifier = Modifier, onContinueClicked: () -> Unit) {
+fun ResultScreen(
+    modifier: Modifier = Modifier,
+    perfect: Int,
+    great: Int,
+    good: Int,
+    bad: Int,
+    miss: Int,
+    maxCombo: Int,
+    totalScore: Float,
+    rank: String,
+    songName: String,
+    imagePath: String?,
+    onContinueClicked: () -> Unit
+) {
     val baseDelay = 100
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        AnimateText(text = "SCORE", fontSize = 28, delayMillis = baseDelay * 0)
-        AnimateText(text = calculateScore(), fontSize = 40, delayMillis = baseDelay * 1)
-        AnimateText(text = "A", fontSize = 100, delayMillis = baseDelay * 12)
+    val bitmap = remember(imagePath) {
+        if (imagePath != null) {
+            BitmapFactory.decodeFile(imagePath)
+        } else {
+            null
+        }
+    }
 
-        StatRow(label = "PERFECT", value = "1195", color = Color.Cyan, delayMillis = baseDelay * 3)
-        StatRow(label = "GREAT", value = "235", color = Color.Green, delayMillis = baseDelay * 4)
-        StatRow(label = "GOOD", value = "124", color = Color.Yellow, delayMillis = baseDelay * 5)
-        StatRow(label = "BAD", value = "073", color = Color.Magenta, delayMillis = baseDelay * 6)
-        StatRow(label = "MISS", value = "073", color = Color.Red, delayMillis = baseDelay * 7)
-        StatRow(
-            label = "MAX COMBO",
-            value = "229",
-            color = Color.White,
-            delayMillis = baseDelay * 8
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Imagen de fondo blureada
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Background Image",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(radius = 15.dp)
+                    .alpha(0.3f),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        // Overlay negro semi-transparente
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.7f))
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        IconButton(
-            onClick = {onContinueClicked() },
+        // Contenido principal
+        Column(
             modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(Color.Gray)
-                .padding(16.dp)
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Continue",
-                tint = Color.White
+            AnimateText(text = "SCORE", fontSize = 28, delayMillis = baseDelay * 0)
+            AnimateText(
+                text = totalScore.toInt().toString(),
+                fontSize = 40,
+                delayMillis = baseDelay * 1
             )
+            AnimateText(text = rank, fontSize = 100, delayMillis = baseDelay * 12)
+
+            StatRow(
+                label = "PERFECT",
+                value = perfect.toString(),
+                color = Color.Cyan,
+                delayMillis = baseDelay * 3
+            )
+            StatRow(
+                label = "GREAT",
+                value = great.toString(),
+                color = Color.Green,
+                delayMillis = baseDelay * 4
+            )
+            StatRow(
+                label = "GOOD",
+                value = good.toString(),
+                color = Color.Yellow,
+                delayMillis = baseDelay * 5
+            )
+            StatRow(
+                label = "BAD",
+                value = bad.toString(),
+                color = Color.Magenta,
+                delayMillis = baseDelay * 6
+            )
+            StatRow(
+                label = "MISS",
+                value = miss.toString(),
+                color = Color.Red,
+                delayMillis = baseDelay * 7
+            )
+            StatRow(
+                label = "MAX COMBO",
+                value = maxCombo.toString(),
+                color = Color.White,
+                delayMillis = baseDelay * 8
+            )
+            Text(
+                text = songName,
+                fontSize = 24.sp,
+                color = Color.White,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            IconButton(
+                onClick = { onContinueClicked() },
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(Color.Gray)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Continue",
+                    tint = Color.White
+                )
+            }
         }
     }
 }
@@ -140,21 +243,6 @@ fun AnimateText(
         modifier = Modifier.padding(vertical = 8.dp)
     )
 }
-
-fun calculateScore(): String {
-    // Ejemplo de cómo se puede calcular el puntaje siguiendo la fórmula proporcionada en la imagen
-    val perfect = 1195
-    val great = 1
-    val good = 0
-    val bad = 0
-    val miss = 0
-    val maxCombo = 1195
-    val totalNotes = perfect + great + good + bad + miss
-    val noteWeights = (1.0 * perfect) + (0.6 * great) + (0.2 * good) + (0.1 * bad)
-    val score = ((99.5 * noteWeights + 0.5 * maxCombo) / totalNotes) * 10000
-    return score.toInt().toString()
-}
-
 
 @Composable
 fun StatRow(label: String, value: String, color: Color, delayMillis: Int) {
