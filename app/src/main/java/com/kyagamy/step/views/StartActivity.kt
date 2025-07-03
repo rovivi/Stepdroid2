@@ -86,13 +86,26 @@ fun StartScreen(viewModel: StartViewModel) {
     val state by viewModel.uiState.collectAsState()
     var showSettingsDialog by remember { mutableStateOf(false) }
 
+    val manageStorageLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager()) {
+            viewModel.setPermissionsGranted(true)
+        } else {
+            showSettingsDialog = true
+        }
+    }
+
     val permissionsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { perms ->
         val allGranted = perms.values.all { it }
         if (allGranted) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-                openManageStorage(activity)
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                    data = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+                }
+                manageStorageLauncher.launch(intent)
             } else {
                 viewModel.setPermissionsGranted(true)
             }
@@ -124,7 +137,10 @@ fun StartScreen(viewModel: StartViewModel) {
         if (notGranted.isNotEmpty()) {
             permissionsLauncher.launch(notGranted.toTypedArray())
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-            openManageStorage(activity)
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                data = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+            }
+            manageStorageLauncher.launch(intent)
         } else {
             viewModel.setPermissionsGranted(true)
         }
@@ -153,14 +169,29 @@ fun StartScreen(viewModel: StartViewModel) {
             confirmButton = {
                 TextButton(onClick = {
                     showSettingsDialog = false
-                    openAppSettings(activity)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        // Para Android 11+, ir directamente a la configuración de administrar almacenamiento
+                        val intent =
+                            Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                                data = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+                            }
+                        activity.startActivity(intent)
+                    } else {
+                        openAppSettings(activity)
+                    }
                 }) { Text("Abrir ajustes") }
             },
             dismissButton = {
                 TextButton(onClick = { showSettingsDialog = false }) { Text("Cancelar") }
             },
             title = { Text("Permiso requerido") },
-            text = { Text("Otorga permisos desde ajustes para continuar") }
+            text = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Text("Activa 'Administrar todo el almacenamiento' para continuar")
+                } else {
+                    Text("Otorga permisos desde ajustes para continuar")
+                }
+            }
         )
     }
 
