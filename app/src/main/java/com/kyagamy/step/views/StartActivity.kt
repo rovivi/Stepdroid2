@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import java.io.File
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -66,6 +67,38 @@ class StartActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        // Verificar permisos cuando se regresa a la actividad
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            viewModel.setPermissionsGranted(Environment.isExternalStorageManager())
+        } else {
+            val hasPermissions = if (Build.VERSION.SDK_INT >= 33) {
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO
+                ).all {
+                    ContextCompat.checkSelfPermission(
+                        this,
+                        it
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                }
+            } else {
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ).all {
+                    ContextCompat.checkSelfPermission(
+                        this,
+                        it
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                }
+            }
+            viewModel.setPermissionsGranted(hasPermissions)
+        }
+    }
 }
 
 @Composable
@@ -85,6 +118,7 @@ fun StartScreen(viewModel: StartViewModel) {
     val activity = context as Activity
     val state by viewModel.uiState.collectAsState()
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showFileInfoDialog by remember { mutableStateOf(false) }
 
     val manageStorageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -133,16 +167,24 @@ fun StartScreen(viewModel: StartViewModel) {
     }
 
     LaunchedEffect(Unit) {
-        val notGranted = permissions.filter { ContextCompat.checkSelfPermission(context, it) != android.content.pm.PackageManager.PERMISSION_GRANTED }
-        if (notGranted.isNotEmpty()) {
-            permissionsLauncher.launch(notGranted.toTypedArray())
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-                data = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+        // Solo verificar permisos al inicio, no constantemente
+        if (!state.permissionsGranted) {
+            val notGranted = permissions.filter {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    it
+                ) != android.content.pm.PackageManager.PERMISSION_GRANTED
             }
-            manageStorageLauncher.launch(intent)
-        } else {
-            viewModel.setPermissionsGranted(true)
+            if (notGranted.isNotEmpty()) {
+                permissionsLauncher.launch(notGranted.toTypedArray())
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                    data = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+                }
+                manageStorageLauncher.launch(intent)
+            } else {
+                viewModel.setPermissionsGranted(true)
+            }
         }
     }
 
@@ -195,6 +237,38 @@ fun StartScreen(viewModel: StartViewModel) {
         )
     }
 
+    if (showFileInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showFileInfoDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showFileInfoDialog = false }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showFileInfoDialog = false
+                    context.startActivity(Intent(context, InstallFilesActivity::class.java))
+                }) { Text("Ir a DS") }
+            },
+            title = { Text("Archivos no encontrados") },
+            text = {
+                Text(
+                    if (state.basePath != null) {
+                        val expectedPath =
+                            "${state.basePath}${File.separator}stepdroid${File.separator}songs"
+                        "No se encontraron archivos SSC en:\n$expectedPath\n\n" +
+                                "Estructura esperada:\n" +
+                                "$expectedPath${File.separator}[Categoría]${File.separator}[Canción]${File.separator}archivo.ssc\n\n" +
+                                "Ejemplo:\n" +
+                                "$expectedPath${File.separator}Pop${File.separator}My Song${File.separator}mysong.ssc\n\n" +
+                                "Usa 'DS' para instalar archivos automáticamente."
+                    } else {
+                        "No se ha seleccionado una ruta base. Por favor, selecciona una carpeta donde colocar los archivos de StepMania."
+                    }
+                )
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -202,7 +276,29 @@ fun StartScreen(viewModel: StartViewModel) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick = { context.startActivity(Intent(context, MainActivity::class.java)) }) {
+        Button(onClick = {
+            if (state.basePath != null && state.basePath!!.isNotEmpty()) {
+                val songsPath = "${state.basePath}${File.separator}stepdroid${File.separator}songs"
+                val songsFile = File(songsPath)
+
+                if (songsFile.exists() && songsFile.isDirectory) {
+                    // Buscar específicamente archivos SSC
+                    val sscFiles = songsFile.walkTopDown()
+                        .filter { it.isFile && it.extension.equals("ssc", true) }
+                        .toList()
+
+                    if (sscFiles.isNotEmpty()) {
+                        context.startActivity(Intent(context, MainActivity::class.java))
+                    } else {
+                        showFileInfoDialog = true
+                    }
+                } else {
+                    showFileInfoDialog = true
+                }
+            } else {
+                showFileInfoDialog = true
+            }
+        }) {
             Text("Start")
         }
         Spacer(Modifier.height(8.dp))
