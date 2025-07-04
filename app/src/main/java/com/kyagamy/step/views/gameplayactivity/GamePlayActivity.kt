@@ -17,6 +17,7 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -73,6 +74,13 @@ class GamePlayActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        // Enable hardware acceleration at window level
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        )
+
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
         //hilo = this.binding.gamePlay?.mainTread

@@ -17,6 +17,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.View
 import android.view.WindowManager
 import android.widget.VideoView
 import com.kyagamy.step.R
@@ -115,6 +116,9 @@ class GamePlayNew(context: Context, attrs: AttributeSet?) : SurfaceView(context,
         setZOrderOnTop(true)
         holder.setFormat(PixelFormat.TRANSPARENT)
         holder.addCallback(this)
+
+        // Ensure hardware acceleration is enabled for this view
+        setLayerType(View.LAYER_TYPE_HARDWARE, null)
     }
 
     private fun initializeGameComponents(
@@ -476,6 +480,10 @@ class GamePlayNew(context: Context, attrs: AttributeSet?) : SurfaceView(context,
 
     fun notifyPadStateChanged() {
         gamePlayActivity?.syncPadState()
+    }
+
+    override fun isHardwareAccelerated(): Boolean {
+        return super.isHardwareAccelerated()
     }
 
     companion object {
