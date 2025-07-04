@@ -7,38 +7,68 @@ import android.graphics.Rect
 import android.opengl.GLSurfaceView
 import com.kyagamy.step.R
 import com.kyagamy.step.common.Common
-import java.io.InputStream
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.random.Random
 
 class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer {
-    private var arrowSprite: SpriteGLRenderer? = null
-    private var arrowRect: Rect = Rect()
+    private val arrowSprites = mutableListOf<SpriteGLRenderer>()
+    private val arrows = mutableListOf<ArrowData>()
     private var screenWidth = 0
     private var screenHeight = 0
 
+    // Configuración de la prueba de estrés
+    private val numberOfArrows = 1000
+    private val arrowSize = 80 // Tamaño más pequeño para las flechas
+
+    data class ArrowData(
+        val rect: Rect,
+        val spriteIndex: Int,
+        var velocityX: Float = 0f,
+        var velocityY: Float = 0f
+    )
+
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        // Cargar sprite del noteskin
-        loadNoteSkinArrow()
-        arrowSprite?.onSurfaceCreated(gl, config)
+        // Cargar sprites de todos los tipos de flechas (5 tipos)
+        loadAllArrowSprites()
+        arrowSprites.forEach { sprite ->
+            sprite.onSurfaceCreated(gl, config)
+        }
     }
 
-    private fun loadNoteSkinArrow() {
-        try {
-            val pathNS = "NoteSkins/pump/default/"
-            val arrowName = Common.PIU_ARROW_NAMES[2] // Usar flecha "up" (centro)
-            val stream = context.assets.open(pathNS + arrowName + "tap.png")
-            val bitmap = BitmapFactory.decodeStream(stream)
+    private fun loadAllArrowSprites() {
+        arrowSprites.clear()
 
-            if (bitmap != null) {
-                // Crear array de frames desde el bitmap (3x2 segun el NoteSkin)
-                val frames = createFramesFromBitmap(bitmap, 3, 2)
-                arrowSprite = SpriteGLRenderer(context, frames)
+        // Cargar los 5 tipos de flechas del noteskin
+        for (arrowType in 0 until 5) {
+            try {
+                val pathNS = "NoteSkins/pump/default/"
+                val arrowName = Common.PIU_ARROW_NAMES[arrowType]
+                val stream = context.assets.open(pathNS + arrowName + "tap.png")
+                val bitmap = BitmapFactory.decodeStream(stream)
+
+                if (bitmap != null) {
+                    val frames = createFramesFromBitmap(bitmap, 3, 2)
+                    val sprite = SpriteGLRenderer(context, frames)
+                    arrowSprites.add(sprite)
+                } else {
+                    // Fallback si no se puede cargar
+                    loadFallbackArrow(arrowType)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                loadFallbackArrow(arrowType)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            // Fallback a drawable si no se puede cargar el noteskin
-            loadFallbackArrow()
+        }
+    }
+
+    private fun loadFallbackArrow(arrowType: Int) {
+        val opts = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 }
+        val bitmap =
+            BitmapFactory.decodeResource(context.resources, R.drawable.dance_pad_up_on, opts)
+        if (bitmap != null) {
+            val sprite = SpriteGLRenderer(context, arrayOf(bitmap))
+            arrowSprites.add(sprite)
         }
     }
 
@@ -67,44 +97,77 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         return frames
     }
 
-    private fun loadFallbackArrow() {
-        val opts = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 }
-        val bitmap =
-            BitmapFactory.decodeResource(context.resources, R.drawable.dance_pad_up_on, opts)
-        if (bitmap != null) {
-            arrowSprite = SpriteGLRenderer(context, arrayOf(bitmap))
-        }
-    }
-
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-        arrowSprite?.onSurfaceChanged(gl, width, height)
+        arrowSprites.forEach { sprite ->
+            sprite.onSurfaceChanged(gl, width, height)
+        }
         screenWidth = width
         screenHeight = height
 
-        // Posicionar la flecha en el centro arriba
-        setupArrowPosition()
+        // Generar las 1000 flechas
+        generateStressTestArrows()
     }
 
-    private fun setupArrowPosition() {
-        if (screenWidth > 0 && screenHeight > 0) {
-            val arrowSize = 200 // Tamaño de la flecha
-            val centerX = screenWidth / 2
-            val topY = 100 // Distancia desde arriba
+    private fun generateStressTestArrows() {
+        arrows.clear()
+        if (screenWidth > 0 && screenHeight > 0 && arrowSprites.isNotEmpty()) {
+            repeat(numberOfArrows) {
+                val left = Random.nextInt(0, screenWidth - arrowSize)
+                val top = Random.nextInt(0, screenHeight - arrowSize)
+                val rect = Rect(left, top, left + arrowSize, top + arrowSize)
+                val spriteIndex = Random.nextInt(arrowSprites.size)
 
-            arrowRect = Rect(
-                centerX - arrowSize / 2,
-                topY,
-                centerX + arrowSize / 2,
-                topY + arrowSize
-            )
+                // Velocidades aleatorias para movimiento
+                val velocityX = Random.nextFloat() * 4f - 2f // -2 a 2
+                val velocityY = Random.nextFloat() * 4f - 2f // -2 a 2
+
+                arrows.add(ArrowData(rect, spriteIndex, velocityX, velocityY))
+            }
         }
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        arrowSprite?.let { sprite ->
-            sprite.draw(arrowRect)
-            sprite.onDrawFrame(gl)
-            sprite.update()
+        // Actualizar posiciones de las flechas
+        updateArrowPositions()
+
+        // Renderizar todas las flechas
+        arrows.forEach { arrow ->
+            if (arrow.spriteIndex < arrowSprites.size) {
+                val sprite = arrowSprites[arrow.spriteIndex]
+                sprite.draw(arrow.rect)
+                sprite.onDrawFrame(gl)
+                sprite.update()
+            }
+        }
+    }
+
+    private fun updateArrowPositions() {
+        arrows.forEach { arrow ->
+            // Mover la flecha
+            arrow.rect.offset(arrow.velocityX.toInt(), arrow.velocityY.toInt())
+
+            // Rebotar en los bordes
+            if (arrow.rect.left <= 0 || arrow.rect.right >= screenWidth) {
+                arrow.velocityX = -arrow.velocityX
+                // Asegurar que esté dentro de los límites
+                if (arrow.rect.left < 0) {
+                    arrow.rect.offsetTo(0, arrow.rect.top)
+                }
+                if (arrow.rect.right > screenWidth) {
+                    arrow.rect.offsetTo(screenWidth - arrowSize, arrow.rect.top)
+                }
+            }
+
+            if (arrow.rect.top <= 0 || arrow.rect.bottom >= screenHeight) {
+                arrow.velocityY = -arrow.velocityY
+                // Asegurar que esté dentro de los límites
+                if (arrow.rect.top < 0) {
+                    arrow.rect.offsetTo(arrow.rect.left, 0)
+                }
+                if (arrow.rect.bottom > screenHeight) {
+                    arrow.rect.offsetTo(arrow.rect.left, screenHeight - arrowSize)
+                }
+            }
         }
     }
 }
