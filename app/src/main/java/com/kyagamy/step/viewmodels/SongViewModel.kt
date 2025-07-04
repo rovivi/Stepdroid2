@@ -63,4 +63,26 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
         return repository.idSong(id)
     }
 
+    suspend fun randomSongs(
+        category: String?,
+        stepType: String?,
+        minLevel: Int?,
+        maxLevel: Int?,
+        title: String?,
+        artist: String?,
+        bpm: String?,
+        limit: Int
+    ): List<Song> {
+        return repository.getRandomSongs(
+            category,
+            stepType,
+            minLevel,
+            maxLevel,
+            title,
+            artist,
+            bpm,
+            limit
+        )
+    }
+
 }

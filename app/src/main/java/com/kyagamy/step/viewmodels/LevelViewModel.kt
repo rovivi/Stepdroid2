@@ -40,5 +40,14 @@ class LevelViewModel(application: Application) : AndroidViewModel(application) {
         return  repository.getLevelBySongId(songId)
     }
 
+    fun queryLevels(
+        songId: Int?,
+        stepType: String?,
+        minMeter: Int?,
+        maxMeter: Int?
+    ): LiveData<List<Level>> {
+        return repository.queryLevels(songId, stepType, minMeter, maxMeter)
+    }
+
 
 }

@@ -73,11 +73,12 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
             } else {
                 if (indexLevel != -1) {//means not LEVEL TAG
                     if (auxIndexToSaveORM != indexLevel) {//when change level
+                        val meter = levelMetaData["METER"]?.toIntOrNull() ?: 0
                         listLevels.add(
                             Level(
                                 0,
                                 auxIndexToSaveORM,
-                                levelMetaData["METER"] ?: "",
+                                meter,
                                 levelMetaData["CREDIT"] ?: "",
                                 levelMetaData["STEPSTYPE"] ?: "",
                                 levelMetaData["DESCRIPTION"] ?: "",
@@ -98,11 +99,12 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
             }
         }
         try {//try to add last level
+            val meter = levelMetaData["METER"]?.toIntOrNull() ?: 0
             listLevels.add(
                 Level(
                     0,
                     auxIndexToSaveORM,
-                    levelMetaData["METER"] ?: "",
+                    meter,
                     levelMetaData["CREDIT"] ?: "",
                     levelMetaData["STEPSTYPE"] ?: "",
                     levelMetaData["DESCRIPTION"] ?: "",
