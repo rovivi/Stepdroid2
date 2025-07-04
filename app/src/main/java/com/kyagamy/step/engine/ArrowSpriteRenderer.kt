@@ -39,8 +39,7 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         sprites.clear()
         Drawables.forEach { drawableRes ->
             val opts = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 }
-            //val bmp = BitmapFactory.decodeResource(context.resources, R.drawable.mi_sprite, opts)
-            val bitmap = BitmapFactory.decodeResource(context.resources, drawableRes)
+            val bitmap = BitmapFactory.decodeResource(context.resources, drawableRes, opts)
             if (bitmap != null) {
                 val sprite = SpriteGLRenderer(context, arrayOf(bitmap))
                 sprite.onSurfaceCreated(gl, config)

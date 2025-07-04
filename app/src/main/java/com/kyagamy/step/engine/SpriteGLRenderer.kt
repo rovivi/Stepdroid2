@@ -50,6 +50,9 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+        // Habilitar transparencias
+        GLES20.glEnable(GLES20.GL_BLEND)
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
 
         program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
         positionHandle = GLES20.glGetAttribLocation(program, "aPosition")
