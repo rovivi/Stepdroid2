@@ -94,23 +94,53 @@ class Vp9EncodeWorker(
             ).show()
         }
 
-        val basePath = inputData.getString(KEY_BASE_PATH) ?: return@withContext Result.failure()
+        val basePath = inputData.getString(KEY_BASE_PATH) ?: return@withContext Result.failure(
+            workDataOf(
+                "error_message" to "No se proporcionó la ruta base",
+                "error_details" to "La ruta base (basePath) es requerida para iniciar la conversión",
+                "error_code" to -1
+            )
+        )
 
         if (!isVp9Supported()) {
-            return@withContext Result.failure()
+            return@withContext Result.failure(
+                workDataOf(
+                    "error_message" to "VP9 no está soportado en este dispositivo",
+                    "error_details" to "El dispositivo no tiene un codec VP9 disponible para codificación",
+                    "error_code" to -2
+                )
+            )
         }
 
         val songsDir = File(basePath, "stepdroid${File.separator}songs")
         if (!songsDir.exists()) {
-            return@withContext Result.failure()
+            return@withContext Result.failure(
+                workDataOf(
+                    "error_message" to "No se encontró la carpeta de canciones",
+                    "error_details" to "La carpeta esperada no existe: ${songsDir.absolutePath}",
+                    "error_code" to -3
+                )
+            )
         }
 
-        val videoExtensions = setOf("mp4", "mkv", "webm", "avi", "mov")
+        val videoExtensions = setOf("mp4", "mkv", "webm", "avi", "mov", "wmv","mpg", "flv", "mpeg")
         val videoFiles = songsDir.walkTopDown()
             .filter { it.isFile && it.extension.lowercase() in videoExtensions }
             .toList()
 
-        if (videoFiles.isEmpty()) return@withContext Result.success()
+        if (videoFiles.isEmpty()) {
+            return@withContext Result.failure(
+                workDataOf(
+                    "error_message" to "No se encontraron archivos de video para convertir",
+                    "error_details" to "No hay archivos con extensiones válidas (${
+                        videoExtensions.joinToString(
+                            ", "
+                        )
+                    }) en: ${songsDir.absolutePath}",
+                    "error_code" to -4
+                )
+            )
+        }
 
         initNotificationChannel()
         val notificationManager = NotificationManagerCompat.from(applicationContext)
@@ -144,7 +174,11 @@ class Vp9EncodeWorker(
         }
 
         var processed = 0
+        var successful = 0
+        var failed = 0
         val startTime = System.currentTimeMillis()
+        val failedFiles = mutableListOf<String>()
+        val successfulFiles = mutableListOf<String>()
 
         for (file in videoFiles) {
             try {
@@ -152,7 +186,9 @@ class Vp9EncodeWorker(
                 val progressData = workDataOf(
                     "current" to processed,
                     "total" to videoFiles.size,
-                    "fileName" to file.name
+                    "fileName" to file.name,
+                    "successful" to successful,
+                    "failed" to failed
                 )
                 setProgress(progressData)
 
@@ -183,7 +219,8 @@ class Vp9EncodeWorker(
                 // Actualizar notificación con el archivo actual y tiempo
                 val fileName = file.name
                 val shortName = if (fileName.length > 20) "${fileName.take(17)}..." else fileName
-                val progressText = "${processed + 1}/${videoFiles.size}: $shortName\n$timeText"
+                val progressText =
+                    "${processed + 1}/${videoFiles.size}: $shortName\n$timeText\nÉxitos: $successful | Fallos: $failed"
 
                 updateNotification(
                     notificationManager,
@@ -194,18 +231,38 @@ class Vp9EncodeWorker(
                 )
 
                 val output = File(file.parent, "${file.nameWithoutExtension}_tmp.${file.extension}")
-                transcodeToVp9(file, output)
-                if (output.exists()) {
-                    file.delete()
-                    output.renameTo(File(file.parent, file.name))
+
+                // Intentar la conversión
+                try {
+                    transcodeToVp9(file, output)
+                    if (output.exists()) {
+                        file.delete()
+                        output.renameTo(File(file.parent, file.name))
+                        successful++
+                        successfulFiles.add(file.name)
+                    } else {
+                        failed++
+                        failedFiles.add(file.name)
+                    }
+                } catch (e: Exception) {
+                    Log.w("Vp9EncodeWorker", "No se pudo convertir ${file.name}: ${e.message}")
+                    failed++
+                    failedFiles.add(file.name)
+                    // Limpiar archivo temporal si existe
+                    if (output.exists()) {
+                        output.delete()
+                    }
                 }
+
                 processed++
 
                 // Enviar progreso actualizado
                 val updatedProgressData = workDataOf(
                     "current" to processed,
                     "total" to videoFiles.size,
-                    "fileName" to ""
+                    "fileName" to "",
+                    "successful" to successful,
+                    "failed" to failed
                 )
                 setProgress(updatedProgressData)
 
@@ -214,9 +271,9 @@ class Vp9EncodeWorker(
                 val minutes = elapsedTime / 60
                 val seconds = elapsedTime % 60
                 val progressText2 = if (processed < videoFiles.size) {
-                    "Procesado $processed/${videoFiles.size} - Tiempo: ${minutes}m ${seconds}s"
+                    "Procesado $processed/${videoFiles.size} - Tiempo: ${minutes}m ${seconds}s\nÉxitos: $successful | Fallos: $failed"
                 } else {
-                    "Procesamiento completado en ${minutes}m ${seconds}s"
+                    "Procesamiento completado en ${minutes}m ${seconds}s\nÉxitos: $successful | Fallos: $failed"
                 }
                 updateNotification(
                     notificationManager,
@@ -227,14 +284,14 @@ class Vp9EncodeWorker(
                 )
 
             } catch (e: Exception) {
-                notifyIfPermitted(
-                    notificationManager,
-                    NOTIFICATION_ID,
-                    builder.setOngoing(false)
-                        .setProgress(0, 0, false)
-                        .setContentText("Error: ${e.message}")
+                Log.e(
+                    "Vp9EncodeWorker",
+                    "Error general procesando archivo ${file.name}: ${e.message}",
+                    e
                 )
-                return@withContext Result.failure()
+                failed++
+                failedFiles.add(file.name)
+                processed++
             }
         }
 
@@ -243,16 +300,33 @@ class Vp9EncodeWorker(
         val minutes = totalTime / 60
         val seconds = totalTime % 60
 
+        // Crear resultado final con estadísticas
+        val resultData = workDataOf(
+            "total_processed" to processed,
+            "successful_count" to successful,
+            "failed_count" to failed,
+            "successful_files" to successfulFiles.joinToString(", "),
+            "failed_files" to failedFiles.joinToString(", "),
+            "processing_time" to "${minutes}m ${seconds}s"
+        )
+
         // Notificación final
+        val finalMessage = if (successful > 0) {
+            "$successful videos convertidos exitosamente"
+        } else {
+            "No se pudieron convertir videos"
+        }
+
         notifyIfPermitted(
             notificationManager,
             NOTIFICATION_ID,
             builder.setContentTitle("Conversión a VP9 completada")
-                .setContentText("$processed videos convertidos en ${minutes}m ${seconds}s")
+                .setContentText("$finalMessage en ${minutes}m ${seconds}s")
                 .setOngoing(false)
                 .setProgress(0, 0, false)
         )
-        Result.success()
+
+        Result.success(resultData)
     }
 
     /**
@@ -286,28 +360,76 @@ class Vp9EncodeWorker(
     private suspend fun transcodeToVp9(input: File, output: File) {
         val completion = CompletableDeferred<Unit>()
 
-        val transformer = Transformer.Builder(applicationContext)
-            .setVideoMimeType(MimeTypes.VIDEO_VP9)
-            .addListener(object : Transformer.Listener {
-                override fun onCompleted(composition: Composition, exportResult: ExportResult) {
-                    completion.complete(Unit)
+        // Lista de formatos a probar, del más preferido al menos preferido
+        val videoFormats = listOf(
+            "video/mp4",              // H.264, H.265 (HEVC)
+            //"video/webm",             // VP8, VP9
+            "video/x-matroska",       // MKV, puede contener VP9, AV1
+            "video/3gpp",             // 3GP, usado en móviles antiguos
+            "video/3gpp2",            // Variante de 3GP
+            "video/avi",              // AVI, menos usado en Android
+            "video/mpeg",             // MPEG-1, MPEG-2
+            "video/x-msvideo",        // AVI (otro tipo)
+            "video/quicktime",        // MOV, de Apple
+            "video/x-flv",            // Flash Video (legacy)
+            "video/ogg",              // Ogg Theora, Opus
+            "video/x-ms-wmv",         // Windows Media Video
+            "video/hevc",             // H.265, alternativa moderna
+            "video/av1"               // AV1, nuevo y eficiente
+        )
+
+        var lastException: Exception? = null
+
+        for (format in videoFormats) {
+            try {
+                val transformer = Transformer.Builder(applicationContext)
+                    .setVideoMimeType(format)
+                    .addListener(object : Transformer.Listener {
+                        override fun onCompleted(
+                            composition: Composition,
+                            exportResult: ExportResult
+                        ) {
+                            completion.complete(Unit)
+                        }
+
+                        override fun onError(
+                            composition: Composition,
+                            exportResult: ExportResult,
+                            exportException: ExportException
+                        ) {
+                            completion.completeExceptionally(exportException)
+                        }
+                    })
+                    .build()
+
+                val inputMediaItem = MediaItem.fromUri(input.toUri())
+                val editedMediaItem = EditedMediaItem.Builder(inputMediaItem).build()
+
+                transformer.start(editedMediaItem, output.absolutePath)
+                completion.await()
+                Log.d(
+                    "Vp9EncodeWorker",
+                    "Conversión exitosa con formato: $format para archivo: ${input.name}"
+                )
+                return // Éxito con este formato
+
+            } catch (e: Exception) {
+                lastException = e
+                Log.w(
+                    "Vp9EncodeWorker",
+                    "Falló conversión con formato $format para ${input.name}: ${e.message}"
+                )
+
+                // Limpiar el CompletableDeferred para el siguiente intento
+                if (!completion.isCompleted) {
+                    completion.cancel()
                 }
+            }
+        }
 
-                override fun onError(
-                    composition: Composition,
-                    exportResult: ExportResult,
-                    exportException: ExportException
-                ) {
-                    completion.completeExceptionally(exportException)
-                }
-            })
-            .build()
-
-        val inputMediaItem = MediaItem.fromUri(input.toUri())
-        val editedMediaItem = EditedMediaItem.Builder(inputMediaItem).build()
-
-        transformer.start(editedMediaItem, output.absolutePath)
-        completion.await()
+        // Si llegamos aquí, todos los formatos fallaron
+        throw lastException
+            ?: Exception("No se pudo convertir el archivo con ningún formato compatible")
     }
 
     companion object {

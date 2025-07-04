@@ -13,12 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.work.*
 import com.kyagamy.step.workers.Vp9EncodeWorker
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
 import androidx.work.WorkInfo.State.*
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.graphics.Color
 
 class Vp9ConversionActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -125,6 +125,8 @@ fun ConversionScreen(basePath: String) {
                             val current = progress.getInt("current", 0)
                             val total = progress.getInt("total", 0)
                             val fileName = progress.getString("fileName") ?: ""
+                            val successful = progress.getInt("successful", 0)
+                            val failed = progress.getInt("failed", 0)
 
                             if (total > 0) {
                                 Text("Progreso: $current/$total")
@@ -140,6 +142,14 @@ fun ConversionScreen(basePath: String) {
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
+
+                            if (successful > 0 || failed > 0) {
+                                Text(
+                                    text = "Éxitos: $successful | Fallos: $failed",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
 
@@ -151,6 +161,71 @@ fun ConversionScreen(basePath: String) {
                             modifier = Modifier.size(64.dp)
                         )
                         Text("¡Conversión completada!")
+
+                        // Mostrar estadísticas detalladas
+                        workInfo?.outputData?.let { outputData ->
+                            val totalProcessed = outputData.getInt("total_processed", 0)
+                            val successfulCount = outputData.getInt("successful_count", 0)
+                            val failedCount = outputData.getInt("failed_count", 0)
+                            val processingTime = outputData.getString("processing_time") ?: ""
+                            val successfulFiles = outputData.getString("successful_files") ?: ""
+                            val failedFiles = outputData.getString("failed_files") ?: ""
+
+                            Column(
+                                modifier = Modifier.padding(top = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Resumen de conversión:",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = "✅ Exitosos: $successfulCount",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Green
+                                )
+                                if (failedCount > 0) {
+                                    Text(
+                                        text = "❌ Fallidos: $failedCount",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Red
+                                    )
+                                }
+                                if (processingTime.isNotEmpty()) {
+                                    Text(
+                                        text = "⏱️ Tiempo: $processingTime",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+
+                                if (successfulFiles.isNotEmpty()) {
+                                    Text(
+                                        text = "Archivos convertidos:",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                    Text(
+                                        text = successfulFiles,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                if (failedFiles.isNotEmpty()) {
+                                    Text(
+                                        text = "Archivos que no se pudieron convertir:",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                    Text(
+                                        text = failedFiles,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Red
+                                    )
+                                }
+                            }
+                        }
+
                         Button(onClick = { (context as ComponentActivity).finish() }) {
                             Text("Volver")
                         }
@@ -163,9 +238,75 @@ fun ConversionScreen(basePath: String) {
                             tint = Color.Red,
                             modifier = Modifier.size(64.dp)
                         )
-                        Text("Error en la conversión")
+                        Text(
+                            text = "¡Error en la conversión!",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Color.Red
+                        )
+
+                        // Mostrar detalles del error
+                        workInfo?.outputData?.let { outputData ->
+                            val errorMessage = outputData.getString("error_message")
+                            val errorDetails = outputData.getString("error_details")
+                            val failedFile = outputData.getString("failed_file")
+                            val errorCode = outputData.getInt("error_code", -1)
+
+                            Column(
+                                modifier = Modifier.padding(top = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                if (errorMessage != null) {
+                                    Text(
+                                        text = "Error: $errorMessage",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Red
+                                    )
+                                }
+
+                                if (failedFile != null) {
+                                    Text(
+                                        text = "Archivo que falló: $failedFile",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                if (errorCode != -1) {
+                                    Text(
+                                        text = "Código de error: $errorCode",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                if (errorDetails != null) {
+                                    Text(
+                                        text = "Detalles técnicos:",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = errorDetails,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                }
+
+                                // Mensaje genérico si no hay detalles específicos
+                                if (errorMessage == null && errorDetails == null && failedFile == null) {
+                                    Text(
+                                        text = "Error desconocido durante la conversión. Revisa los logs del sistema para más información.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(top = 16.dp)
                         ) {
                             Button(onClick = { startConversion(context, basePath) }) {
                                 Text("Reintentar")
@@ -226,9 +367,9 @@ fun ConversionScreen(basePath: String) {
 }
 
 private fun startConversion(context: android.content.Context, basePath: String) {
-    val data = Data.Builder()
-        .putString(Vp9EncodeWorker.KEY_BASE_PATH, basePath)
-        .build()
+    val data = workDataOf(
+        Vp9EncodeWorker.KEY_BASE_PATH to basePath
+    )
     val request = OneTimeWorkRequestBuilder<Vp9EncodeWorker>()
         .setInputData(data)
         .build()
