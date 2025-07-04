@@ -69,6 +69,11 @@
             android:keepScreenOn="true"
             android:screenOrientation="fullSensor" />
 
+        <activity
+            android:name=".views.TestGLPlayerActivity"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait" />
+
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
