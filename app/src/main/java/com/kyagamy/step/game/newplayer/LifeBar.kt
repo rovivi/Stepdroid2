@@ -116,7 +116,7 @@ class LifeBar(
         }
     }
 
-    fun updateLife(typeTap: Byte,combo: Int) {
+    fun updateLife(typeTap: Short, combo: Int) {
         when (typeTap) {
             Combo.VALUE_PERFECT, Combo.VALUE_GREAT -> life+=1*abs(combo)
             Combo.VALUE_BAD -> life-=0.3f*abs(combo)

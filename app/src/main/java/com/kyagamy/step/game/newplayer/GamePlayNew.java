@@ -66,8 +66,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 
     //TEST
 
-     boolean mpUpdated=false;
-        private double avAuxValue =100;
+    boolean mpUpdated = false;
+    private double avAuxValue = 100;
 //    public InputStream IS;
 //    public BufferedInputStream BIS;
 //    public DataInputStream DIS;
@@ -141,8 +141,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             touchPad = new GamePad(context, stepData.getStepType(), gameState.inputs, sizeScreen.x, size.y);
             touchPad.setGamePlayNew(this); // Establecer la referencia para las notificaciones
             combo.setLifeBar(bar);
-            gameState.setCombo(combo);
-            gameState.setStepsDrawer(stepsDrawer);
+            gameState.combo = combo;
+            gameState.stepsDrawer = stepsDrawer;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 soundPool = new SoundPool.Builder()
                         .setMaxStreams(25)
