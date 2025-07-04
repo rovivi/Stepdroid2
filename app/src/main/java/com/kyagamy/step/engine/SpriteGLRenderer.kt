@@ -20,6 +20,7 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
     private var positionHandle = 0
     private var texHandle = 0
     private var mvpMatrixHandle = 0
+    private var textureHandle = 0
     private var vertexBuffer: FloatBuffer
     private var texBuffer: FloatBuffer
     private val mvpMatrix = FloatArray(16)
@@ -58,6 +59,7 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
         positionHandle = GLES20.glGetAttribLocation(program, "aPosition")
         texHandle = GLES20.glGetAttribLocation(program, "aTexCoord")
         mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
+        textureHandle = GLES20.glGetUniformLocation(program, "uTexture")
         GLES20.glGenTextures(frames.size, textureIds, 0)
         for (i in frames.indices) {
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureIds[i])
@@ -80,7 +82,9 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
        // GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         GLES20.glUseProgram(program)
         updateFrameIndex()
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureIds[frameIndex])
+        GLES20.glUniform1i(textureHandle, 0)
         vertexBuffer.position(0)
         GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
         GLES20.glEnableVertexAttribArray(positionHandle)
