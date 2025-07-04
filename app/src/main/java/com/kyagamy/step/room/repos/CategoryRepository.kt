@@ -16,6 +16,10 @@ class CategoryRepository(private val cateDao: CategoryDao) {
         cateDao.insert(cate)
     }
 
+    fun searchByName(filter: String): LiveData<List<Category>> {
+        return cateDao.searchByName(filter)
+    }
+
     suspend fun deleteAll() {
         cateDao.deleteAll()
     }

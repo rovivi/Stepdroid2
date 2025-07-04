@@ -19,4 +19,13 @@ class LevelRepository(private val levelDao: LevelDao) {
     suspend fun insert(level: Level) {
         levelDao.insert(level)
     }
+
+    fun queryLevels(
+        songId: Int?,
+        stepType: String?,
+        minMeter: Int?,
+        maxMeter: Int?
+    ): LiveData<List<Level>> {
+        return levelDao.queryLevels(songId, stepType, minMeter, maxMeter)
+    }
 }

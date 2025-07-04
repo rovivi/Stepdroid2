@@ -50,4 +50,29 @@ interface SongDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(Song: Song)
+
+    @Query(
+        """
+        SELECT DISTINCT s.* FROM Song s
+        INNER JOIN Level l ON s.song_id = l.song_fkid
+        WHERE (:category IS NULL OR s.catecatecate LIKE '%' || :category || '%')
+          AND (:stepType IS NULL OR l.STEPSTYPE LIKE '%' || :stepType || '%')
+          AND (:minLevel IS NULL OR l.METER >= :minLevel)
+          AND (:maxLevel IS NULL OR l.METER <= :maxLevel)
+          AND (:title IS NULL OR s.TITLE LIKE '%' || :title || '%')
+          AND (:artist IS NULL OR s.ARTIST LIKE '%' || :artist || '%')
+          AND (:bpm IS NULL OR s.DISPLAYBPM LIKE '%' || :bpm || '%')
+        ORDER BY RANDOM() LIMIT :limit
+        """
+    )
+    suspend fun getRandomSongs(
+        category: String?,
+        stepType: String?,
+        minLevel: Int?,
+        maxLevel: Int?,
+        title: String?,
+        artist: String?,
+        bpm: String?,
+        limit: Int
+    ): List<Song>
 }

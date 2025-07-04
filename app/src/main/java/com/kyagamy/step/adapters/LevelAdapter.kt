@@ -47,7 +47,7 @@ class LevelAdapter internal constructor(
 
     override fun onBindViewHolder(holder: songViewHolder, position: Int) {
         val current = levels[position]
-        holder.level.text = if (current.METER.length >= 2) current.METER else ("0" + current.METER)
+        holder.level.text = if (current.METER >= 10) current.METER.toString() else ("0" + current.METER)
 
         val anim = AnimationUtils.loadAnimation(
             context,

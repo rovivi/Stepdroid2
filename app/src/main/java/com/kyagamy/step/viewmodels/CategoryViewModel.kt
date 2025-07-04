@@ -29,4 +29,8 @@ class CategoryViewModel(application: Application) : AndroidViewModel(application
         repository.deleteAll()
     }
 
+    fun searchByName(filter: String): LiveData<List<Category>> {
+        return repository.searchByName(filter)
+    }
+
 }

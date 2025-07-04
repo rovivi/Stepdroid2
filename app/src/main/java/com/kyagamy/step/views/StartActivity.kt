@@ -337,11 +337,7 @@ fun StartScreen(viewModel: StartViewModel) {
                 // Filtrar canciones que tengan al menos un nivel > 19
                 val songIdsWithHighLevel = allLevels
                     .filter { level ->
-                        try {
-                            level.METER.toInt() > 19
-                        } catch (e: NumberFormatException) {
-                            false
-                        }
+                        level.METER > 19
                     }
                     .map { it.song_fkid }
                     .toSet()

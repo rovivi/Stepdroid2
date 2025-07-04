@@ -12,7 +12,7 @@ class Level (
     @PrimaryKey(autoGenerate = true)
     val id:Int,
     val index:Int,
-    val METER:String,
+    val METER:Int,
     val CREDIT:String,
     val STEPSTYPE:String,
     val DESCRIPTION:String,

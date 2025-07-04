@@ -55,7 +55,7 @@ class EvaluationActivity : FullScreenActivity() {
 //        levelRecycl
         //ADAPTERS
         val levelAdapter = LevelAdapter(this)
-        var lvl = Level(1, 1, "22", "me", "pump-single", "asdasd", "name", 1, null)
+        var lvl = Level(1, 1, 22, "me", "pump-single", "asdasd", "name", 1, null)
 
         var level = listOf(lvl)
         levelAdapter.setLevels(level)

@@ -242,10 +242,8 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
                         gameState.isRunning = true;
                     });
                     bgPlayer.start(gameState.currentBeat);
-                  //  mpMusic.prepare();
                 }
-            } else
-                mainTread.sulrfaceHolder = this.getHolder();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -26,6 +26,9 @@ interface CategoryDao {
     @Query(value = "select  * from Category where name=:arg0")
     fun getByName(arg0:String):Category
 
+    @Query("SELECT * FROM Category WHERE name LIKE '%' || :filter || '%' ORDER BY name ASC")
+    fun searchByName(filter: String): LiveData<List<Category>>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(cate: Category)
 
