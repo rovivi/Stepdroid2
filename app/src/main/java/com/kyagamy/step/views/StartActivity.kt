@@ -14,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,11 +41,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.codekidlabs.storagechooser.StorageChooser
 import com.kyagamy.step.BuildConfig
 import com.kyagamy.step.ui.EvaluationActivity
@@ -52,6 +58,7 @@ import com.kyagamy.step.viewmodels.StartViewModel
 import com.kyagamy.step.viewmodels.SongViewModel
 import com.kyagamy.step.viewmodels.LevelViewModel
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
+import com.kyagamy.step.workers.Vp9EncodeWorker
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -74,7 +81,7 @@ class StartActivity : ComponentActivity() {
                         }
                     }
                     composable("home") {
-                        StartScreen(viewModel)
+                        StartScreen(viewModel = viewModel)
                     }
                 }
             }
@@ -182,11 +189,21 @@ fun StartScreen(viewModel: StartViewModel) {
     }
 
     val permissions = if (Build.VERSION.SDK_INT >= 33) {
-        arrayOf(
-            Manifest.permission.READ_MEDIA_AUDIO,
-            Manifest.permission.READ_MEDIA_IMAGES,
-            Manifest.permission.READ_MEDIA_VIDEO
-        )
+        if (Build.VERSION.SDK_INT >= 34) {
+            arrayOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.POST_NOTIFICATIONS,
+                Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC
+            )
+        } else {
+            arrayOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO
+            )
+        }
     } else {
         arrayOf(
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -297,6 +314,8 @@ fun StartScreen(viewModel: StartViewModel) {
         )
     }
 
+    var showNotificationPermissionDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -371,6 +390,19 @@ fun StartScreen(viewModel: StartViewModel) {
             enabled = !isLoadingRandom
         ) {
             Text(if (isLoadingRandom) "Loading..." else "Random 500AV >19")
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = {
+            state.basePath?.let { basePath ->
+                val intent = Intent(context, Vp9ConversionActivity::class.java)
+                intent.putExtra("basePath", basePath)
+                context.startActivity(intent)
+            } ?: run {
+                showFileInfoDialog = true
+            }
+        }) {
+            Text("Convert Videos to VP9")
         }
 
         Spacer(Modifier.height(8.dp))
