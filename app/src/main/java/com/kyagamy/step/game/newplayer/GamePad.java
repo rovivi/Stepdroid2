@@ -255,7 +255,15 @@ public class GamePad {
                 if (arrowsPosition2[j].contains(x, y)) {
                     if (pad[j] == 0 || (isDownMove && pad[j] == 2)) {
                         pad[j] = 1;
-                        StepsDrawer.noteSkins[0].tapsEffect[j].play();
+                        if (gamePlayNew != null) {
+                            StepsDrawer stepsDrawer = gamePlayNew.getStepsDrawer();
+                            if (stepsDrawer != null) {
+                                NoteSkin selectedSkin = stepsDrawer.getSelectedSkin();
+                                if (selectedSkin != null && j < selectedSkin.tapsEffect.length) {
+                                    selectedSkin.tapsEffect[j].play();
+                                }
+                            }
+                        }
                     }
                     wasPressed = true;
                     break;

@@ -472,6 +472,8 @@ class GamePlayNew(context: Context, attrs: AttributeSet?) : SurfaceView(context,
 
     fun getTouchPad(): GamePad? = touchPad
 
+    fun getStepsDrawer(): StepsDrawer? = stepsDrawer
+
     fun notifyPadStateChanged() {
         gamePlayActivity?.syncPadState()
     }
@@ -484,8 +486,7 @@ class GamePlayNew(context: Context, attrs: AttributeSet?) : SurfaceView(context,
 
         private fun getDisplayRefreshRate(context: Context): Int {
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                context.display?.refreshRate?.let { Math.round(it) }
-                    ?: GameConstants.DEFAULT_REFRESH_RATE
+                context.display.refreshRate.let { Math.round(it) }
             } else {
                 val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager?
                 wm?.defaultDisplay?.refreshRate?.let { Math.round(it) }
