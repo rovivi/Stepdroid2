@@ -274,7 +274,7 @@ fun StartScreen(viewModel: StartViewModel) {
             dismissButton = {
                 TextButton(onClick = {
                     showFileInfoDialog = false
-                    context.startActivity(Intent(context, InstallFilesActivity::class.java))
+                    context.startActivity(Intent(context, AddMediaFromLinkActivity::class.java))
                 }) { Text("Ir a DS") }
             },
             title = { Text("Archivos no encontrados") },
@@ -386,7 +386,7 @@ fun StartScreen(viewModel: StartViewModel) {
             Text("Reload Songs")
         }
         Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, InstallFilesActivity::class.java)) }) {
+        Button(onClick = { context.startActivity(Intent(context, AddMediaFromLinkActivity::class.java)) }) {
             Text("DS")
         }
         Spacer(Modifier.height(8.dp))
