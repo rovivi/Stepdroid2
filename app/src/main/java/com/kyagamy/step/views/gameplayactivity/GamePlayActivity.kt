@@ -354,8 +354,8 @@ class GamePlayActivity : Activity() {
         // Buscar el GamePad en el GamePlayNew para obtener el estado del pad[]
         val gamePlayNew = binding.gamePlay
         if (gamePlayNew != null) {
-            val touchPad = gamePlayNew.touchPad
-            if (touchPad != null && touchPad.pad != null) {
+            val touchPad = gamePlayNew.getTouchPad()
+            if (touchPad?.pad != null) {
                 // Sincronizar con el estado del GamePad
                 arrows.forEachIndexed { index, arrow ->
                     if (index < touchPad.pad.size) {
