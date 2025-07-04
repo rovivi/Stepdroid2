@@ -45,6 +45,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.codekidlabs.storagechooser.StorageChooser
 import com.kyagamy.step.BuildConfig
 import com.kyagamy.step.ui.EvaluationActivity
@@ -52,6 +56,7 @@ import com.kyagamy.step.viewmodels.StartViewModel
 import com.kyagamy.step.viewmodels.SongViewModel
 import com.kyagamy.step.viewmodels.LevelViewModel
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
+import com.kyagamy.step.workers.Vp9EncodeWorker
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -375,6 +380,25 @@ fun StartScreen(viewModel: StartViewModel) {
             enabled = !isLoadingRandom
         ) {
             Text(if (isLoadingRandom) "Loading..." else "Random 500AV >19")
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = {
+            state.basePath?.let {
+                val data = workDataOf(Vp9EncodeWorker.KEY_BASE_PATH to it)
+                val request = OneTimeWorkRequestBuilder<Vp9EncodeWorker>()
+                    .setInputData(data)
+                    .build()
+                WorkManager.getInstance(context).enqueueUniqueWork(
+                    "vp9_transcode",
+                    ExistingWorkPolicy.REPLACE,
+                    request
+                )
+            } ?: run {
+                showFileInfoDialog = true
+            }
+        }) {
+            Text("Convert Videos to VP9")
         }
 
         Spacer(Modifier.height(8.dp))
