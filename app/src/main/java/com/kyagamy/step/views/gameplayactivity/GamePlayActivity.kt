@@ -75,7 +75,7 @@ class GamePlayActivity : Activity() {
         setContentView(binding.root)
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
-        hilo = this.binding.gamePlay?.mainTread
+        //hilo = this.binding.gamePlay?.mainTread
         i = Intent(this, EvaluationActivity::class.java)
         val sharedPref = this.getSharedPreferences(
             getString(R.string.singleArrowsPos), Context.MODE_PRIVATE
@@ -133,7 +133,7 @@ class GamePlayActivity : Activity() {
                 step.path = Objects.requireNonNull(path).toString()
                 //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-                binding.gamePlay!!.build1Object(
+                binding.gamePlay.startGamePLay(
                     binding.videoViewBGA,
                     step,
                     baseContext,

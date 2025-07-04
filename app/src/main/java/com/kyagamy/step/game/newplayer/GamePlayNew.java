@@ -13,7 +13,6 @@ import android.graphics.PorterDuffXfermode;
 import android.view.Display;
 import android.view.WindowManager;
 import android.graphics.Rect;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.os.Build;
@@ -24,13 +23,12 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.VideoView;
 
-import androidx.annotation.RequiresApi;
-
 import com.kyagamy.step.views.gameplayactivity.GamePlayActivity;
 import com.kyagamy.step.R;
 import com.kyagamy.step.common.Common;
 import com.kyagamy.step.common.step.CommonGame.ParamsSong;
 import com.kyagamy.step.common.step.Game.GameRow;
+import com.kyagamy.step.game.newplayer.GameConstants;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,45 +38,56 @@ import java.util.Objects;
 import game.StepObject;
 
 public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
-    private static int[] colors = {Color.BLUE, Color.RED, Color.YELLOW, Color.RED, Color.BLUE, Color.BLUE, Color.RED, Color.YELLOW, Color.RED, Color.BLUE};
-    float testFloatNOTUSE = 0f;
-    public MainThreadNew mainTread;
-    //private Bitmap bgaBitmap;
-    private MediaPlayer mpMusic;
-    private int playerSizeX = 400, playerSizeY = 500;
-    private boolean isLandScape = false;
 
+    // Core game components
+    public MainThreadNew mainThread;
     private GameState gameState;
-    public Double fps;
-    Handler handler1 = new Handler();
-    private Paint paint, clearPaint;
-    //////
-    StepsDrawer stepsDrawer;
-    LifeBar bar;
-    Combo combo;
+    private MediaPlayer musicPlayer;
+    private GameRenderer renderer;
+
+    // Game elements
+    private StepsDrawer stepsDrawer;
+    private LifeBar bar;
+    private Combo combo;
     private GamePad touchPad;
-    String msj;
-    BgPlayer bgPlayer;
-    private int speed;
+    private BgPlayer bgPlayer;
+
+    // Display and configuration
+    private int playerSizeX = GameConstants.DEFAULT_PLAYER_SIZE_X;
+    private int playerSizeY = GameConstants.DEFAULT_PLAYER_SIZE_Y;
+    private boolean isLandScape = false;
+    private int refreshRate;
+
+    // Audio
     public static SoundPool soundPool;
     public static int soundPullBeat;
     public static int soundPullMine;
-    //    private Context ctx;
-    public GamePlayActivity playerBga;
 
-    //TEST
+    // Performance optimizations
+    private final ArrayList<GameRow> drawList = new ArrayList<>();
+    private Paint debugPaint;
+    private boolean musicPlayerUpdated = false;
+    private double audioVideoSyncValue = 100;
 
-    boolean mpUpdated = false;
-    private double avAuxValue = 100;
-//    public InputStream IS;
-//    public BufferedInputStream BIS;
-//    public DataInputStream DIS;
-//    public AudioTrack AUDIOTRACK;
-//    short[] music;
-//    int musicLength;
+    // Game state
+    public Double fps;
+    private Handler handler = new Handler();
+    private GamePlayActivity gamePlayActivity;
+
+    private int speed;
+    private String debugMessage;
 
     public GamePlayNew(Context context, AttributeSet attrs) {
         super(context, attrs);
+        initializePaints();
+        refreshRate = getDisplayRefreshRate(context);
+    }
+
+    private void initializePaints() {
+        debugPaint = new Paint();
+        debugPaint.setTextSize(GameConstants.DEBUG_TEXT_SIZE);
+        debugPaint.setColor(Color.WHITE);
+        debugPaint.setStyle(Paint.Style.FILL);
     }
 
     private static int getDisplayRefreshRate(Context context) {
@@ -93,152 +102,123 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
             Display d = wm.getDefaultDisplay();
             return Math.round(d.getRefreshRate());
         }
-        return 60;
+        return GameConstants.DEFAULT_REFRESH_RATE;
     }
 
-    private Runnable musicRun = new Runnable() {
+    private final Runnable musicStartRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mpMusic != null) {
-                mpMusic.start();
+            if (musicPlayer != null) {
+                musicPlayer.start();
                 gameState.isRunning = true;
             }
         }
     };
 
-
-    public void build1Object(VideoView videoView, StepObject stepData, Context context, Point sizeScreen, GamePlayActivity playerBga, byte[] inputs) {
+    public void startGamePLay(VideoView videoView, StepObject stepData, Context context, Point sizeScreen, GamePlayActivity gamePlayActivity, byte[] inputs) {
         try {
-            this.playerBga = playerBga;
+            this.gamePlayActivity = gamePlayActivity;
             isLandScape = context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 
-            this.setZOrderOnTop(true); //necessary
-            getHolder().setFormat(PixelFormat.TRANSPARENT);
-            getHolder().addCallback(this);
-            gameState = new GameState(stepData, inputs);
-            gameState.reset();
-            mpMusic = new MediaPlayer();
-            clearPaint = new Paint();
-            clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-            int maxFps = getDisplayRefreshRate(context);
-            mainTread = new MainThreadNew(getHolder(), this, maxFps);
-            mainTread.setRunning(true);
-            bgPlayer = new BgPlayer(stepData.getPath(), stepData.getBgChanges(), videoView, getContext(), gameState.BPM);
-            fps = 0d;
-            setFocusable(true);
-            paint = new Paint();
-            paint.setTextSize(30);
-            //-- Metrics of player
-            Point size = Common.Companion.getSize(getContext());
-            playerSizeX = size.x;
-            //verify if landscape
-            //16:9
-            //playerSizeY = (int) (size.x*0.5625d);
-            //4:3
-            playerSizeY = (int) (size.x * 0.75d);
-            paint.setColor(Color.WHITE);
-            try {
-                mpMusic.setDataSource(stepData.getMusicPath());
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    //   mpMusic.setPlaybackParams(mpMusic.getPlaybackParams().setSpeed(ParamsSong.rush));// Esto será para el rush
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            //steps
-            mpMusic.prepare();
-            mpMusic.setOnCompletionListener(mp -> stop());
-            mpMusic.setOnPreparedListener(mp -> startGame());
-            stepsDrawer = new StepsDrawer(getContext(), stepData.getStepType(), "16:9", isLandScape, sizeScreen);
-            //match video whit stepDrawer
-            videoView.getLayoutParams().height = stepsDrawer.sizeY + stepsDrawer.offsetY;
-            videoView.getLayoutParams().width = stepsDrawer.sizeX;
-            //lifeBar
-            bar = new LifeBar(context, stepsDrawer);
-            combo = new Combo(getContext(), stepsDrawer);
-            touchPad = new GamePad(context, stepData.getStepType(), gameState.inputs, sizeScreen.x, size.y);
-            touchPad.setGamePlayNew(this); // Establecer la referencia para las notificaciones
-            combo.setLifeBar(bar);
-            gameState.combo = combo;
-            gameState.stepsDrawer = stepsDrawer;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                soundPool = new SoundPool.Builder()
-                        .setMaxStreams(25)
-                        .build();
-            } else {
-                soundPool = new SoundPool(25, AudioManager.STREAM_MUSIC, 50);
-            }
-            //sound pool
-            soundPullBeat = soundPool.load(this.getContext(), R.raw.beat2, 1);
-            soundPullMine = soundPool.load(this.getContext(), R.raw.mine, 1);
+            setupSurface();
+            initializeGameComponents(stepData, inputs, context, sizeScreen, videoView);
+            setupAudio(stepData);
+            setupVideoView(videoView);
+            initializeSoundPool();
 
-
-            //TEST
-
-//            File FILEAUDIO = new File(stepData.getMusicPath());
-//             musicLength = (int)(FILEAUDIO.length()/2)+1;
-//            music = new short[musicLength];
-//
-//            IS = new FileInputStream(FILEAUDIO);
-//            BIS = new BufferedInputStream(IS, musicLength);
-//            DIS = new DataInputStream(BIS);
-//            int i = 0;                                                          //  Read the file into the "music" array
-//            while (DIS.available() > 0 && i<musicLength)
-//            {
-//                music[i] = DIS.readShort();                                      //  This assignment does not reverse the order
-//                i++;
-//            }
-//
-//
-//
-//
-//            AUDIOTRACK = new AudioTrack(AudioManager.STREAM_MUSIC,
-//                    44100 ,
-//                    AudioFormat.CHANNEL_OUT_STEREO,
-//                    AudioFormat.ENCODING_PCM_16BIT,
-//                    musicLength,
-//                    AudioTrack.MODE_STREAM);
-//
-//
-//
-//            DIS .close();
-
-//AV
-            avAuxValue=stepData.getDisplayBPM();
+            audioVideoSyncValue = stepData.getDisplayBPM();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    private void setupSurface() {
+        this.setZOrderOnTop(true);
+        getHolder().setFormat(PixelFormat.TRANSPARENT);
+        getHolder().addCallback(this);
+    }
+
+    private void initializeGameComponents(StepObject stepData, byte[] inputs, Context context, Point sizeScreen, VideoView videoView) {
+        gameState = new GameState(stepData, inputs);
+        gameState.reset();
+
+        mainThread = new MainThreadNew(getHolder(), this, refreshRate);
+        mainThread.setRunning(true);
+
+        bgPlayer = new BgPlayer(stepData.getPath(), stepData.getBgChanges(), videoView, getContext(), gameState.BPM);
+        fps = 0d;
+        setFocusable(true);
+
+        calculatePlayerSize(context);
+
+        stepsDrawer = new StepsDrawer(getContext(), stepData.getStepType(), "16:9", isLandScape, sizeScreen);
+        bar = new LifeBar(context, stepsDrawer);
+        combo = new Combo(getContext(), stepsDrawer);
+        touchPad = new GamePad(context, stepData.getStepType(), gameState.inputs, sizeScreen.x, Common.Companion.getSize(getContext()).y);
+        touchPad.setGamePlayNew(this);
+
+        combo.setLifeBar(bar);
+        gameState.combo = combo;
+        gameState.stepsDrawer = stepsDrawer;
+
+        renderer = new GameRenderer(stepsDrawer, bar, combo, debugPaint, isLandScape);
+    }
+
+    private void calculatePlayerSize(Context context) {
+        Point size = Common.Companion.getSize(context);
+        playerSizeX = size.x;
+        playerSizeY = (int) (size.x * GameConstants.ASPECT_RATIO_4_3); // 4:3 aspect ratio
+    }
+
+    private void setupAudio(StepObject stepData) {
+        try {
+            musicPlayer = new MediaPlayer();
+            musicPlayer.setDataSource(stepData.getMusicPath());
+            musicPlayer.prepare();
+            musicPlayer.setOnCompletionListener(mp -> startEvaluation());
+            musicPlayer.setOnPreparedListener(mp -> startGame());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setupVideoView(VideoView videoView) {
+        if (videoView != null) {
+            videoView.getLayoutParams().height = stepsDrawer.sizeY + stepsDrawer.offsetY;
+            videoView.getLayoutParams().width = stepsDrawer.sizeX;
+        }
+    }
+
+    private void initializeSoundPool() {
+        soundPool = new SoundPool.Builder()
+                .setMaxStreams(GameConstants.SOUNDPOOL_MAX_STREAMS)
+                .build();
+
+        soundPullBeat = soundPool.load(this.getContext(), R.raw.beat2, 1);
+        soundPullMine = soundPool.load(this.getContext(), R.raw.mine, 1);
+    }
+
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         gameState.reset();
-        mainTread.setRunning(true);
-        mainTread.start();
+        mainThread.setRunning(true);
+        mainThread.start();
     }
 
     public void startGame() {
         Evaluator.Companion.resetScore();
-        mpMusic.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                startEvaluation();
-            }
-        });
+        musicPlayer.setOnCompletionListener(mp -> startEvaluation());
 
         gameState.start();
         try {
-            if (mainTread.running) {
+            if (mainThread.running) {
                 if (gameState.offset > 0) {
                     bgPlayer.start(gameState.currentBeat);
-                    handler1.postDelayed(musicRun, (long) (gameState.offset * 1000));
+                    handler.postDelayed(musicStartRunnable, (long) (gameState.offset * 1000));
                 } else {
-                    mpMusic.seekTo((int) Math.abs(gameState.offset * 1000));
-                    mpMusic.setOnPreparedListener(mp -> {
-
-//                        AUDIOTRACK.play();
-//                        AUDIOTRACK.write(music, 0, musicLength);
-                        mpMusic.start();
+                    musicPlayer.seekTo((int) Math.abs(gameState.offset * 1000));
+                    musicPlayer.setOnPreparedListener(mp -> {
+                        musicPlayer.start();
                         gameState.isRunning = true;
                     });
                     bgPlayer.start(gameState.currentBeat);
@@ -259,126 +239,129 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
 
     public void draw(Canvas canvas) {
         super.draw(canvas);
-        //se limpia la pantalla
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         try {
-            //speed calc
-         //   avAuxValue = (gameState.initialBPM); //example BPM 200 ;
-            speed = (int) ((int) (stepsDrawer.sizeNote / avAuxValue * ParamsSong.av)*0.9f)  ;//580 av
-            double lastScrollAux = gameState.lastScroll;
-            double lastBeat = this.gameState.currentBeat + 0;
-            double lastPosition = stepsDrawer.sizeNote * 0.7;
-            ArrayList<GameRow> list = new ArrayList<>();
-            int initialIndex = 0;
             if (gameState.isRunning) {
-                    drawStats(canvas);
-                for (int x = 0; (gameState.currentElement + x) >= 0 && lastScrollAux != 0; x--) {
-                    GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
-                    double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
-                    lastPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
-                    if (lastPosition < -stepsDrawer.sizeNote * 2)
-                        break;
-                    lastBeat = currentElemt.getCurrentBeat();
-                    initialIndex = x;
-                }
-                lastScrollAux = gameState.lastScroll;
-                lastBeat = this.gameState.currentBeat + 0;
-                lastPosition = stepsDrawer.sizeNote * 0.7;
-                for (int x = initialIndex; (gameState.currentElement + x) < gameState.steps.size() &&
-                        (gameState.currentElement + x) >= 0; x++) {//after current beat
-                    GameRow currentElemt = gameState.steps.get(gameState.currentElement + x);
-                    double diffBeats = currentElemt.getCurrentBeat() - lastBeat;
-                    lastPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
+                calculateSpeed();
+                drawList.clear();
+                calculateVisibleNotes();
+                renderer.drawGame(canvas, drawList, gameState, speed);
+                renderer.drawDebugInfo(canvas, gameState, musicPlayer, fps, speed, musicPlayerUpdated, playerSizeX, playerSizeY);
 
-                    if (currentElemt.getNotes() != null) {
-                        currentElemt.setPosY((int) lastPosition);
-                        list.add(currentElemt);
-                    }
-                    if (lastPosition >= stepsDrawer.sizeY + stepsDrawer.sizeNote)
-                        break;
-                    if (currentElemt.getModifiers() != null && currentElemt.getModifiers().get("SCROLLS") != null && x >= 0)
-                        lastScrollAux = Objects.requireNonNull(currentElemt.getModifiers().get("SCROLLS")).get(1);
-                    lastBeat = currentElemt.getCurrentBeat();
+                if (gameState.currentElement + 1 == gameState.steps.size()) {
+                    startEvaluation();
                 }
-                stepsDrawer.draw(canvas, list);
-                if (gameState.currentElement + 1 == gameState.steps.size()) startEvaluation();
             }
-            bar.draw(canvas);
-            combo.draw(canvas);
-            if (!isLandScape)
-                canvas.drawRect(new Rect(0, stepsDrawer.sizeY, stepsDrawer.offsetX + stepsDrawer.sizeX, stepsDrawer.sizeY * 2), clearPaint);
-            //touchPad.draw(canvas);
+
+            renderer.drawUI(canvas);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void calculateSpeed() {
+        speed = (int) ((stepsDrawer.sizeNote / audioVideoSyncValue * ParamsSong.av) * GameConstants.SPEED_MULTIPLIER);
+    }
+
+    private void calculateVisibleNotes() {
+        double lastScrollAux = gameState.lastScroll;
+        double lastBeat = gameState.currentBeat;
+        double lastPosition = stepsDrawer.sizeNote * GameConstants.NOTE_POSITION_FACTOR;
+
+        int initialIndex = findInitialVisibleIndex(lastScrollAux, lastBeat, lastPosition);
+        populateVisibleNotes(initialIndex);
+    }
+
+    private int findInitialVisibleIndex(double lastScrollAux, double lastBeat, double lastPosition) {
+        int initialIndex = 0;
+        double currentPosition = lastPosition;
+        double currentBeat = lastBeat;
+
+        for (int x = 0; (gameState.currentElement + x) >= 0 && lastScrollAux != 0; x--) {
+            GameRow currentElement = gameState.steps.get(gameState.currentElement + x);
+            double diffBeats = currentElement.getCurrentBeat() - currentBeat;
+            currentPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
+            if (currentPosition < -stepsDrawer.sizeNote * GameConstants.NOTE_SIZE_MULTIPLIER) break;
+            currentBeat = currentElement.getCurrentBeat();
+            initialIndex = x;
+        }
+        return initialIndex;
+    }
+
+    private void populateVisibleNotes(int initialIndex) {
+        double lastScrollAux = gameState.lastScroll;
+        double lastBeat = gameState.currentBeat;
+        double lastPosition = stepsDrawer.sizeNote * GameConstants.NOTE_POSITION_FACTOR;
+
+        for (int x = initialIndex; (gameState.currentElement + x) < gameState.steps.size() &&
+                (gameState.currentElement + x) >= 0; x++) {
+            GameRow currentElement = gameState.steps.get(gameState.currentElement + x);
+            double diffBeats = currentElement.getCurrentBeat() - lastBeat;
+            lastPosition += diffBeats * speed * gameState.currentSpeedMod * lastScrollAux;
+
+            if (currentElement.getNotes() != null) {
+                currentElement.setPosY((int) lastPosition);
+                drawList.add(currentElement);
+            }
+
+            if (lastPosition >= stepsDrawer.sizeY + stepsDrawer.sizeNote) break;
+
+            if (currentElement.getModifiers() != null &&
+                    currentElement.getModifiers().get("SCROLLS") != null && x >= 0) {
+                lastScrollAux = Objects.requireNonNull(currentElement.getModifiers().get("SCROLLS")).get(1);
+            }
+            lastBeat = currentElement.getCurrentBeat();
         }
     }
 
     public void update() {
         gameState.update();
         combo.update();
+
         if (gameState.isRunning) {
             stepsDrawer.update();
             bgPlayer.update(gameState.currentBeat);
             bar.update();
+            syncAudioVideo();
         }
-        //se va actualizar una vez el audio
-        if (!mpUpdated){
-            double diff = ((gameState.currentSecond/100d)-gameState.offset-mpMusic.getCurrentPosition()/1000d);
-            if (Math.abs(diff)<0.001){ mpUpdated=true;}
+    }
 
-            if (diff>=Math.abs(0.04d) && !mpUpdated &&gameState.isRunning && mpMusic.isPlaying()){
-                gameState.currentBeat-=Common.Companion.second2Beat(diff,gameState.BPM);
-                gameState.currentSecond-=diff*100;
-                //mpUpdated=true;
+    private void syncAudioVideo() {
+        if (!musicPlayerUpdated) {
+            double diff = ((gameState.currentSecond / 100d) - gameState.offset - musicPlayer.getCurrentPosition() / 1000d);
+            if (Math.abs(diff) < GameConstants.AUDIO_SYNC_THRESHOLD) {
+                musicPlayerUpdated = true;
+            }
+
+            if (diff >= GameConstants.AUDIO_SYNC_DIFF_THRESHOLD && !musicPlayerUpdated &&
+                    gameState.isRunning && musicPlayer.isPlaying()) {
+                gameState.currentBeat -= Common.Companion.second2Beat(diff, gameState.BPM);
+                gameState.currentSecond -= diff * 100;
             }
         }
-
     }
 
     private void startEvaluation() {
         stop();
-        playerBga.startEvaluation();
-        playerBga.finish();
-        //  ctx.startActivity(new Intent(ctx,EvaluationActivity.class));
-    }
-
-    public void drawStats(Canvas c) {
-        paint.setTextSize(20);
-        paint.setStyle(Paint.Style.FILL);
-        c.drawPaint(paint);
-        paint.setTextSize(25);
-        paint.setColor(Color.WHITE);
-        //  c.drawText("::: " + msj, 0, 20, paint);
-        c.drawText("FPS: " + fps, 0, 250, paint);
-        // c.drawText("Log: " + gameState.currentTickCount, 0, 100, paint);
-        // c.drawText("event: " + gameState.eventAux, 0, playerSizeY - 200, paint);
-        c.drawText("C Seg: " + String.format(new Locale("es"), "%.5f", (gameState.currentSecond/100d)-gameState.offset), 0, playerSizeY +40, paint);
-        c.drawText("offset: " +mpUpdated, 0, playerSizeY +90, paint);
-        c.drawText("diff: " +String.format(new Locale("es"), "%.5f", (gameState.currentSecond/100d)-gameState.offset-mpMusic.getCurrentPosition()/1000d), 0, playerSizeY +110, paint);
-        c.drawText("MP ms: " + mpMusic.getCurrentPosition()/1000d, 0, playerSizeY +70, paint);
-        c.drawText("C Beat: " + String.format(new Locale("es"), "%.3f", gameState.currentBeat), 0, playerSizeY - 150, paint);
-        c.drawText("C BPM: " + gameState.BPM, 0, playerSizeY - 250, paint);
-        c.drawText("C Speed: " + gameState.currentSpeedMod, 0, playerSizeY - 100, paint);
-        c.drawText("Scroll: " + gameState.lastScroll, 0, playerSizeY , paint);
-
-        StringBuilder st = new StringBuilder();
-        for (int j = 0; j < 10; j++)
-            st.append(gameState.inputs[j]);
-        c.drawText("pad: " + st, playerSizeX - 250, playerSizeY - 20, paint);
-        //  paint.setColor(Color.BLACK);
-        paint.setColor(Color.TRANSPARENT);
+        if (gamePlayActivity != null) {
+            gamePlayActivity.startEvaluation();
+            gamePlayActivity.finish();
+        }
     }
 
     public void stop() {
         boolean retry = true;
-        if (mainTread != null)
-            mainTread.setRunning(false);
+        if (mainThread != null) {
+            mainThread.setRunning(false);
+        }
+
         while (retry) {
             try {
-                if (mainTread != null)
-                    mainTread.setRunning(false);
-                releaseMediaPlayer();
+                if (mainThread != null) {
+                    mainThread.setRunning(false);
+                }
+                releaseResources();
                 retry = false;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -386,13 +369,33 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
-    private void releaseMediaPlayer() {
+    private void releaseResources() {
+        releaseMusicPlayer();
+        releaseSoundPool();
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+        }
+    }
+
+    private void releaseMusicPlayer() {
         try {
-            if (mpMusic != null) {
-                if (mpMusic.isPlaying())
-                    mpMusic.stop();
-                mpMusic.release();
-                mpMusic = null;
+            if (musicPlayer != null) {
+                if (musicPlayer.isPlaying()) {
+                    musicPlayer.stop();
+                }
+                musicPlayer.release();
+                musicPlayer = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void releaseSoundPool() {
+        try {
+            if (soundPool != null) {
+                soundPool.release();
+                soundPool = null;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -404,37 +407,30 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         try {
             int maskedAction = event.getActionMasked();
             int fingers = event.getPointerCount();
-            //this.fingersOnScreen = (byte) fingers;
             int[][] inputsTouch = new int[fingers][2];
+
             for (int i = 0; i < fingers; i++) {
                 inputsTouch[i][0] = (int) event.getX(i);
                 inputsTouch[i][1] = (int) event.getY(i);
-//                this.event += " " + i + ":(" + (int) event.getX(i) + "," + (int) event.getY(i) + ")";
             }
+
             switch (maskedAction) {
                 case MotionEvent.ACTION_POINTER_UP:
                     int actionIndex = event.getPointerId(event.getActionIndex());
-                    this.touchPad.unpress(event.getX(actionIndex), event.getY(actionIndex));
+                    touchPad.unpress(event.getX(actionIndex), event.getY(actionIndex));
                     break;
                 case MotionEvent.ACTION_DOWN:
-                    if (event.getX() > playerSizeX / 2 && event.getY() < playerSizeY / 2) {
-                        speed += 10;
-                    } else if (event.getX() < playerSizeX / 2 && event.getY() < playerSizeY / 2) {
-                        if (speed > 99)
-                            speed += 10;
-                    } else if (event.getX() < playerSizeX / 2 && event.getY() > playerSizeY / 2 && event.getY() < playerSizeY) {
-                        //ParamsSong.autoplay = !ParamsSong.autoplay;
-                    } else if (event.getX() > playerSizeX / 2 && event.getY() > playerSizeY / 2 && event.getY() < playerSizeY) {
-                        //    steps.doMagic = !steps.doMagic;
-                    }
+                    handleDebugTouches(event);
                     touchPad.checkInputs(inputsTouch, true);
+                    break;
                 default:
-                    //   this.event = "numero" + maskedAction;
-                    this.touchPad.checkInputs(inputsTouch, false);
+                    touchPad.checkInputs(inputsTouch, false);
                     break;
                 case MotionEvent.ACTION_UP:
-                    if (fingers == 1)
+                    if (fingers == 1) {
                         touchPad.clearPad();
+                    }
+                    break;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -442,13 +438,23 @@ public class GamePlayNew extends SurfaceView implements SurfaceHolder.Callback {
         return true;
     }
 
+    private void handleDebugTouches(MotionEvent event) {
+        if (event.getX() > playerSizeX / 2 && event.getY() < playerSizeY / 2) {
+            speed += GameConstants.SPEED_INCREMENT;
+        } else if (event.getX() < playerSizeX / 2 && event.getY() < playerSizeY / 2) {
+            if (speed > GameConstants.MIN_SPEED) {
+                speed -= GameConstants.SPEED_INCREMENT;
+            }
+        }
+    }
+
     public GamePad getTouchPad() {
         return touchPad;
     }
 
     public void notifyPadStateChanged() {
-        if (playerBga != null) {
-            playerBga.syncPadState();
+        if (gamePlayActivity != null) {
+            gamePlayActivity.syncPadState();
         }
     }
 }
