@@ -8,6 +8,8 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import com.kyagamy.step.engine.ISpriteRenderer;
+import com.kyagamy.step.engine.SpriteGLRenderer;
 
 
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap;
@@ -17,7 +19,7 @@ import java.util.ArrayList;
 /**
  * Created by Rodrigo Vidal February 2018
  */
-public class SpriteReader {
+public class SpriteReader implements ISpriteRenderer {
     public Bitmap[] frames;
     private int frameIndex;
     private float frameTime;
@@ -30,6 +32,10 @@ public class SpriteReader {
     double seconds;
     Paint paint, painShader;
     ArrayList<String[]> attacksList = new ArrayList<String[]>();
+
+    private boolean useCanvas = true;
+    private Canvas currentCanvas;
+    private SpriteGLRenderer glRenderer;
 
 
     /**
@@ -98,20 +104,6 @@ public class SpriteReader {
         isPlaying = false;
     }
 
-    public void update() {
-        lapsedtime = System.currentTimeMillis() - lastFrame;
-        seconds += lapsedtime;
-        if (lapsedtime > frameTime * 1000) {
-            frameIndex++;
-            if (frameIndex == frames.length) {
-                frameIndex = 0;
-
-            }
-            lastFrame = System.currentTimeMillis();
-        }
-    }
-
-
     /**
      * Draw the sprite in the canvas
      * @param canvas destinated canvas
@@ -167,5 +159,50 @@ public class SpriteReader {
             canvas.drawBitmap(frames[frameIndex], null, destiny, paint);
         }
     }
+
+    // region ISpriteRenderer implementation
+    @Override
+    public void draw(Rect rect) {
+        if (useCanvas) {
+            if (currentCanvas != null) {
+                draw(currentCanvas, rect);
+            }
+        } else if (glRenderer != null) {
+            glRenderer.draw(rect);
+        }
+    }
+
+    @Override
+    public void update() {
+        updateFrame();
+        if (!useCanvas && glRenderer != null) {
+            glRenderer.update();
+        }
+    }
+
+    private void updateFrame() {
+        lapsedtime = System.currentTimeMillis() - lastFrame;
+        seconds += lapsedtime;
+        if (lapsedtime > frameTime * 1000) {
+            frameIndex++;
+            if (frameIndex == frames.length) {
+                frameIndex = 0;
+            }
+            lastFrame = System.currentTimeMillis();
+        }
+    }
+
+    public void setCanvas(Canvas canvas) {
+        this.currentCanvas = canvas;
+    }
+
+    public void setUseCanvas(boolean value) {
+        this.useCanvas = value;
+    }
+
+    public void setGlRenderer(SpriteGLRenderer renderer) {
+        this.glRenderer = renderer;
+    }
+    // endregion
 }
 
