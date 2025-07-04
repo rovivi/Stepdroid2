@@ -50,6 +50,7 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+
         program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
         positionHandle = GLES20.glGetAttribLocation(program, "aPosition")
         texHandle = GLES20.glGetAttribLocation(program, "aTexCoord")
@@ -62,6 +63,7 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, frames[i], 0)
         }
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+    // textura en unidad 0
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -72,7 +74,7 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+       // GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         GLES20.glUseProgram(program)
         updateFrameIndex()
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureIds[frameIndex])
@@ -94,6 +96,12 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
         GLES20.glUniformMatrix4fv(mvpMatrixHandle,1,false,mvpMatrix,0)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP,0,4)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,0)
+
+
+//        //test
+//        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)   // limpia fondo
+//        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)   // unidad 0
+//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureIds[frameIndex])
     }
 
     override fun draw(rect: Rect) {
