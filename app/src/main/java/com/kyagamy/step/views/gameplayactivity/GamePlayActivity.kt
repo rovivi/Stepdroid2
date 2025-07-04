@@ -17,6 +17,7 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -73,6 +74,13 @@ class GamePlayActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        // Enable hardware acceleration at window level
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        )
+
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
         //hilo = this.binding.gamePlay?.mainTread
@@ -335,7 +343,8 @@ class GamePlayActivity : Activity() {
                     if (arrowsPosition2[index].contains(x, y)) {
                         if (inputs[index] == ARROW_UNPRESSED || isDownMove && inputs[index] == ARROW_HOLD_PRESSED) { //by this way confirm if the curret pad is off
                             inputs[index] = ARROW_PRESSED
-                            StepsDrawer.noteSkins[0].tapsEffect[index].play()
+                            binding.gamePlay.getStepsDrawer()?.selectedSkin?.tapsEffect?.get(index)
+                                ?.play()
                         }
                         wasPressed = true
                         break
@@ -354,8 +363,8 @@ class GamePlayActivity : Activity() {
         // Buscar el GamePad en el GamePlayNew para obtener el estado del pad[]
         val gamePlayNew = binding.gamePlay
         if (gamePlayNew != null) {
-            val touchPad = gamePlayNew.touchPad
-            if (touchPad != null && touchPad.pad != null) {
+            val touchPad = gamePlayNew.getTouchPad()
+            if (touchPad?.pad != null) {
                 // Sincronizar con el estado del GamePad
                 arrows.forEachIndexed { index, arrow ->
                     if (index < touchPad.pad.size) {
