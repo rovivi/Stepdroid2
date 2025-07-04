@@ -60,32 +60,27 @@ class StepsDrawer internal constructor(
     var startValueY: Int = 0
 
     private val gameMode: GameMode
-    private var noteSkins: EnumMap<SkinType, NoteSkin>? = null
-    private var lastPositionDraw: IntArray = IntArray(10) { -999 }
+    private val steps: Int
+    private val noteSkins = arrayOfNulls<NoteSkin>(SkinType.values().size)
+    private val lastPositionDraw: IntArray = IntArray(10) { NOT_USED }
 
-    // Reusable objects to avoid garbage collection
-    private var debugPaint: Paint? = null
-    private var drawRect: Rect? = null
+    // Non-nullable reusable objects
+    private val drawRect: Rect = Rect()
+    private val debugPaint: Paint = Paint().apply {
+        color = Color.WHITE
+        style = Paint.Style.FILL
+        textSize = DEBUG_TEXT_SIZE
+    }
 
     /**
      * Created the step drawer
      */
     init {
-        this.gameMode = GameMode.Companion.fromString(gameModeStr)
-        initializeReusableObjects()
+        this.gameMode = GameMode.fromString(gameModeStr)
+        this.steps = gameMode.steps
         calculateDimensions(aspectRatio, landScape, screenSize)
         initializeNoteSkins(context)
         initializeDrawingValues()
-    }
-
-    private fun initializeReusableObjects() {
-        debugPaint = Paint()
-        debugPaint!!.setColor(Color.WHITE)
-        debugPaint!!.setStyle(Paint.Style.FILL)
-        debugPaint!!.setTextSize(DEBUG_TEXT_SIZE)
-
-        drawRect = Rect()
-        noteSkins = EnumMap<SkinType, NoteSkin>(SkinType::class.java)
     }
 
     private fun calculateDimensions(aspectRatio: String, landScape: Boolean, screenSize: Point) {
@@ -134,18 +129,15 @@ class StepsDrawer internal constructor(
     private fun initializeNoteSkins(context: Context?) {
         when (gameMode) {
             GameMode.PUMP_ROUTINE -> {
-                noteSkins!!.put(SkinType.ROUTINE0, NoteSkin(context, gameMode.value, "routine1"))
-                noteSkins!!.put(SkinType.ROUTINE1, NoteSkin(context, gameMode.value, "routine2"))
-                noteSkins!!.put(SkinType.ROUTINE2, NoteSkin(context, gameMode.value, "routine3"))
-                noteSkins!!.put(SkinType.ROUTINE3, NoteSkin(context, gameMode.value, "soccer"))
+                noteSkins[SkinType.ROUTINE0.ordinal] = NoteSkin(context, gameMode.value, "routine1")
+                noteSkins[SkinType.ROUTINE1.ordinal] = NoteSkin(context, gameMode.value, "routine2")
+                noteSkins[SkinType.ROUTINE2.ordinal] = NoteSkin(context, gameMode.value, "routine3")
+                noteSkins[SkinType.ROUTINE3.ordinal] = NoteSkin(context, gameMode.value, "soccer")
             }
 
-            GameMode.PUMP_DOUBLE, GameMode.PUMP_HALFDOUBLE, GameMode.PUMP_SINGLE -> noteSkins!!.put(
-                SkinType.SELECTED, NoteSkin(
-                    context,
-                    gameMode.value, "prime"
-                )
-            )
+            GameMode.PUMP_DOUBLE, GameMode.PUMP_HALFDOUBLE, GameMode.PUMP_SINGLE -> {
+                noteSkins[SkinType.SELECTED.ordinal] = NoteSkin(context, gameMode.value, "prime")
+            }
 
             GameMode.DANCE_SINGLE, GameMode.EMPTY -> {}
         }
@@ -162,205 +154,209 @@ class StepsDrawer internal constructor(
         }
     }
 
-    fun draw(canvas: Canvas?, listRow: ArrayList<GameRow>) {
+    fun draw(canvas: Canvas, listRow: ArrayList<GameRow>) {
         resetLastPositionDraw()
-
-        drawReceptors(canvas)
+        drawReceptorsAndEffects(canvas)
         drawNotes(canvas, listRow)
-        drawEffects(canvas)
     }
 
-    private fun drawReceptors(canvas: Canvas?) {
-        val selectedSkin = noteSkins!!.get(SkinType.SELECTED)
-        if (selectedSkin == null) return
+    private fun drawReceptorsAndEffects(canvas: Canvas) {
+        val selectedSkin = noteSkins[SkinType.SELECTED.ordinal] ?: return
+        val receptors = selectedSkin.receptors
+        val explosions = selectedSkin.explotions
+        val explosionTails = selectedSkin.explotionTails
+        val tapsEffect = selectedSkin.tapsEffect
 
-        for (j in selectedSkin.receptors.indices) {
+        for (j in 0 until steps) {
             val startNoteX = posInitialX + sizeNote * j
-            setDrawRect(
-                startNoteX,
-                startValueY,
-                startNoteX + scaledNoteSize,
-                startValueY + scaledNoteSize
-            )
-            selectedSkin.receptors[j].draw(canvas, drawRect)
+            val endNoteX = startNoteX + scaledNoteSize
+
+            // Draw receptors
+            drawRect.set(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize)
+            receptors[j].draw(canvas, drawRect)
+
+            // Draw effects
+            explosions[j].staticDraw(canvas, drawRect)
+            explosionTails[j].draw(canvas, drawRect)
+            tapsEffect[j].staticDraw(canvas, drawRect)
         }
     }
 
-    private fun drawNotes(canvas: Canvas?, listRow: ArrayList<GameRow>) {
+    private fun drawNotes(canvas: Canvas, listRow: ArrayList<GameRow>) {
         for (gameRow in listRow) {
             val notes = gameRow.notes
-            var count: Short = 0
-
             if (notes != null) {
-                for (note in notes) {
-                    if (note != null && note.type != CommonSteps.NOTE_EMPTY) {
-                        drawSingleNote(canvas, note, gameRow, count.toInt())
+                for (count in notes.indices) {
+                    val note = notes[count]
+                    if (note.type != CommonSteps.NOTE_EMPTY) {
+                        drawSingleNote(canvas, note, gameRow, count)
                     }
-                    count++
                 }
             }
         }
     }
 
-    private fun drawSingleNote(canvas: Canvas?, note: Note, gameRow: GameRow, columnIndex: Int) {
-        val selectedSkin = noteSkins!!.get(SkinType.SELECTED)
-        if (selectedSkin == null) return
-
+    private  fun drawSingleNote(
+        canvas: Canvas,
+        note: Note,
+        gameRow: GameRow,
+        columnIndex: Int
+    ) {
+        val selectedSkin = noteSkins[SkinType.SELECTED.ordinal] ?: return
         val startNoteX = posInitialX + sizeNote * columnIndex
         val endNoteX = startNoteX + scaledNoteSize
+        val arrows = selectedSkin.arrows
         var currentArrow: SpriteReader? = null
 
         when (note.type) {
-            CommonSteps.NOTE_TAP, CommonSteps.NOTE_FAKE -> currentArrow =
-                selectedSkin.arrows[columnIndex]
+            CommonSteps.NOTE_TAP, CommonSteps.NOTE_FAKE ->
+                currentArrow = arrows[columnIndex]
 
             CommonSteps.NOTE_LONG_START -> drawLongNote(
-                canvas,
-                note,
-                gameRow,
-                startNoteX,
-                endNoteX,
-                columnIndex,
-                selectedSkin
+                canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin
             )
 
             CommonSteps.NOTE_LONG_BODY -> drawLongNoteBody(
-                canvas,
-                note,
-                gameRow,
-                startNoteX,
-                endNoteX,
-                columnIndex,
-                selectedSkin
+                canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin
             )
 
             CommonSteps.NOTE_MINE -> currentArrow = selectedSkin.mine
         }
 
         if (currentArrow != null) {
-            setDrawRect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + scaledNoteSize)
+            drawRect.set(
+                startNoteX,
+                gameRow.getPosY(),
+                endNoteX,
+                gameRow.getPosY() + scaledNoteSize
+            )
             currentArrow.draw(canvas, drawRect)
         }
     }
 
     private fun drawLongNote(
-        canvas: Canvas?,
-        note: Note,
-        gameRow: GameRow,
-        startNoteX: Int,
-        endNoteX: Int,
-        columnIndex: Int,
-        skin: NoteSkin
+        canvas: Canvas, note: Note, gameRow: GameRow, startNoteX: Int, endNoteX: Int,
+        columnIndex: Int, skin: NoteSkin
     ) {
-        val endY = if (Objects.requireNonNull<GameRow?>(note.rowEnd)
-                .getPosY() == NOT_DRAWABLE
-        ) sizeY else note.rowEnd!!.getPosY()
+        // Pre-calculate all values outside canvas operations
+        val startY = gameRow.getPosY()
+        val rowEnd = note.rowEnd
+        val endYRaw = rowEnd?.getPosY() ?: NOT_DRAWABLE
+        val endY = if (endYRaw == NOT_DRAWABLE) sizeY else endYRaw
         lastPositionDraw[columnIndex] = endY + scaledNoteSize
 
-        // Draw long note body
-        setDrawRect(
-            startNoteX, gameRow.getPosY() + ((scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()),
-            endNoteX, endY + scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
-        )
-        skin.longs[columnIndex].draw(canvas, drawRect)
+        // Pre-calculate offsets and positions
+        val bodyOffsetPx = (scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()
+        val tailDiv = scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
+        val bodyTop = startY + bodyOffsetPx
+        val bodyBottom = endY + tailDiv
+        val headBottom = startY + scaledNoteSize
+        val tailBottom = endY + scaledNoteSize
 
-        // Draw start arrow
-        setDrawRect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + scaledNoteSize)
-        skin.arrows[columnIndex].draw(canvas, drawRect)
+        // Cache sprite references
+        val arrows = skin.arrows[columnIndex]
+        val longs = skin.longs[columnIndex]
+        val tails = skin.tails[columnIndex]
 
-        // Draw tail if end exists
-        if (Objects.requireNonNull<GameRow?>(note.rowEnd).getPosY() != NOT_DRAWABLE) {
-            setDrawRect(startNoteX, endY, endNoteX, endY + scaledNoteSize)
-            skin.tails[columnIndex].draw(canvas, drawRect)
+        // Draw order: body → tail → head (head always on top)
+
+        // 1) Draw long note body
+        drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
+        longs.draw(canvas, drawRect)
+
+        // 2) Draw tail (only if end exists)
+        if (endYRaw != NOT_DRAWABLE) {
+            drawRect.set(startNoteX, endY, endNoteX, tailBottom)
+            tails.draw(canvas, drawRect)
         }
+
+        // 3) Draw head arrow (always on top)
+        drawRect.set(startNoteX, startY, endNoteX, headBottom)
+        arrows.draw(canvas, drawRect)
     }
 
     private fun drawLongNoteBody(
-        canvas: Canvas?,
-        note: Note,
-        gameRow: GameRow,
-        startNoteX: Int,
-        endNoteX: Int,
-        columnIndex: Int,
-        skin: NoteSkin
+        canvas: Canvas, note: Note, gameRow: GameRow, startNoteX: Int, endNoteX: Int,
+        columnIndex: Int, skin: NoteSkin
     ) {
-        if (gameRow.getPosY() > lastPositionDraw[columnIndex]) {
-            var startY = gameRow.getPosY()
-            if (gameRow.getPosY() > startValueY && gameRow.getPosY() < sizeY) {
-                startY = startValueY
-            }
+        // Pre-calculate all values
+        val currentPosY = gameRow.getPosY()
+        if (currentPosY <= lastPositionDraw[columnIndex]) return
 
-            val endY = if (Objects.requireNonNull<GameRow?>(note.rowEnd)
-                    .getPosY() == NOT_DRAWABLE
-            ) sizeY else note.rowEnd!!.getPosY()
-            lastPositionDraw[columnIndex] = endY
-
-            // Draw long note body
-            setDrawRect(
-                startNoteX, startY + ((scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()),
-                endNoteX, endY + scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
-            )
-            skin.longs[columnIndex].draw(canvas, drawRect)
-
-            // Draw arrow
-            setDrawRect(startNoteX, startY, endNoteX, startY + scaledNoteSize)
-            skin.arrows[columnIndex].draw(canvas, drawRect)
-
-            // Draw tail if end exists
-            if (Objects.requireNonNull<GameRow?>(note.rowEnd).getPosY() != NOT_DRAWABLE) {
-                setDrawRect(startNoteX, endY, endNoteX, endY + scaledNoteSize)
-                skin.tails[columnIndex].draw(canvas, drawRect)
-            }
+        var startY = currentPosY
+        if (currentPosY > startValueY && currentPosY < sizeY) {
+            startY = startValueY
         }
-    }
 
-    private fun drawEffects(canvas: Canvas?) {
-        val selectedSkin = noteSkins!!.get(SkinType.SELECTED)
-        if (selectedSkin == null) return
+        val rowEnd = note.rowEnd
+        val endYRaw = rowEnd?.getPosY() ?: NOT_DRAWABLE
+        val endY = if (endYRaw == NOT_DRAWABLE) sizeY else endYRaw
+        lastPositionDraw[columnIndex] = endY
 
-        for (j in selectedSkin.arrows.indices) {
-            val startNoteX = posInitialX + sizeNote * j
-            val endNoteX = startNoteX + scaledNoteSize
+        // Pre-calculate offsets and positions
+        val bodyOffsetPx = (scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()
+        val tailDiv = scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
+        val bodyTop = startY + bodyOffsetPx
+        val bodyBottom = endY + tailDiv
+        val headBottom = startY + scaledNoteSize
+        val tailBottom = endY + scaledNoteSize
 
-            setDrawRect(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize)
-            selectedSkin.explotions[j].staticDraw(canvas, drawRect)
-            selectedSkin.explotionTails[j].draw(canvas, drawRect)
-            selectedSkin.tapsEffect[j].staticDraw(canvas, drawRect)
+        // Cache sprite references
+        val arrows = skin.arrows[columnIndex]
+        val longs = skin.longs[columnIndex]
+        val tails = skin.tails[columnIndex]
+
+        // Draw order: body → tail → head (head always on top)
+
+        // 1) Draw long note body
+        drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
+        longs.draw(canvas, drawRect)
+
+        // 2) Draw tail (only if end exists)
+        if (endYRaw != NOT_DRAWABLE) {
+            drawRect.set(startNoteX, endY, endNoteX, tailBottom)
+            tails.draw(canvas, drawRect)
         }
-    }
 
-    private fun setDrawRect(left: Int, top: Int, right: Int, bottom: Int) {
-        drawRect!!.set(left, top, right, bottom)
+        // 3) Draw head arrow (always on top)
+        drawRect.set(startNoteX, startY, endNoteX, headBottom)
+        arrows.draw(canvas, drawRect)
     }
 
     fun update() {
-        for (currentNote in noteSkins!!.values) {
-            updateNoteSkin(currentNote)
-        }
-    }
+        // Optimized update with flat loops
+        for (skinIndex in noteSkins.indices) {
+            val currentSkin = noteSkins[skinIndex] ?: continue
+            val arrows = currentSkin.arrows
+            val tails = currentSkin.tails
+            val longs = currentSkin.longs
+            val explosions = currentSkin.explotions
+            val explosionTails = currentSkin.explotionTails
+            val tapsEffect = currentSkin.tapsEffect
+            val receptors = currentSkin.receptors
 
-    private fun updateNoteSkin(noteSkin: NoteSkin) {
-        for (x in noteSkin.arrows.indices) {
-            noteSkin.arrows[x].update()
-            noteSkin.tails[x].update()
-            noteSkin.longs[x].update()
-            noteSkin.explotions[x].update()
-            noteSkin.explotionTails[x].update()
-            noteSkin.tapsEffect[x].update()
-            noteSkin.receptors[x].update()
+            for (x in arrows.indices) {
+                arrows[x].update()
+                tails[x].update()
+                longs[x].update()
+                explosions[x].update()
+                explosionTails[x].update()
+                tapsEffect[x].update()
+                receptors[x].update()
+            }
+            currentSkin.mine.update()
         }
-        noteSkin.mine.update()
     }
 
     val stepsByGameMode: Int
-        get() = gameMode.steps
+        get() = steps
 
     fun getNoteSkin(skinType: SkinType): NoteSkin? {
-        return noteSkins!!.get(skinType)
+        return noteSkins[skinType.ordinal]
     }
 
     val selectedSkin: NoteSkin?
-        get() = noteSkins!![SkinType.SELECTED]
+        get() = noteSkins[SkinType.SELECTED.ordinal]
 
     fun getSizeX(): Int {
         return sizeX
@@ -372,7 +368,7 @@ class StepsDrawer internal constructor(
 
     companion object {
         // Constants
-        private val NOT_USED = -999
+        private const val NOT_USED = -999
         private const val STEPS_Y_COUNT = 9.3913f
         private const val RECEPTOR_Y_FACTOR = 0.7f
         private const val NOTE_SCALE_FACTOR = 1.245f
