@@ -34,6 +34,7 @@
             android:label="@string/title_activity_evaluation"
             android:theme="@style/AppTheme" />
         <activity android:name=".views.InstallFilesActivity" />
+        <activity android:name=".views.AddMediaFromLinkActivity" />
         <activity
             android:name=".game.newplayer.EvaluationActivity"
             android:exported="true">
