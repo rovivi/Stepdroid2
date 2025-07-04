@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,6 +32,7 @@ class AddMediaFromLinkActivity : ComponentActivity() {
 fun AddMediaFromLinkScreen(viewModel: AddMediaFromLinkViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
     var url by remember { mutableStateOf(TextFieldValue(uiState.url)) }
+    val context = LocalContext.current
 
     LaunchedEffect(url.text) {
         viewModel.setUrl(url.text)
@@ -50,7 +52,7 @@ fun AddMediaFromLinkScreen(viewModel: AddMediaFromLinkViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { viewModel.startDownload(this@AddMediaFromLinkActivity) }, enabled = !uiState.isWorking) {
+            Button(onClick = { viewModel.startDownload(context) }, enabled = !uiState.isWorking) {
                 Text("Add media from external link")
             }
             if (uiState.isWorking) {
