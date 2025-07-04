@@ -14,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
@@ -79,7 +81,7 @@ class StartActivity : ComponentActivity() {
                         }
                     }
                     composable("home") {
-                        StartScreen(viewModel)
+                        StartScreen(viewModel = viewModel)
                     }
                 }
             }
@@ -187,11 +189,21 @@ fun StartScreen(viewModel: StartViewModel) {
     }
 
     val permissions = if (Build.VERSION.SDK_INT >= 33) {
-        arrayOf(
-            Manifest.permission.READ_MEDIA_AUDIO,
-            Manifest.permission.READ_MEDIA_IMAGES,
-            Manifest.permission.READ_MEDIA_VIDEO
-        )
+        if (Build.VERSION.SDK_INT >= 34) {
+            arrayOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.POST_NOTIFICATIONS,
+                Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC
+            )
+        } else {
+            arrayOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO
+            )
+        }
     } else {
         arrayOf(
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -302,6 +314,8 @@ fun StartScreen(viewModel: StartViewModel) {
         )
     }
 
+    var showNotificationPermissionDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -384,16 +398,10 @@ fun StartScreen(viewModel: StartViewModel) {
 
         Spacer(Modifier.height(8.dp))
         Button(onClick = {
-            state.basePath?.let {
-                val data = workDataOf(Vp9EncodeWorker.KEY_BASE_PATH to it)
-                val request = OneTimeWorkRequestBuilder<Vp9EncodeWorker>()
-                    .setInputData(data)
-                    .build()
-                WorkManager.getInstance(context).enqueueUniqueWork(
-                    "vp9_transcode",
-                    ExistingWorkPolicy.REPLACE,
-                    request
-                )
+            state.basePath?.let { basePath ->
+                val intent = Intent(context, Vp9ConversionActivity::class.java)
+                intent.putExtra("basePath", basePath)
+                context.startActivity(intent)
             } ?: run {
                 showFileInfoDialog = true
             }
