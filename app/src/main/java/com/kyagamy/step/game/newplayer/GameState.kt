@@ -246,7 +246,7 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
                         val currentChar =
                             steps.get(currentElement + posBack)!!.notes!!.get(arrowIndex)
                         if (inputs[arrowIndex] == CommonSteps.Companion.ARROW_PRESSED && currentChar.type == CommonSteps.Companion.NOTE_TAP) { //NORMALTAP
-                            stepsDrawer?.getSelectedSkin()?.explotions?.get(arrowIndex)?.play()
+                            stepsDrawer?.selectedSkin?.explotions?.get(arrowIndex)?.play()
                             steps.get(currentElement + posBack)!!.notes!!.get(arrowIndex).type =
                                 CommonSteps.Companion.NOTE_PRESSED
                             inputs[arrowIndex] = CommonSteps.Companion.ARROW_HOLD_PRESSED
@@ -264,12 +264,11 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
                                 combo!!.setComboUpdate(Combo.VALUE_PERFECT.toShort())
                             }
 
-                            stepsDrawer?.getSelectedSkin()?.explotionTails?.get(arrowIndex)?.play()
+                            stepsDrawer?.selectedSkin?.explotionTails?.get(arrowIndex)?.play()
                             inputs[arrowIndex] = CommonSteps.Companion.ARROW_HOLD_PRESSED
                         }
                         if (inputs[arrowIndex] == CommonSteps.Companion.ARROW_UNPRESSED) {
-                            val selectedSkin =
-                                stepsDrawer?.getSelectedSkin()
+                            val selectedSkin = stepsDrawer?.selectedSkin
                             if (arrowIndex < (selectedSkin?.explotionTails?.size ?: 0)) {
                                 selectedSkin?.explotionTails?.get(arrowIndex)?.stop()
                             }

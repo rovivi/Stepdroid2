@@ -1,43 +1,28 @@
-package com.kyagamy.step.game.newplayer;
+package com.kyagamy.step.game.newplayer
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.Rect;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Point
+import android.graphics.Rect
+import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader
+import com.kyagamy.step.common.step.CommonSteps
+import com.kyagamy.step.common.step.Game.GameRow
+import com.kyagamy.step.common.step.Game.NOT_DRAWABLE
+import game.Note
+import java.util.*
+import kotlin.math.abs
 
-import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader;
-import com.kyagamy.step.common.step.CommonSteps;
-
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.Objects;
-
-import com.kyagamy.step.common.step.Game.GameRow;
-
-import game.Note;
-
-import static com.kyagamy.step.common.step.CommonSteps.NOTE_LONG_PRESSED;
-import static com.kyagamy.step.common.step.Game.GameRowKt.NOT_DRAWABLE;
-
-public class StepsDrawer {
-
-    // Constants
-    private static final int NOT_USED = -999;
-    private static final float STEPS_Y_COUNT = 9.3913f;
-    private static final float RECEPTOR_Y_FACTOR = 0.7f;
-    private static final float NOTE_SCALE_FACTOR = 1.245f;
-    private static final float SCREEN_WIDTH_FACTOR = 0.1f;
-    private static final float ASPECT_RATIO_4_3 = 0.75f;
-    private static final float ASPECT_RATIO_16_9 = 0.5625f;
-    private static final float ASPECT_RATIO_16_9_CALC = 1.77777778f;
-    private static final float LONG_NOTE_BODY_OFFSET = 0.35f;
-    private static final int LONG_NOTE_TAIL_OFFSET_DIVISOR = 3;
-    private static final float DEBUG_TEXT_SIZE = 20f;
-
+class StepsDrawer internal constructor(
+    context: Context?,
+    gameModeStr: String?,
+    aspectRatio: String,
+    landScape: Boolean,
+    screenSize: Point
+) {
     // Enums
-    public enum GameMode {
+    enum class GameMode(val value: String, val steps: Int) {
         PUMP_ROUTINE("pump-routine", 10),
         PUMP_DOUBLE("pump-double", 10),
         PUMP_HALFDOUBLE("pump-halfdouble", 10),
@@ -45,305 +30,358 @@ public class StepsDrawer {
         DANCE_SINGLE("dance-single", 4),
         EMPTY("", 0);
 
-        private final String value;
-        private final int steps;
-
-        GameMode(String value, int steps) {
-            this.value = value;
-            this.steps = steps;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public int getSteps() {
-            return steps;
-        }
-
-        public static GameMode fromString(String value) {
-            for (GameMode mode : values()) {
-                if (mode.value.equals(value)) {
-                    return mode;
+        companion object {
+            fun fromString(value: String?): GameMode {
+                for (mode in entries) {
+                    if (mode.value == value) {
+                        return mode
+                    }
                 }
+                return GameMode.EMPTY
             }
-            return EMPTY;
         }
     }
 
-    public enum SkinType {
+    enum class SkinType {
         SELECTED, ROUTINE0, ROUTINE1, ROUTINE2, ROUTINE3
     }
 
     // Fields
-    protected int sizeX;
-    protected int sizeY;
-    protected int sizeNote;
-    protected int scaledNoteSize;
-    protected int offsetX = 0;
-    protected int offsetY = 0;
-    protected int posInitialX;
-    protected int startValueY;
+    @JvmField
+    var sizeX: Int = 0
+    @JvmField
+    var sizeY: Int = 0
+    var sizeNote: Int = 0
+    var scaledNoteSize: Int = 0
+    @JvmField
+    var offsetX: Int = 0
+    var offsetY: Int = 0
+    var posInitialX: Int = 0
+    var startValueY: Int = 0
 
-    private GameMode gameMode;
-    private EnumMap<SkinType, NoteSkin> noteSkins;
-    private int[] lastPositionDraw;
+    private val gameMode: GameMode
+    private var noteSkins: EnumMap<SkinType, NoteSkin>? = null
+    private var lastPositionDraw: IntArray = IntArray(10) { -999 }
 
     // Reusable objects to avoid garbage collection
-    private Paint debugPaint;
-    private Rect drawRect;
+    private var debugPaint: Paint? = null
+    private var drawRect: Rect? = null
 
     /**
      * Created the step drawer
      */
-    StepsDrawer(Context context, String gameModeStr, String aspectRatio, boolean landScape, Point screenSize) {
-        this.gameMode = GameMode.fromString(gameModeStr);
-        initializeReusableObjects();
-        calculateDimensions(aspectRatio, landScape, screenSize);
-        initializeNoteSkins(context);
-        initializeDrawingValues();
+    init {
+        this.gameMode = GameMode.Companion.fromString(gameModeStr)
+        initializeReusableObjects()
+        calculateDimensions(aspectRatio, landScape, screenSize)
+        initializeNoteSkins(context)
+        initializeDrawingValues()
     }
 
-    private void initializeReusableObjects() {
-        debugPaint = new Paint();
-        debugPaint.setColor(Color.WHITE);
-        debugPaint.setStyle(Paint.Style.FILL);
-        debugPaint.setTextSize(DEBUG_TEXT_SIZE);
+    private fun initializeReusableObjects() {
+        debugPaint = Paint()
+        debugPaint!!.setColor(Color.WHITE)
+        debugPaint!!.setStyle(Paint.Style.FILL)
+        debugPaint!!.setTextSize(DEBUG_TEXT_SIZE)
 
-        drawRect = new Rect();
-        lastPositionDraw = new int[10];
-        noteSkins = new EnumMap<>(SkinType.class);
+        drawRect = Rect()
+        noteSkins = EnumMap<SkinType, NoteSkin>(SkinType::class.java)
     }
 
-    private void calculateDimensions(String aspectRatio, boolean landScape, Point screenSize) {
-        posInitialX = (int) (screenSize.x * SCREEN_WIDTH_FACTOR);
+    private fun calculateDimensions(aspectRatio: String, landScape: Boolean, screenSize: Point) {
+        posInitialX = (screenSize.x * SCREEN_WIDTH_FACTOR).toInt()
 
-        float relationAspectValue = aspectRatio.contains("4:3") ? ASPECT_RATIO_4_3 : ASPECT_RATIO_16_9;
+        val relationAspectValue: Float =
+            if (aspectRatio.contains("4:3")) ASPECT_RATIO_4_3 else ASPECT_RATIO_16_9
 
         if (landScape) {
-            calculateLandscapeDimensions(screenSize);
+            calculateLandscapeDimensions(screenSize)
         } else {
-            calculatePortraitDimensions(screenSize);
+            calculatePortraitDimensions(screenSize)
         }
 
-        sizeNote = (int) (sizeY / STEPS_Y_COUNT);
-        scaledNoteSize = (int) (sizeNote * NOTE_SCALE_FACTOR);
-        posInitialX = (((sizeX) - (sizeNote * gameMode.getSteps()))) / 2 + offsetX / 2;
+        sizeNote = (sizeY / STEPS_Y_COUNT).toInt()
+        scaledNoteSize = (sizeNote * NOTE_SCALE_FACTOR).toInt()
+        posInitialX = (((sizeX) - (sizeNote * gameMode.steps))) / 2 + offsetX / 2
     }
 
-    private void calculateLandscapeDimensions(Point screenSize) {
-        sizeY = screenSize.y;
-        sizeX = (int) (screenSize.y * ASPECT_RATIO_16_9_CALC);
-        offsetX = (int) ((screenSize.x - sizeX) / 2f);
+    private fun calculateLandscapeDimensions(screenSize: Point) {
+        sizeY = screenSize.y
+        sizeX = (screenSize.y * ASPECT_RATIO_16_9_CALC).toInt()
+        offsetX = ((screenSize.x - sizeX) / 2f).toInt()
 
         if (sizeX > screenSize.x) {
-            sizeY = (int) (screenSize.x / ASPECT_RATIO_16_9_CALC);
-            sizeX = (int) (sizeY * ASPECT_RATIO_16_9_CALC);
-            offsetX = Math.abs((int) ((screenSize.x - sizeX) / 2f));
-            offsetY = (int) ((screenSize.y - sizeY) / 2f);
+            sizeY = (screenSize.x / ASPECT_RATIO_16_9_CALC).toInt()
+            sizeX = (sizeY * ASPECT_RATIO_16_9_CALC).toInt()
+            offsetX = abs(((screenSize.x - sizeX) / 2f).toInt())
+            offsetY = ((screenSize.y - sizeY) / 2f).toInt()
         }
 
-        sizeX += offsetX / 2;
-        sizeY += offsetY;
+        sizeX += offsetX / 2
+        sizeY += offsetY
     }
 
-    private void calculatePortraitDimensions(Point screenSize) {
-        sizeY = screenSize.y / 2;
-        sizeX = screenSize.x;
+    private fun calculatePortraitDimensions(screenSize: Point) {
+        sizeY = screenSize.y / 2
+        sizeX = screenSize.x
 
-        if ((int) (sizeY / STEPS_Y_COUNT) * gameMode.getSteps() > sizeX) {
-            sizeY = (int) (sizeX / (gameMode.getSteps() + 0.2) * STEPS_Y_COUNT);
-            offsetY = screenSize.y - sizeY;
-        }
-    }
-
-    private void initializeNoteSkins(Context context) {
-        switch (gameMode) {
-            case PUMP_ROUTINE:
-                noteSkins.put(SkinType.ROUTINE0, new NoteSkin(context, gameMode.getValue(), "routine1"));
-                noteSkins.put(SkinType.ROUTINE1, new NoteSkin(context, gameMode.getValue(), "routine2"));
-                noteSkins.put(SkinType.ROUTINE2, new NoteSkin(context, gameMode.getValue(), "routine3"));
-                noteSkins.put(SkinType.ROUTINE3, new NoteSkin(context, gameMode.getValue(), "soccer"));
-                break;
-            case PUMP_DOUBLE:
-            case PUMP_HALFDOUBLE:
-            case PUMP_SINGLE:
-                noteSkins.put(SkinType.SELECTED, new NoteSkin(context, gameMode.getValue(), "prime"));
-                break;
-            case DANCE_SINGLE:
-            case EMPTY:
-                break;
+        if ((sizeY / STEPS_Y_COUNT).toInt() * gameMode.steps > sizeX) {
+            sizeY = (sizeX / (gameMode.steps + 0.2) * STEPS_Y_COUNT).toInt()
+            offsetY = screenSize.y - sizeY
         }
     }
 
-    private void initializeDrawingValues() {
-        startValueY = (int) (sizeNote * RECEPTOR_Y_FACTOR);
-        resetLastPositionDraw();
-    }
+    private fun initializeNoteSkins(context: Context?) {
+        when (gameMode) {
+            GameMode.PUMP_ROUTINE -> {
+                noteSkins!!.put(SkinType.ROUTINE0, NoteSkin(context, gameMode.value, "routine1"))
+                noteSkins!!.put(SkinType.ROUTINE1, NoteSkin(context, gameMode.value, "routine2"))
+                noteSkins!!.put(SkinType.ROUTINE2, NoteSkin(context, gameMode.value, "routine3"))
+                noteSkins!!.put(SkinType.ROUTINE3, NoteSkin(context, gameMode.value, "soccer"))
+            }
 
-    private void resetLastPositionDraw() {
-        for (int i = 0; i < lastPositionDraw.length; i++) {
-            lastPositionDraw[i] = NOT_USED;
+            GameMode.PUMP_DOUBLE, GameMode.PUMP_HALFDOUBLE, GameMode.PUMP_SINGLE -> noteSkins!!.put(
+                SkinType.SELECTED, NoteSkin(
+                    context,
+                    gameMode.value, "prime"
+                )
+            )
+
+            GameMode.DANCE_SINGLE, GameMode.EMPTY -> {}
         }
     }
 
-    public void draw(Canvas canvas, ArrayList<GameRow> listRow) {
-        resetLastPositionDraw();
-
-        drawReceptors(canvas);
-        drawNotes(canvas, listRow);
-        drawEffects(canvas);
+    private fun initializeDrawingValues() {
+        startValueY = (sizeNote * RECEPTOR_Y_FACTOR).toInt()
+        resetLastPositionDraw()
     }
 
-    private void drawReceptors(Canvas canvas) {
-        NoteSkin selectedSkin = noteSkins.get(SkinType.SELECTED);
-        if (selectedSkin == null) return;
-
-        for (int j = 0; j < selectedSkin.receptors.length; j++) {
-            int startNoteX = posInitialX + sizeNote * j;
-            setDrawRect(startNoteX, startValueY, startNoteX + scaledNoteSize, startValueY + scaledNoteSize);
-            selectedSkin.receptors[j].draw(canvas, drawRect);
+    private fun resetLastPositionDraw() {
+        for (i in lastPositionDraw.indices) {
+            lastPositionDraw[i] = NOT_USED
         }
     }
 
-    private void drawNotes(Canvas canvas, ArrayList<GameRow> listRow) {
-        for (GameRow gameRow : listRow) {
-            ArrayList<Note> notes = gameRow.getNotes();
-            short count = 0;
+    fun draw(canvas: Canvas?, listRow: ArrayList<GameRow>) {
+        resetLastPositionDraw()
 
-            for (Note note : notes) {
-                if (note != null && note.getType() != CommonSteps.NOTE_EMPTY) {
-                    drawSingleNote(canvas, note, gameRow, count);
+        drawReceptors(canvas)
+        drawNotes(canvas, listRow)
+        drawEffects(canvas)
+    }
+
+    private fun drawReceptors(canvas: Canvas?) {
+        val selectedSkin = noteSkins!!.get(SkinType.SELECTED)
+        if (selectedSkin == null) return
+
+        for (j in selectedSkin.receptors.indices) {
+            val startNoteX = posInitialX + sizeNote * j
+            setDrawRect(
+                startNoteX,
+                startValueY,
+                startNoteX + scaledNoteSize,
+                startValueY + scaledNoteSize
+            )
+            selectedSkin.receptors[j].draw(canvas, drawRect)
+        }
+    }
+
+    private fun drawNotes(canvas: Canvas?, listRow: ArrayList<GameRow>) {
+        for (gameRow in listRow) {
+            val notes = gameRow.notes
+            var count: Short = 0
+
+            if (notes != null) {
+                for (note in notes) {
+                    if (note != null && note.type != CommonSteps.NOTE_EMPTY) {
+                        drawSingleNote(canvas, note, gameRow, count.toInt())
+                    }
+                    count++
                 }
-                count++;
             }
         }
     }
 
-    private void drawSingleNote(Canvas canvas, Note note, GameRow gameRow, int columnIndex) {
-        NoteSkin selectedSkin = noteSkins.get(SkinType.SELECTED);
-        if (selectedSkin == null) return;
+    private fun drawSingleNote(canvas: Canvas?, note: Note, gameRow: GameRow, columnIndex: Int) {
+        val selectedSkin = noteSkins!!.get(SkinType.SELECTED)
+        if (selectedSkin == null) return
 
-        int startNoteX = posInitialX + sizeNote * columnIndex;
-        int endNoteX = startNoteX + scaledNoteSize;
-        SpriteReader currentArrow = null;
+        val startNoteX = posInitialX + sizeNote * columnIndex
+        val endNoteX = startNoteX + scaledNoteSize
+        var currentArrow: SpriteReader? = null
 
-        switch (note.getType()) {
-            case CommonSteps.NOTE_TAP:
-            case CommonSteps.NOTE_FAKE:
-                currentArrow = selectedSkin.arrows[columnIndex];
-                break;
-            case CommonSteps.NOTE_LONG_START:
-                drawLongNote(canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin);
-                break;
-            case CommonSteps.NOTE_LONG_BODY:
-                drawLongNoteBody(canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin);
-                break;
-            case CommonSteps.NOTE_MINE:
-                currentArrow = selectedSkin.mine;
-                break;
+        when (note.type) {
+            CommonSteps.NOTE_TAP, CommonSteps.NOTE_FAKE -> currentArrow =
+                selectedSkin.arrows[columnIndex]
+
+            CommonSteps.NOTE_LONG_START -> drawLongNote(
+                canvas,
+                note,
+                gameRow,
+                startNoteX,
+                endNoteX,
+                columnIndex,
+                selectedSkin
+            )
+
+            CommonSteps.NOTE_LONG_BODY -> drawLongNoteBody(
+                canvas,
+                note,
+                gameRow,
+                startNoteX,
+                endNoteX,
+                columnIndex,
+                selectedSkin
+            )
+
+            CommonSteps.NOTE_MINE -> currentArrow = selectedSkin.mine
         }
 
         if (currentArrow != null) {
-            setDrawRect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + scaledNoteSize);
-            currentArrow.draw(canvas, drawRect);
+            setDrawRect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + scaledNoteSize)
+            currentArrow.draw(canvas, drawRect)
         }
     }
 
-    private void drawLongNote(Canvas canvas, Note note, GameRow gameRow, int startNoteX, int endNoteX, int columnIndex, NoteSkin skin) {
-        int endY = (Objects.requireNonNull(note.getRowEnd()).getPosY() == NOT_DRAWABLE) ? sizeY : note.getRowEnd().getPosY();
-        lastPositionDraw[columnIndex] = endY + scaledNoteSize;
+    private fun drawLongNote(
+        canvas: Canvas?,
+        note: Note,
+        gameRow: GameRow,
+        startNoteX: Int,
+        endNoteX: Int,
+        columnIndex: Int,
+        skin: NoteSkin
+    ) {
+        val endY = if (Objects.requireNonNull<GameRow?>(note.rowEnd)
+                .getPosY() == NOT_DRAWABLE
+        ) sizeY else note.rowEnd!!.getPosY()
+        lastPositionDraw[columnIndex] = endY + scaledNoteSize
 
         // Draw long note body
-        setDrawRect(startNoteX, gameRow.getPosY() + ((int) (scaledNoteSize * LONG_NOTE_BODY_OFFSET)),
-                endNoteX, endY + scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR);
-        skin.longs[columnIndex].draw(canvas, drawRect);
+        setDrawRect(
+            startNoteX, gameRow.getPosY() + ((scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()),
+            endNoteX, endY + scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
+        )
+        skin.longs[columnIndex].draw(canvas, drawRect)
 
         // Draw start arrow
-        setDrawRect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + scaledNoteSize);
-        skin.arrows[columnIndex].draw(canvas, drawRect);
+        setDrawRect(startNoteX, gameRow.getPosY(), endNoteX, gameRow.getPosY() + scaledNoteSize)
+        skin.arrows[columnIndex].draw(canvas, drawRect)
 
         // Draw tail if end exists
-        if (Objects.requireNonNull(note.getRowEnd()).getPosY() != NOT_DRAWABLE) {
-            setDrawRect(startNoteX, endY, endNoteX, endY + scaledNoteSize);
-            skin.tails[columnIndex].draw(canvas, drawRect);
+        if (Objects.requireNonNull<GameRow?>(note.rowEnd).getPosY() != NOT_DRAWABLE) {
+            setDrawRect(startNoteX, endY, endNoteX, endY + scaledNoteSize)
+            skin.tails[columnIndex].draw(canvas, drawRect)
         }
     }
 
-    private void drawLongNoteBody(Canvas canvas, Note note, GameRow gameRow, int startNoteX, int endNoteX, int columnIndex, NoteSkin skin) {
+    private fun drawLongNoteBody(
+        canvas: Canvas?,
+        note: Note,
+        gameRow: GameRow,
+        startNoteX: Int,
+        endNoteX: Int,
+        columnIndex: Int,
+        skin: NoteSkin
+    ) {
         if (gameRow.getPosY() > lastPositionDraw[columnIndex]) {
-            int startY = gameRow.getPosY();
+            var startY = gameRow.getPosY()
             if (gameRow.getPosY() > startValueY && gameRow.getPosY() < sizeY) {
-                startY = startValueY;
+                startY = startValueY
             }
 
-            int endY = (Objects.requireNonNull(note.getRowEnd()).getPosY() == NOT_DRAWABLE) ? sizeY : note.getRowEnd().getPosY();
-            lastPositionDraw[columnIndex] = endY;
+            val endY = if (Objects.requireNonNull<GameRow?>(note.rowEnd)
+                    .getPosY() == NOT_DRAWABLE
+            ) sizeY else note.rowEnd!!.getPosY()
+            lastPositionDraw[columnIndex] = endY
 
             // Draw long note body
-            setDrawRect(startNoteX, startY + ((int) (scaledNoteSize * LONG_NOTE_BODY_OFFSET)),
-                    endNoteX, endY + scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR);
-            skin.longs[columnIndex].draw(canvas, drawRect);
+            setDrawRect(
+                startNoteX, startY + ((scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()),
+                endNoteX, endY + scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
+            )
+            skin.longs[columnIndex].draw(canvas, drawRect)
 
             // Draw arrow
-            setDrawRect(startNoteX, startY, endNoteX, startY + scaledNoteSize);
-            skin.arrows[columnIndex].draw(canvas, drawRect);
+            setDrawRect(startNoteX, startY, endNoteX, startY + scaledNoteSize)
+            skin.arrows[columnIndex].draw(canvas, drawRect)
 
             // Draw tail if end exists
-            if (Objects.requireNonNull(note.getRowEnd()).getPosY() != NOT_DRAWABLE) {
-                setDrawRect(startNoteX, endY, endNoteX, endY + scaledNoteSize);
-                skin.tails[columnIndex].draw(canvas, drawRect);
+            if (Objects.requireNonNull<GameRow?>(note.rowEnd).getPosY() != NOT_DRAWABLE) {
+                setDrawRect(startNoteX, endY, endNoteX, endY + scaledNoteSize)
+                skin.tails[columnIndex].draw(canvas, drawRect)
             }
         }
     }
 
-    private void drawEffects(Canvas canvas) {
-        NoteSkin selectedSkin = noteSkins.get(SkinType.SELECTED);
-        if (selectedSkin == null) return;
+    private fun drawEffects(canvas: Canvas?) {
+        val selectedSkin = noteSkins!!.get(SkinType.SELECTED)
+        if (selectedSkin == null) return
 
-        for (int j = 0; j < selectedSkin.arrows.length; j++) {
-            int startNoteX = posInitialX + sizeNote * j;
-            int endNoteX = startNoteX + scaledNoteSize;
+        for (j in selectedSkin.arrows.indices) {
+            val startNoteX = posInitialX + sizeNote * j
+            val endNoteX = startNoteX + scaledNoteSize
 
-            setDrawRect(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize);
-            selectedSkin.explotions[j].staticDraw(canvas, drawRect);
-            selectedSkin.explotionTails[j].draw(canvas, drawRect);
-            selectedSkin.tapsEffect[j].staticDraw(canvas, drawRect);
+            setDrawRect(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize)
+            selectedSkin.explotions[j].staticDraw(canvas, drawRect)
+            selectedSkin.explotionTails[j].draw(canvas, drawRect)
+            selectedSkin.tapsEffect[j].staticDraw(canvas, drawRect)
         }
     }
 
-    private void setDrawRect(int left, int top, int right, int bottom) {
-        drawRect.set(left, top, right, bottom);
+    private fun setDrawRect(left: Int, top: Int, right: Int, bottom: Int) {
+        drawRect!!.set(left, top, right, bottom)
     }
 
-    public void update() {
-        for (NoteSkin currentNote : noteSkins.values()) {
-            updateNoteSkin(currentNote);
+    fun update() {
+        for (currentNote in noteSkins!!.values) {
+            updateNoteSkin(currentNote)
         }
     }
 
-    private void updateNoteSkin(NoteSkin noteSkin) {
-        for (int x = 0; x < noteSkin.arrows.length; x++) {
-            noteSkin.arrows[x].update();
-            noteSkin.tails[x].update();
-            noteSkin.longs[x].update();
-            noteSkin.explotions[x].update();
-            noteSkin.explotionTails[x].update();
-            noteSkin.tapsEffect[x].update();
-            noteSkin.receptors[x].update();
+    private fun updateNoteSkin(noteSkin: NoteSkin) {
+        for (x in noteSkin.arrows.indices) {
+            noteSkin.arrows[x].update()
+            noteSkin.tails[x].update()
+            noteSkin.longs[x].update()
+            noteSkin.explotions[x].update()
+            noteSkin.explotionTails[x].update()
+            noteSkin.tapsEffect[x].update()
+            noteSkin.receptors[x].update()
         }
-        noteSkin.mine.update();
+        noteSkin.mine.update()
     }
 
-    public int getStepsByGameMode() {
-        return gameMode.getSteps();
+    val stepsByGameMode: Int
+        get() = gameMode.steps
+
+    fun getNoteSkin(skinType: SkinType): NoteSkin? {
+        return noteSkins!!.get(skinType)
     }
 
-    public NoteSkin getNoteSkin(SkinType skinType) {
-        return noteSkins.get(skinType);
+    val selectedSkin: NoteSkin?
+        get() = noteSkins!![SkinType.SELECTED]
+
+    fun getSizeX(): Int {
+        return sizeX
     }
 
-    public NoteSkin getSelectedSkin() {
-        return noteSkins.get(SkinType.SELECTED);
+    fun getSizeY(): Int {
+        return sizeY
+    }
+
+    companion object {
+        // Constants
+        private val NOT_USED = -999
+        private const val STEPS_Y_COUNT = 9.3913f
+        private const val RECEPTOR_Y_FACTOR = 0.7f
+        private const val NOTE_SCALE_FACTOR = 1.245f
+        private const val SCREEN_WIDTH_FACTOR = 0.1f
+        private const val ASPECT_RATIO_4_3 = 0.75f
+        private const val ASPECT_RATIO_16_9 = 0.5625f
+        private const val ASPECT_RATIO_16_9_CALC = 1.77777778f
+        private const val LONG_NOTE_BODY_OFFSET = 0.35f
+        private const val LONG_NOTE_TAIL_OFFSET_DIVISOR = 3
+        private const val DEBUG_TEXT_SIZE = 20f
     }
 }

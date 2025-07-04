@@ -335,9 +335,8 @@ class GamePlayActivity : Activity() {
                     if (arrowsPosition2[index].contains(x, y)) {
                         if (inputs[index] == ARROW_UNPRESSED || isDownMove && inputs[index] == ARROW_HOLD_PRESSED) { //by this way confirm if the curret pad is off
                             inputs[index] = ARROW_PRESSED
-                            binding.gamePlay?.getStepsDrawer()?.getSelectedSkin()?.tapsEffect?.get(
-                                index
-                            )?.play()
+                            binding.gamePlay.getStepsDrawer()?.selectedSkin?.tapsEffect?.get(index)
+                                ?.play()
                         }
                         wasPressed = true
                         break
