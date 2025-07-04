@@ -42,7 +42,6 @@ import java.io.FileInputStream
 import java.util.*
 import kotlin.collections.ArrayList
 import com.kyagamy.step.databinding.ActivityPlayerbgaBinding
-import com.kyagamy.step.engine.TestSongRenderer
 
 
 class GamePlayActivity : Activity() {
@@ -58,7 +57,6 @@ class GamePlayActivity : Activity() {
 
     var gamePlayError = false
     private val arrowsPosition2: ArrayList<Rect> = ArrayList()
-    private var testSongRenderer: TestSongRenderer? = null
 
     private var stepInfo: List<Int> = listOf(
         R.drawable.selector_down_left,
@@ -84,12 +82,7 @@ class GamePlayActivity : Activity() {
             WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
         )
 
-        // Inicializar OpenGL renderer de prueba
-        testSongRenderer = TestSongRenderer(this)
-        binding.openGLSpriteView?.let { glView ->
-            glView.setRenderer(testSongRenderer!! as android.opengl.GLSurfaceView.Renderer)
-            glView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
-        }
+        // Game uses Canvas renderer by default
 
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
@@ -130,11 +123,11 @@ class GamePlayActivity : Activity() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
 
-        // Mostrar OpenGL y ocultar el juego normal para la demo
-        binding.openGLSpriteView?.visibility = View.VISIBLE
-        binding.gamePlay?.visibility = View.GONE
-        binding.bgPad?.visibility = View.GONE
-        binding.videoViewBGA?.visibility = View.GONE
+        // Mostrar el juego tradicional
+        binding.openGLSpriteView?.visibility = View.GONE
+        binding.gamePlay?.visibility = View.VISIBLE
+        binding.bgPad?.visibility = View.VISIBLE
+        binding.videoViewBGA?.visibility = View.VISIBLE
 
         //set height  to bga
         startGamePlay()
@@ -142,19 +135,13 @@ class GamePlayActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
-        binding.openGLSpriteView?.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        binding.openGLSpriteView?.onResume()
     }
 
     private fun startGamePlay() {
-        // Para la demo, solo iniciamos el OpenGL renderer
-        // El código original del juego queda comentado
-
-        /*
         try {
             // gamePlay!!.top = 0
             val rawSSC =
@@ -170,7 +157,6 @@ class GamePlayActivity : Activity() {
                     false
                 )
                 step.path = Objects.requireNonNull(path).toString()
-                //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
                 binding.gamePlay.startGamePLay(
                     binding.videoViewBGA,
@@ -208,30 +194,15 @@ class GamePlayActivity : Activity() {
             true
         }
         if (!gamePlayError && binding.gamePlay != null) binding.gamePlay!!.startGame() else finish()
-        */
-
-        // Simular que el juego está corriendo correctamente
-        gamePlayError = false
-
-        // ... existing code ...
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // Para la demo OpenGL, simplemente finalizamos
-            finish()
-            return true
-        }
-
-        // El resto del código original se mantiene para compatibilidad
-        /*
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (!gamePlayError && binding.gamePlay != null) {
                 binding.gamePlay.stop()
             }
             super.onBackPressed()
         }
-        */
 
         when (keyCode) {
             KeyEvent.KEYCODE_BUTTON_1 -> inputs[7] = 1

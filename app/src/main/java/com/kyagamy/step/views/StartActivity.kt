@@ -52,6 +52,7 @@ import com.kyagamy.step.viewmodels.StartViewModel
 import com.kyagamy.step.viewmodels.SongViewModel
 import com.kyagamy.step.viewmodels.LevelViewModel
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
+import com.kyagamy.step.views.TestGLPlayerActivity
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -384,6 +385,10 @@ fun StartScreen(viewModel: StartViewModel) {
         Spacer(Modifier.height(8.dp))
         Button(onClick = { context.startActivity(Intent(context, AddMediaFromLinkActivity::class.java)) }) {
             Text("DS")
+        }
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = { context.startActivity(Intent(context, TestGLPlayerActivity::class.java)) }) {
+            Text("Test GL Player")
         }
         Spacer(Modifier.height(8.dp))
         Button(onClick = { context.startActivity(Intent(context, EvaluationActivity::class.java)) }) {
