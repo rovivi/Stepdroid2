@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include only specific important app data -->
+    <include
+        domain="file"
+        path="steps" />
+    <include
+        domain="file"
+        path="songs" />
+    <include
+        domain="file"
+        path="configs" />
+    <include
+        domain="file"
+        path="settings" />
+    <include
+        domain="file"
+        path="user_content" />
+    <include
+        domain="file"
+        path="media" />
+
+    <!-- Include only necessary shared preferences -->
+    <include
+        domain="sharedpref"
+        path="app_preferences" />
+    <include
+        domain="sharedpref"
+        path="game_settings" />
+</full-backup-content>

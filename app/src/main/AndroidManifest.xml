@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Required to access Google Play Licensing -->
-    <uses-permission android:name="com.android.vending.CHECK_LICENSE" /> <!-- Required to download files from Google Play -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+<!-- Required to access Google Play Licensing -->
+    <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
+    <!-- Required to download files from Google Play -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!--
@@ -13,70 +16,132 @@
          Required to poll the state of the network connection
         and respond to changes
     -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- Required to read and write the expansion files on shared storage -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- Legacy storage permissions for backward compatibility -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Scoped storage permissions for Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
+    <!-- For apps targeting Android 11+ that need to manage external storage -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <!-- Post notifications permission for Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Foreground service permission for Android 14+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Restrict backup to secure channels only -->
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
     <application
         android:allowBackup="true"
-        android:configChanges="orientation|screenSize"
+        android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
-        android:installLocation="preferExternal"
+        android:installLocation="auto"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
+        android:preserveLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:enableOnBackInvokedCallback="true"
+        android:localeConfig="@xml/locales_config"
+        tools:targetApi="35">
+
+        <!-- Security provider for network communications -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".ui.EvaluationActivity"
             android:exported="false"
             android:label="@string/title_activity_evaluation"
             android:theme="@style/AppTheme" />
-        <activity android:name=".views.InstallFilesActivity" />
-        <activity android:name=".views.AddMediaFromLinkActivity" />
+        <activity
+            android:name=".views.InstallFilesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".views.AddMediaFromLinkActivity"
+            android:exported="false" />
         <activity
             android:name=".game.newplayer.EvaluationActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
-            </intent-filter>
-        </activity>
-        <activity android:name=".views.DragStepActivity" />
+            android:exported="false" />
+        <activity
+            android:name=".views.DragStepActivity"
+            android:exported="false" />
         <activity
             android:name=".views.LoadingSongActivity"
+            android:exported="false"
             android:label="@string/title_activity_loading_song"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".views.SplashActivity"
+            android:exported="false"
             android:label="@string/title_activity_splash"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".views.StartActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".views.MainActivity" />
+        <activity
+            android:name=".views.MainActivity"
+            android:exported="false" />
         <activity
             android:name=".views.gameplayactivity.GamePlayActivity"
+            android:exported="false"
             android:hardwareAccelerated="true"
             android:keepScreenOn="true"
-            android:screenOrientation="fullSensor" />
-
+            android:screenOrientation="fullSensor"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation" />
         <activity
             android:name=".views.TestGLPlayerActivity"
+            android:exported="false"
             android:hardwareAccelerated="true"
             android:screenOrientation="portrait" />
 
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
+
+        <!-- Disable automatic backup for sensitive data -->
+        <meta-data
+            android:name="android.backup.disable_backup"
+            android:value="false" />
+
+        <!-- Enable app security features -->
+        <meta-data
+            android:name="android.security.DENY_UNKNOWN_SOURCES"
+            android:value="true" />
     </application>
 
 </manifest>

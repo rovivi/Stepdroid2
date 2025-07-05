@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Include only specific important app data -->
+        <include
+            domain="file"
+            path="steps" />
+        <include
+            domain="file"
+            path="songs" />
+        <include
+            domain="file"
+            path="configs" />
+        <include
+            domain="file"
+            path="settings" />
+        <include
+            domain="file"
+            path="user_content" />
+        <include
+            domain="file"
+            path="media" />
+
+        <!-- Exclude sensitive shared preferences -->
+        <exclude
+            domain="sharedpref"
+            path="." />
+
+        <!-- Include only necessary shared preferences -->
+        <include
+            domain="sharedpref"
+            path="app_preferences" />
+        <include
+            domain="sharedpref"
+            path="game_settings" />
+    </cloud-backup>
+
+    <device-transfer>
+        <!-- Include only specific important app data -->
+        <include
+            domain="file"
+            path="steps" />
+        <include
+            domain="file"
+            path="songs" />
+        <include
+            domain="file"
+            path="configs" />
+        <include
+            domain="file"
+            path="settings" />
+        <include
+            domain="file"
+            path="user_content" />
+        <include
+            domain="file"
+            path="media" />
+
+        <!-- Exclude sensitive shared preferences -->
+        <exclude
+            domain="sharedpref"
+            path="." />
+
+        <!-- Include only necessary shared preferences -->
+        <include
+            domain="sharedpref"
+            path="app_preferences" />
+        <include
+            domain="sharedpref"
+            path="game_settings" />
+    </device-transfer>
+</data-extraction-rules>
