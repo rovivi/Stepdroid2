@@ -65,11 +65,11 @@ fun CategoryInfo(
                 icon = "🎭"
             )
 
-            InfoItem(
-                label = "Duration",
-                value = "${String.format("%.1f", stats.totalTime / 60)}m",
-                icon = "⏱️"
-            )
+//            InfoItem(
+//                label = "Duration",
+//                value = "${String.format("%.1f", stats.totalTime / 60)}m",
+//                icon = "⏱️"
+//            )
         }
     }
 }
