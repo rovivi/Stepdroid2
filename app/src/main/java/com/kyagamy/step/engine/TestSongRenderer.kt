@@ -1,24 +1,30 @@
 package com.kyagamy.step.engine
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Rect
+import android.graphics.Point
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
-import android.opengl.GLUtils
 import android.opengl.Matrix
+import com.kyagamy.step.common.step.Game.GameRow
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import kotlin.math.sin
 import kotlin.random.Random
 
 class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, ISpriteRenderer {
+
+    // Test modes
+    enum class TestMode {
+        SKIN_VARIANTS,      // prueba() - All skin variants in rows
+        SKIN_GRID,          // pruebaGrid() - All sprites in grid
+        SPECIFIC_SKIN,      // pruebaSpecificSkin() - Only one skin type
+        NORMAL_GAME,        // drawGame() - Normal game rendering
+        LEGACY_NOTES        // Legacy rendering system
+    }
+
+    private var testMode = TestMode.SKIN_VARIANTS
 
     private val notes = mutableListOf<Note>()
     private var program = 0
@@ -35,6 +41,10 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
     private val noteInterval = 500L // Nueva nota cada 500ms
     private var gameTime = 0L
     private var startTime = 0L
+
+    // StepsDrawerGL integration
+    private var stepsDrawer: StepsDrawerGL? = null
+    private val gameRows = ArrayList<GameRow>()
 
     data class Note(
         var x: Float,
@@ -57,6 +67,34 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         vertexBuffer.put(vertices).position(0)
 
         startTime = System.currentTimeMillis()
+
+        // Initialize StepsDrawerGL
+        initializeStepsDrawer()
+    }
+
+    // Method to change test mode
+    fun setTestMode(mode: TestMode) {
+        testMode = mode
+    }
+
+    // Method to cycle through test modes
+    fun cycleTestMode() {
+        val modes = TestMode.values()
+        val currentIndex = modes.indexOf(testMode)
+        val nextIndex = (currentIndex + 1) % modes.size
+        testMode = modes[nextIndex]
+    }
+
+    private fun initializeStepsDrawer() {
+        val screenSize =
+            Point(1080, 1920) // Default screen size, will be updated in onSurfaceChanged
+        stepsDrawer = StepsDrawerGL(
+            context,
+            "pump-single", // Game mode for testing
+            "16:9",
+            false, // Portrait mode
+            screenSize
+        )
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -64,10 +102,14 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
 
+        // Initialize basic renderer program
         program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
         positionHandle = GLES20.glGetAttribLocation(program, "aPosition")
         colorHandle = GLES20.glGetUniformLocation(program, "uColor")
         mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
+
+        // Initialize StepsDrawerGL program
+        stepsDrawer?.initializeGLProgram()
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -79,12 +121,24 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 3f, 7f)
         Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 3f, 0f, 0f, 0f, 0f, 1.0f, 0.0f)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
+
+        // Update StepsDrawerGL viewport
+        stepsDrawer?.setViewport(width, height)
     }
 
     override fun onDrawFrame(gl: GL10?) {
         gameTime = System.currentTimeMillis() - startTime
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+
+        // Draw all test modes simultaneously by dividing screen into sections
+        drawAllTestModes()
+
+        // Update game logic
+        updateGame()
+    }
+
+    private fun drawLegacyNotes() {
         GLES20.glUseProgram(program)
 
         // Generar nuevas notas
@@ -99,6 +153,11 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
 
         // Dibujar receptores (líneas donde deben caer las notas)
         drawReceptors()
+    }
+
+    private fun updateGame() {
+        // Update sprites
+        stepsDrawer?.update()
     }
 
     private fun generateNote() {
@@ -186,14 +245,6 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         GLES20.glDisableVertexAttribArray(positionHandle)
     }
 
-    override fun draw(rect: Rect) {
-        // No necesario para este renderer
-    }
-
-    override fun update() {
-        // La actualización se hace en onDrawFrame
-    }
-
     private fun createProgram(vertexSource: String, fragmentSource: String): Int {
         val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource)
         val fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource)
@@ -213,6 +264,93 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         return shader
     }
 
+    // Draw all test modes simultaneously by dividing screen into sections
+    private fun drawAllTestModes() {
+        // Save original viewport
+        val originalViewport = IntArray(4)
+        GLES20.glGetIntegerv(GLES20.GL_VIEWPORT, originalViewport, 0)
+
+        // Divide screen into 5 sections (one for each test mode)
+        val sectionHeight = viewHeight / 5
+        val sectionWidth = viewWidth
+
+        // Clear background with dark color
+        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f)
+
+        // Section 1: SKIN_VARIANTS (top)
+        GLES20.glViewport(0, viewHeight - sectionHeight, sectionWidth, sectionHeight)
+        stepsDrawer?.setViewport(sectionWidth, sectionHeight)
+        stepsDrawer?.prueba()
+
+        // Section 2: SKIN_GRID
+        GLES20.glViewport(0, viewHeight - sectionHeight * 2, sectionWidth, sectionHeight)
+        stepsDrawer?.setViewport(sectionWidth, sectionHeight)
+        stepsDrawer?.pruebaGrid()
+
+        // Section 3: SPECIFIC_SKIN
+        GLES20.glViewport(0, viewHeight - sectionHeight * 3, sectionWidth, sectionHeight)
+        stepsDrawer?.setViewport(sectionWidth, sectionHeight)
+        stepsDrawer?.pruebaSpecificSkin(StepsDrawerGL.SkinType.SELECTED)
+
+        // Section 4: NORMAL_GAME
+        GLES20.glViewport(0, viewHeight - sectionHeight * 4, sectionWidth, sectionHeight)
+        stepsDrawer?.setViewport(sectionWidth, sectionHeight)
+        stepsDrawer?.drawGame(gameRows)
+
+        // Section 5: LEGACY_NOTES (bottom)
+        GLES20.glViewport(0, 0, sectionWidth, sectionHeight)
+        setupLegacyViewport(sectionWidth, sectionHeight)
+        drawLegacyNotes()
+
+        // Draw separators between sections
+        drawSectionSeparators(sectionHeight)
+
+        // Restore original viewport
+        GLES20.glViewport(
+            originalViewport[0],
+            originalViewport[1],
+            originalViewport[2],
+            originalViewport[3]
+        )
+        stepsDrawer?.setViewport(viewWidth, viewHeight)
+    }
+
+    private fun drawSectionSeparators(sectionHeight: Int) {
+        // Restore full viewport for drawing separators
+        GLES20.glViewport(0, 0, viewWidth, viewHeight)
+        GLES20.glUseProgram(program)
+
+        // Set up orthographic projection for 2D drawing
+        val orthoMatrix = FloatArray(16)
+        Matrix.orthoM(orthoMatrix, 0, 0f, viewWidth.toFloat(), 0f, viewHeight.toFloat(), -1f, 1f)
+
+        val separatorColor = floatArrayOf(1.0f, 1.0f, 1.0f, 0.5f) // Semi-transparent white
+        val thickness = 3
+
+        // Draw horizontal separators between sections
+        for (i in 1 until 5) {
+            val y = i * sectionHeight
+            val vertices = floatArrayOf(
+                0f, y.toFloat(),
+                0f, (y + thickness).toFloat(),
+                viewWidth.toFloat(), y.toFloat(),
+                viewWidth.toFloat(), (y + thickness).toFloat()
+            )
+
+            val buffer = ByteBuffer.allocateDirect(vertices.size * 4)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer()
+            buffer.put(vertices).position(0)
+
+            GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, buffer)
+            GLES20.glEnableVertexAttribArray(positionHandle)
+            GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, orthoMatrix, 0)
+            GLES20.glUniform4fv(colorHandle, 1, separatorColor, 0)
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+            GLES20.glDisableVertexAttribArray(positionHandle)
+        }
+    }
+
     companion object {
         private const val VERTEX_SHADER = """
             attribute vec2 aPosition;
@@ -229,5 +367,25 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
                 gl_FragColor = uColor;
             }
         """
+    }
+
+    // Set up the OpenGL matrices for legacy notes rendering in a section viewport
+    private fun setupLegacyViewport(width: Int, height: Int) {
+        // Adjust matrices for legacy rendering in smaller viewport
+        val ratio = width.toFloat() / height.toFloat()
+        Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 3f, 7f)
+        Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 3f, 0f, 0f, 0f, 0f, 1.0f, 0.0f)
+        Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
+    }
+
+    // ISpriteRenderer interface methods
+    override fun draw(rect: android.graphics.Rect) {
+        // This method is required by ISpriteRenderer but our rendering is handled in onDrawFrame
+        // We can use this for any additional drawing if needed
+    }
+
+    override fun update() {
+        // Update sprites - this is called by the OpenGLSpriteView
+        stepsDrawer?.update()
     }
 }

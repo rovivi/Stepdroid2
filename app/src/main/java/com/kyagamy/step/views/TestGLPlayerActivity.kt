@@ -6,11 +6,11 @@ import android.widget.VideoView
 import androidx.appcompat.app.AppCompatActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.databinding.ActivityTestGlplayerBinding
-import com.kyagamy.step.engine.ArrowSpriteRenderer
+import com.kyagamy.step.engine.TestSongRenderer
 
 class TestGLPlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityTestGlplayerBinding
-    private var renderer: ArrowSpriteRenderer? = null
+    private var renderer: TestSongRenderer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,16 +20,14 @@ class TestGLPlayerActivity : AppCompatActivity() {
         // Configurar video de fondo BGA
         setupBgaVideo()
 
-        renderer = ArrowSpriteRenderer(this)
+        // Usar TestSongRenderer en lugar de ArrowSpriteRenderer
+        renderer = TestSongRenderer(this)
 
-        // Configurar callback para recibir datos de FPS
-        renderer?.fpsCallback = { fps, arrowCount ->
-            runOnUiThread {
-                binding.fpsCounter.text = "FPS: ${String.format("%.1f", fps)} | Arrows: $arrowCount"
-            }
-        }
+        // Configurar el renderer en el GLSurfaceView con cast explícito para resolver ambigüedad
+        binding.openGLView.setRenderer(renderer!! as android.opengl.GLSurfaceView.Renderer)
 
-        binding.openGLView.setRenderer(renderer!!)
+        // Actualizar el texto del FPS counter para mostrar información de los test modes
+        binding.fpsCounter.text = "StepsDrawer GL - All Test Modes Active"
     }
 
     override fun onResume() {

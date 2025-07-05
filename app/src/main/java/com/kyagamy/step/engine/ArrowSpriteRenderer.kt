@@ -18,7 +18,7 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     private var screenHeight = 0
 
     // Configuración de la prueba de estrés
-    private val numberOfArrows = 150
+    private val numberOfArrows = 1
     private val arrowSize = 80 // Tamaño más pequeño para las flechas
 
     // FPS Counter
