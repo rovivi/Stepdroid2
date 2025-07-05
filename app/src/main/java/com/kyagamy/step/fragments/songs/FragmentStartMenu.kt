@@ -44,339 +44,339 @@ import java.io.FileNotFoundException
 import java.util.*
 
 
-private const val songId = "song"
+    private const val songId = "song"
 
-class FragmentStartMenu : DialogFragment() {
+    class FragmentStartMenu : DialogFragment() {
 
-    private val binding: FragmentFragmentStartMenuBinding by lazy {
-        //FragmentFragmentStartMenuBinding.inflate(layoutInflater(this))
-        FragmentFragmentStartMenuBinding.inflate(from(context), null, false)
+        private val binding: FragmentFragmentStartMenuBinding by lazy {
+            //FragmentFragmentStartMenuBinding.inflate(layoutInflater(this))
+            FragmentFragmentStartMenuBinding.inflate(from(context), null, false)
 
-    }
-
-
-    private var idSong: Int = 0
-    private var hexagons =
-        arrayOfNulls<ImageView>(2)
-    private lateinit var exit: TextView
-    private lateinit var loading: TextView
-    private lateinit var percent: TextView
-    private lateinit var startImage: ImageView
-    private lateinit var startImage2: ImageView
-    var anim: ValueAnimator? = null
-    private var warningStartSong = false
-
-    //
-    private lateinit var levelModel: LevelViewModel
-    private lateinit var songsModel: SongViewModel
-
-    private lateinit var levelRecyclerView: RecyclerView
-    //var i: Intent? = null
-
-    var currentSong: Song? = null
-    lateinit var preview: VideoView
-
-    var errorAuxImage: BitmapDrawable? = null
-    var changeMusic: SoundPool? = null
-    var mediaPlayer: MediaPlayer? = MediaPlayer()
-    var spCode = 0
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            idSong = it.getInt(songId)
         }
-    }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        Objects.requireNonNull(dialog?.window)
-            ?.attributes!!.windowAnimations = R.style.DialogAnimation
-        Objects.requireNonNull(dialog?.window)
-            ?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        val view =
-            inflater.inflate(R.layout.fragment_fragment__start_menu, container, false)
 
-        hexagons[0] = view.findViewById(R.id.iv_hexagon1)
-        hexagons[1] = view.findViewById(R.id.iv_hexagon2)
-        preview = view.findViewById(R.id.videoPreview)
-        val constraintLayout = view.findViewById<ConstraintLayout>(R.id.constraintLayoutMenu)
+        private var idSong: Int = 0
+        private var hexagons =
+            arrayOfNulls<ImageView>(2)
+        private lateinit var exit: TextView
+        private lateinit var loading: TextView
+        private lateinit var percent: TextView
+        private lateinit var startImage: ImageView
+        private lateinit var startImage2: ImageView
+        var anim: ValueAnimator? = null
+        private var warningStartSong = false
 
-        loading = view.findViewById(R.id.loading_text_dialog)
-        exit = view.findViewById(R.id.tv_damiss)
+        //
+        private lateinit var levelModel: LevelViewModel
+        private lateinit var songsModel: SongViewModel
 
-        exit.setOnClickListener { dismiss() }
-        startImage = view.findViewById(R.id.start_image)
-        startImage2 = view.findViewById(R.id.start_blour)
-        if (!loadingScreen) {
-            startImage.setOnClickListener { v: View? ->
-                anim!!.start()
-                warningStartSong = true
+        private lateinit var levelRecyclerView: RecyclerView
+        //var i: Intent? = null
+
+        var currentSong: Song? = null
+        lateinit var preview: VideoView
+
+        var errorAuxImage: BitmapDrawable? = null
+        var changeMusic: SoundPool? = null
+        var mediaPlayer: MediaPlayer? = MediaPlayer()
+        var spCode = 0
+
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            arguments?.let {
+                idSong = it.getInt(songId)
             }
-        } else {
-            startImage2.visibility = View.INVISIBLE
-            startImage.visibility = View.INVISIBLE
-            exit.visibility = View.INVISIBLE
-            loading.visibility = View.VISIBLE
         }
-        val from = Color.argb(100, 0, 0, 0)
-        val to = Color.argb(100, 255, 255, 255)
-        anim = ValueAnimator()
-        anim!!.setIntValues(from, to)
-        anim!!.setEvaluator(ArgbEvaluator())
-        anim!!.addUpdateListener { valueAnimator: ValueAnimator ->
-            view.setBackgroundColor(
-                (valueAnimator.animatedValue as Int)
-            )
-        }
-        anim!!.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: Animator) {
-                dismiss()
-            }
-        })
-        anim!!.duration = 250
 
-        //setSettingsFragment
-        try {
-            val transaction = childFragmentManager.beginTransaction()
-            val fragmentCategory = MenuOptionFragment()
-            transaction.add(R.id.frame_options, fragmentCategory)
-            transaction.commit()
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-        }
-        //songs
+        override fun onCreateView(
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
+        ): View? {
+            Objects.requireNonNull(dialog?.window)
+                ?.attributes!!.windowAnimations = R.style.DialogAnimation
+            Objects.requireNonNull(dialog?.window)
+                ?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            val view =
+                inflater.inflate(R.layout.fragment_fragment__start_menu, container, false)
 
-        songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
-        levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
+            hexagons[0] = view.findViewById(R.id.iv_hexagon1)
+            hexagons[1] = view.findViewById(R.id.iv_hexagon2)
+            preview = view.findViewById(R.id.videoPreview)
+            val constraintLayout = view.findViewById<ConstraintLayout>(R.id.constraintLayoutMenu)
 
+            loading = view.findViewById(R.id.loading_text_dialog)
+            exit = view.findViewById(R.id.tv_damiss)
 
-
-
-        val levelAdapter = LevelAdapter(requireActivity().applicationContext)
-
-        levelRecyclerView = view.findViewById(R.id.recycler_levels)
-        levelRecyclerView.layoutManager = LinearLayoutManager(
-            requireActivity().applicationContext,
-            LinearLayoutManager.HORIZONTAL,
-            false
-        )
-        levelRecyclerView.adapter = levelAdapter
-        songsModel.songById(idSong)
-            .observe(viewLifecycleOwner) { words ->
-                words?.let {
-                    currentSong = it[0]
+            exit.setOnClickListener { dismiss() }
+            startImage = view.findViewById(R.id.start_image)
+            startImage2 = view.findViewById(R.id.start_blour)
+            if (!loadingScreen) {
+                startImage.setOnClickListener { v: View? ->
+                    anim!!.start()
+                    warningStartSong = true
                 }
+            } else {
+                startImage2.visibility = View.INVISIBLE
+                startImage.visibility = View.INVISIBLE
+                exit.visibility = View.INVISIBLE
+                loading.visibility = View.VISIBLE
             }
-        levelRecyclerView.addOnItemTouchListener(
-            RecyclerItemClickListener(activity,
-                levelRecyclerView,
-                object : RecyclerItemClickListener.OnItemClickListener {
-                    override fun onItemClick(view: View?, position: Int) {
-                        lifecycleScope.run {
-                            try {
-                                val i = Intent(requireActivity(), GamePlayActivity::class.java)
+            val from = Color.argb(100, 0, 0, 0)
+            val to = Color.argb(100, 255, 255, 255)
+            anim = ValueAnimator()
+            anim!!.setIntValues(from, to)
+            anim!!.setEvaluator(ArgbEvaluator())
+            anim!!.addUpdateListener { valueAnimator: ValueAnimator ->
+                view.setBackgroundColor(
+                    (valueAnimator.animatedValue as Int)
+                )
+            }
+            anim!!.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    dismiss()
+                }
+            })
+            anim!!.duration = 250
 
-                                // root.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_out));
-                                releaseMediaPlayer()
-                                i.putExtra("ssc", currentSong?.PATH_File)
-                                i.putExtra("nchar", levelAdapter.getLevel(position).index)
-                                i.putExtra("path", currentSong?.PATH_SONG)
-                                i.putExtra(
-                                    "pathDisc",
-                                    currentSong?.PATH_SONG + currentSong?.BANNER_SONG
-                                )
+            //setSettingsFragment
+            try {
+                val transaction = childFragmentManager.beginTransaction()
+                val fragmentCategory = MenuOptionFragment()
+                transaction.add(R.id.frame_options, fragmentCategory)
+                transaction.commit()
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+            //songs
 
-                                startActivity(i)
-                            } catch (ex: Exception) {
-                                ex.printStackTrace()
+            songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
+            levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
+
+
+
+
+            val levelAdapter = LevelAdapter(requireActivity().applicationContext)
+
+            levelRecyclerView = view.findViewById(R.id.recycler_levels)
+            levelRecyclerView.layoutManager = LinearLayoutManager(
+                requireActivity().applicationContext,
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
+            levelRecyclerView.adapter = levelAdapter
+            songsModel.songById(idSong)
+                .observe(viewLifecycleOwner) { words ->
+                    words?.let {
+                        currentSong = it[0]
+                    }
+                }
+            levelRecyclerView.addOnItemTouchListener(
+                RecyclerItemClickListener(activity,
+                    levelRecyclerView,
+                    object : RecyclerItemClickListener.OnItemClickListener {
+                        override fun onItemClick(view: View?, position: Int) {
+                            lifecycleScope.run {
+                                try {
+                                    val i = Intent(requireActivity(), GamePlayActivity::class.java)
+
+                                    // root.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_out));
+                                    releaseMediaPlayer()
+                                    i.putExtra("ssc", currentSong?.PATH_File)
+                                    i.putExtra("nchar", levelAdapter.getLevel(position).index)
+                                    i.putExtra("path", currentSong?.PATH_SONG)
+                                    i.putExtra(
+                                        "pathDisc",
+                                        currentSong?.PATH_SONG + currentSong?.BANNER_SONG
+                                    )
+
+                                    startActivity(i)
+                                } catch (ex: Exception) {
+                                    ex.printStackTrace()
+                                }
                             }
                         }
-                    }
 
-                    override fun onItemLongClick(
-                        view: View?,
-                        position: Int
-                    ) {
-                    }
-                })
-        )
-
-        levelModel.get(idSong)
-            .observe(viewLifecycleOwner) { level ->
-                level?.let { levelAdapter.setLevels(it) }
-            }
-
-
-        val displayMetrics = DisplayMetrics()
-        activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-        val height = displayMetrics.heightPixels
-        val width = displayMetrics.widthPixels
-
-        val lp = constraintLayout.layoutParams
-        lp.height = (height * 0.95).toInt()
-        lp.width = (width * 0.9).toInt()
-        constraintLayout.layoutParams = lp
-        return view
-    }
-
-
-    override fun onDestroyView() {
-        releaseMediaPlayer()
-        super.onDestroyView()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        hexagons[0]!!.startAnimation(
-            AnimationUtils.loadAnimation(
-                activity?.baseContext,
-                R.anim.rotate
+                        override fun onItemLongClick(
+                            view: View?,
+                            position: Int
+                        ) {
+                        }
+                    })
             )
-        )
-        hexagons[1]!!.startAnimation(
-            AnimationUtils.loadAnimation(
-                activity?.baseContext,
-                R.anim.rotate2
-            )
-        )
-        hexagons[0]!!.startAnimation(
-            AnimationUtils.loadAnimation(
-                activity?.baseContext,
-                R.anim.rotate
-            )
-        )
-        if (!loadingScreen) {
-            startImage2.startAnimation(
+
+            levelModel.get(idSong)
+                .observe(viewLifecycleOwner) { level ->
+                    level?.let { levelAdapter.setLevels(it) }
+                }
+
+
+            val displayMetrics = DisplayMetrics()
+            activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+            val height = displayMetrics.heightPixels
+            val width = displayMetrics.widthPixels
+
+            val lp = constraintLayout.layoutParams
+            lp.height = (height * 0.95).toInt()
+            lp.width = (width * 0.9).toInt()
+            constraintLayout.layoutParams = lp
+            return view
+        }
+
+
+        override fun onDestroyView() {
+            releaseMediaPlayer()
+            super.onDestroyView()
+        }
+
+        override fun onResume() {
+            super.onResume()
+            hexagons[0]!!.startAnimation(
                 AnimationUtils.loadAnimation(
                     activity?.baseContext,
-                    R.anim.fade_half
+                    R.anim.rotate
                 )
             )
-        }
-        songsModel.songById(idSong)
-            .observe(viewLifecycleOwner) { words ->
-                words?.let {
-                    changeSong(it[0])
-                }
-            }
-    }
-
-
-    private fun changeSong(song: Song?) {
-        if (song == null) return
-        //display 
-        binding.songName.text = song.TITLE
-
-
-        changeMusic?.play(spCode, 1f, 1f, 1, 0, 1.0f)
-        releaseMediaPlayer()
-        try {
-            val video = File(song.PATH_SONG + "/" + song.PREVIEWVID)
-            val bg = File(song.PATH_SONG + "/" + song.BACKGROUND)
-            val transparent: Bitmap
-            lifecycleScope.launch() {
-                playMusicPreview(song)
-            }
-            if (video.exists() && (video.path.endsWith(".mpg") || video.path
-                    .endsWith(".mp4") || video.path.endsWith(".avi"))
-            ) {
-
-                preview.setOnPreparedListener { mediaPlayer: MediaPlayer ->
-                    mediaPlayer.isLooping = true
-                    mediaPlayer.setVolume(0f, 0f)
-                }
-
-                preview.background = null
-                preview.setVideoPath(video.path)
-                preview.start()
-                transparent =
-                    TransformBitmap.makeTransparent(BitmapFactory.decodeFile(bg.path), 180)
-                this.errorAuxImage = BitmapDrawable(transparent)
-            } else {
-                if (bg.exists() && bg.isFile) {
-                    transparent = TransformBitmap.makeTransparent(
-                        BitmapFactory.decodeFile(bg.path),
-                        180
+            hexagons[1]!!.startAnimation(
+                AnimationUtils.loadAnimation(
+                    activity?.baseContext,
+                    R.anim.rotate2
+                )
+            )
+            hexagons[0]!!.startAnimation(
+                AnimationUtils.loadAnimation(
+                    activity?.baseContext,
+                    R.anim.rotate
+                )
+            )
+            if (!loadingScreen) {
+                startImage2.startAnimation(
+                    AnimationUtils.loadAnimation(
+                        activity?.baseContext,
+                        R.anim.fade_half
                     )
+                )
+            }
+            songsModel.songById(idSong)
+                .observe(viewLifecycleOwner) { words ->
+                    words?.let {
+                        changeSong(it[0])
+                    }
+                }
+        }
+
+
+        private fun changeSong(song: Song?) {
+            if (song == null) return
+            //display
+            binding.songName.text = song.TITLE
+
+
+            changeMusic?.play(spCode, 1f, 1f, 1, 0, 1.0f)
+            releaseMediaPlayer()
+            try {
+                val video = File(song.PATH_SONG + "/" + song.PREVIEWVID)
+                val bg = File(song.PATH_SONG + "/" + song.BACKGROUND)
+                val transparent: Bitmap
+                lifecycleScope.launch() {
+                    playMusicPreview(song)
+                }
+                if (video.exists() && (video.path.endsWith(".mpg") || video.path
+                        .endsWith(".mp4") || video.path.endsWith(".avi"))
+                ) {
+
+                    preview.setOnPreparedListener { mediaPlayer: MediaPlayer ->
+                        mediaPlayer.isLooping = true
+                        mediaPlayer.setVolume(0f, 0f)
+                    }
+
+                    preview.background = null
+                    preview.setVideoPath(video.path)
+                    preview.start()
+                    transparent =
+                        TransformBitmap.makeTransparent(BitmapFactory.decodeFile(bg.path), 180)
                     this.errorAuxImage = BitmapDrawable(transparent)
                 } else {
-                    transparent = TransformBitmap.makeTransparent(
-                        BitmapFactory.decodeResource(
-                            resources,
-                            R.drawable.no_banner
-                        ), 180
-                    )
-                    this.errorAuxImage = BitmapDrawable(transparent)
+                    if (bg.exists() && bg.isFile) {
+                        transparent = TransformBitmap.makeTransparent(
+                            BitmapFactory.decodeFile(bg.path),
+                            180
+                        )
+                        this.errorAuxImage = BitmapDrawable(transparent)
+                    } else {
+                        transparent = TransformBitmap.makeTransparent(
+                            BitmapFactory.decodeResource(
+                                resources,
+                                R.drawable.no_banner
+                            ), 180
+                        )
+                        this.errorAuxImage = BitmapDrawable(transparent)
+                    }
+                    preview.background = errorAuxImage
                 }
-                preview.background = errorAuxImage
+            } catch (e: FileNotFoundException) {
+                e.printStackTrace()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-
-    private fun releaseMediaPlayer() {
-        try {
-            while (mediaPlayer != null) {
-                //preview?.suspend()
-                if (mediaPlayer!!.isPlaying) mediaPlayer!!.stop()
-                mediaPlayer!!.release()
-                mediaPlayer = null
-            }
-        } catch (e: java.lang.Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private suspend fun playMusicPreview(song: Song) {
-        val startTime = System.currentTimeMillis()
-        releaseMediaPlayer()
-        val audio = File(song.PATH_SONG + "/" + song.MUSIC)
-        val duration = song.SAMPLELENGTH * 1000 + 3000
-        try {
-
-            mediaPlayer = MediaPlayer()
-            mediaPlayer!!.setVolume(1f, 1f)
-            mediaPlayer!!.setDataSource(audio.path)
-            mediaPlayer!!.prepare()
-            mediaPlayer!!.seekTo(song.SAMPLESTART.toInt() * 1000)
-            mediaPlayer!!.start()
-
-        } catch (_: Exception) {
         }
 
-        while (mediaPlayer != null) {
+
+        private fun releaseMediaPlayer() {
             try {
-                delay(100)
-                val timeLapsed = System.currentTimeMillis() - startTime
-                if (timeLapsed >= duration) {
-                    releaseMediaPlayer()
-                    break
-                } else if (timeLapsed >= (duration - 3000)) {
-                    val lapset = (100 - ((timeLapsed - (duration - 3000)) / 3000 * 100)) / 100
-                    mediaPlayer!!.setVolume(lapset.toFloat(), lapset.toFloat())
+                while (mediaPlayer != null) {
+                    //preview?.suspend()
+                    if (mediaPlayer!!.isPlaying) mediaPlayer!!.stop()
+                    mediaPlayer!!.release()
+                    mediaPlayer = null
                 }
-            } catch (_: NullPointerException) {
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
             }
         }
-    }
 
-    companion object {
-        var loadingScreen = false
+        private suspend fun playMusicPreview(song: Song) {
+            val startTime = System.currentTimeMillis()
+            releaseMediaPlayer()
+            val audio = File(song.PATH_SONG + "/" + song.MUSIC)
+            val duration = song.SAMPLELENGTH * 1000 + 3000
+            try {
 
-        @JvmStatic
-        fun newInstance(idSong: Int) =
-            FragmentStartMenu().apply {
-                arguments = Bundle().apply {
-                    putInt(songId, idSong)
+                mediaPlayer = MediaPlayer()
+                mediaPlayer!!.setVolume(1f, 1f)
+                mediaPlayer!!.setDataSource(audio.path)
+                mediaPlayer!!.prepare()
+                mediaPlayer!!.seekTo(song.SAMPLESTART.toInt() * 1000)
+                mediaPlayer!!.start()
+
+            } catch (_: Exception) {
+            }
+
+            while (mediaPlayer != null) {
+                try {
+                    delay(100)
+                    val timeLapsed = System.currentTimeMillis() - startTime
+                    if (timeLapsed >= duration) {
+                        releaseMediaPlayer()
+                        break
+                    } else if (timeLapsed >= (duration - 3000)) {
+                        val lapset = (100 - ((timeLapsed - (duration - 3000)) / 3000 * 100)) / 100
+                        mediaPlayer!!.setVolume(lapset.toFloat(), lapset.toFloat())
+                    }
+                } catch (_: NullPointerException) {
                 }
             }
+        }
+
+        companion object {
+            var loadingScreen = false
+
+            @JvmStatic
+            fun newInstance(idSong: Int) =
+                FragmentStartMenu().apply {
+                    arguments = Bundle().apply {
+                        putInt(songId, idSong)
+                    }
+                }
+        }
     }
-}
