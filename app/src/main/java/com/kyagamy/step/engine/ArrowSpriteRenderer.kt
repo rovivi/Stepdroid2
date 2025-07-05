@@ -21,7 +21,7 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
 
     // Configuración de la prueba de estrés
     private val numberOfArrows = 3000
-    private val arrowSize = 80 // Tamaño más pequeño para las flechas
+    private val arrowSize = 48 // Tamaño más pequeño y realista para las flechas
 
     // FPS Counter
     private var frameCount = 0
@@ -199,8 +199,8 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
                 // Crear matriz modelo
                 val model = FloatArray(16)
                 Matrix.setIdentityM(model, 0)
-                Matrix.translateM(model, 0, arrow.x, arrow.y, 0f)
-                Matrix.scaleM(model, 0, arrowSize.toFloat(), arrowSize.toFloat(), 1f)
+                Matrix.translateM(model, 0, arrow.x + arrowSize / 2f, arrow.y + arrowSize / 2f, 0f)
+                Matrix.scaleM(model, 0, arrowSize.toFloat() / 2f, arrowSize.toFloat() / 2f, 1f)
 
                 // UV offset por defecto (toda la textura)
                 val uvOff = floatArrayOf(0f, 0f, 1f, 1f)
@@ -238,20 +238,21 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
             arrow.x += arrow.velocityX
             arrow.y += arrow.velocityY
 
-            // Rebotar en los bordes
-            if (arrow.x <= 0 || arrow.x >= screenWidth - arrowSize) {
+            // Rebotar en los bordes con mejor detección
+            if (arrow.x < 0) {
+                arrow.x = 0f
                 arrow.velocityX = -arrow.velocityX
-                // Asegurar que esté dentro de los límites
-                if (arrow.x < 0) arrow.x = 0f
-                if (arrow.x > screenWidth - arrowSize) arrow.x = (screenWidth - arrowSize).toFloat()
+            } else if (arrow.x + arrowSize > screenWidth) {
+                arrow.x = (screenWidth - arrowSize).toFloat()
+                arrow.velocityX = -arrow.velocityX
             }
 
-            if (arrow.y <= 0 || arrow.y >= screenHeight - arrowSize) {
+            if (arrow.y < 0) {
+                arrow.y = 0f
                 arrow.velocityY = -arrow.velocityY
-                // Asegurar que esté dentro de los límites
-                if (arrow.y < 0) arrow.y = 0f
-                if (arrow.y > screenHeight - arrowSize) arrow.y =
-                    (screenHeight - arrowSize).toFloat()
+            } else if (arrow.y + arrowSize > screenHeight) {
+                arrow.y = (screenHeight - arrowSize).toFloat()
+                arrow.velocityY = -arrow.velocityY
             }
         }
     }
