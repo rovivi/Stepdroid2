@@ -5,7 +5,6 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.util.DisplayMetrics
-import androidx.appcompat.app.AppCompatActivity
 import android.opengl.GLSurfaceView
 import com.kyagamy.step.R
 import com.kyagamy.step.common.Common.Companion.convertStreamToString
@@ -13,9 +12,10 @@ import com.kyagamy.step.common.step.Parsers.FileSSC
 import com.kyagamy.step.databinding.ActivityTestGlplayerBinding
 import com.kyagamy.step.game.opengl.GamePlayGLRenderer
 import com.kyagamy.step.engine.ISpriteRenderer
+import com.kyagamy.step.utils.EdgeToEdgeHelper
 import game.StepObject
 
-class TestGLPlayerActivity : AppCompatActivity() {
+class TestGLPlayerActivity : FullScreenActivity() {
     private lateinit var binding: ActivityTestGlplayerBinding
     private var renderer: GamePlayGLRenderer? = null
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -24,8 +24,14 @@ class TestGLPlayerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         android.util.Log.d("TestGLPlayerActivity", "=== onCreate ===")
+        // Remove title bar completely
+        supportActionBar?.hide()
+
         binding = ActivityTestGlplayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Use EdgeToEdgeHelper for game-optimized edge-to-edge
+        EdgeToEdgeHelper.setupGameEdgeToEdge(this)
 
         // Configurar video de fondo BGA
         setupBgaVideo()
