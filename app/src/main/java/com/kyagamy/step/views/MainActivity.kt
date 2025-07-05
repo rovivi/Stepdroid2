@@ -1,6 +1,7 @@
 package com.kyagamy.step.views
 
 import android.content.DialogInterface
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import com.kyagamy.step.ArrowTestActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.databinding.ActivityMainBinding
 import com.kyagamy.step.fragments.CategoryFragament
@@ -69,6 +71,12 @@ class MainActivity : FullScreenActivity() {
         }
         binding.bgVideo.setVideoURI(Uri.parse(path))
         binding.bgVideo.start()
+
+        // Add TEST button functionality
+        binding.testButton.setOnClickListener {
+            val intent = Intent(this, ArrowTestActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     override fun onPause() {
