@@ -24,7 +24,9 @@ data class AddMediaUiState(
     val progress: Float = 0f,
     val phase: DownloadPhase = DownloadPhase.IDLE,
     val isWorking: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val isPhoenixDownloaded: Boolean = false,
+    val isPhoenix2Downloaded: Boolean = false
 ) {
     val phaseLabel: String
         get() = when (phase) {
@@ -39,6 +41,20 @@ class AddMediaFromLinkViewModel(application: Application) : AndroidViewModel(app
     private val _uiState = MutableStateFlow(AddMediaUiState())
     val uiState: StateFlow<AddMediaUiState> = _uiState.asStateFlow()
 
+    private val downloadPrefs =
+        application.getSharedPreferences("download_prefs", Context.MODE_PRIVATE)
+
+    fun checkForExistingDownloads() {
+        val phoenix1Done = downloadPrefs.getBoolean("phoenix1_downloaded", false)
+        val phoenix2Done = downloadPrefs.getBoolean("phoenix2_downloaded", false)
+        _uiState.update {
+            it.copy(
+                isPhoenixDownloaded = phoenix1Done,
+                isPhoenix2Downloaded = phoenix2Done
+            )
+        }
+    }
+
     fun setUrl(url: String) {
         _uiState.update { it.copy(url = url) }
     }
@@ -49,9 +65,24 @@ class AddMediaFromLinkViewModel(application: Application) : AndroidViewModel(app
             _uiState.update { it.copy(error = "Only zip files are supported") }
             return
         }
+        downloadAndExtract(context, url, null)
+    }
+
+    fun startPackDownload(context: Context, packUrl: String, packId: String) {
+        downloadAndExtract(context, packUrl, packId)
+    }
+
+    private fun downloadAndExtract(context: Context, url: String, packId: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                _uiState.update { it.copy(isWorking = true, phase = DownloadPhase.DOWNLOADING, progress = 0f, error = null) }
+                _uiState.update {
+                    it.copy(
+                        isWorking = true,
+                        phase = DownloadPhase.DOWNLOADING,
+                        progress = 0f,
+                        error = null
+                    )
+                }
                 val client = OkHttpClient()
                 val request = Request.Builder().url(url).build()
                 val response = client.newCall(request).execute()
@@ -76,16 +107,38 @@ class AddMediaFromLinkViewModel(application: Application) : AndroidViewModel(app
                 }
                 _uiState.update { it.copy(phase = DownloadPhase.EXTRACTING, progress = 0.5f) }
                 val prefs = context.getSharedPreferences("pref", Context.MODE_PRIVATE)
-                val basePath = prefs.getString(context.getString(com.kyagamy.step.R.string.base_path), null)
-                    ?: throw Exception("Base path not set")
-                val destDir = File(basePath + File.separator + "stepdroid" + File.separator + "songs")
+                val basePath =
+                    prefs.getString(context.getString(com.kyagamy.step.R.string.base_path), null)
+                        ?: throw Exception("Base path not set")
+                val songsDir = File(basePath, "stepdroid/songs")
+                var destDir = songsDir
+
+                if (packId == "phoenix2") {
+                    destDir = File(songsDir, "PHOENIX")
+                }
+
                 if (!destDir.exists()) destDir.mkdirs()
                 unzipWithProgress(tempFile, destDir) { percent ->
                     val prog = 0.5f + 0.5f * percent
                     _uiState.update { it.copy(progress = prog) }
                 }
                 tempFile.delete()
-                _uiState.update { it.copy(isWorking = false, phase = DownloadPhase.DONE, progress = 1f) }
+                packId?.let {
+                    if (packId == "phoenix1") {
+                        downloadPrefs.edit().putBoolean("phoenix1_downloaded", true).apply()
+                        _uiState.update { it.copy(isPhoenixDownloaded = true) }
+                    } else if (packId == "phoenix2") {
+                        downloadPrefs.edit().putBoolean("phoenix2_downloaded", true).apply()
+                        _uiState.update { it.copy(isPhoenix2Downloaded = true) }
+                    }
+                }
+                _uiState.update {
+                    it.copy(
+                        isWorking = false,
+                        phase = DownloadPhase.DONE,
+                        progress = 1f
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isWorking = false, error = e.message) }
             }
