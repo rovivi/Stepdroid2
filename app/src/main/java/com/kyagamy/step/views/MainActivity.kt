@@ -4,15 +4,28 @@ import android.content.DialogInterface
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
+import androidx.fragment.app.Fragment
 import com.kyagamy.step.R
 import com.kyagamy.step.databinding.ActivityMainBinding
 import com.kyagamy.step.fragments.CategoryFragament
 import com.kyagamy.step.fragments.songs.SongsListFragment
-
+import com.kyagamy.step.ui.compose.SongsListScreen
+import com.kyagamy.step.ui.ui.theme.StepDroidTheme
+import com.kyagamy.step.fragments.songs.FragmentStartMenu
 
 class MainActivity : FullScreenActivity() {
     // Reference to "name" TextView using synthetic properties.
@@ -24,6 +37,8 @@ class MainActivity : FullScreenActivity() {
     private var positionCategory = 2
     private val manager = supportFragmentManager
 
+    // Flag to enable/disable Compose version
+    private val useComposeVersion = true // Set to false to use old fragment version
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,8 +62,6 @@ class MainActivity : FullScreenActivity() {
         }
         binding.bgVideo.setVideoURI(Uri.parse(path))
         binding.bgVideo.start()
-
-
     }
 
     override fun onPause() {
@@ -81,7 +94,6 @@ class MainActivity : FullScreenActivity() {
         }
     }
 
-
     fun showFragmentCategory() {
         val transaction = manager.beginTransaction()
         // transaction.setCustomAnimations(R.anim.fragment_fade_enter, R.anim.fragment_fade_exit)
@@ -91,10 +103,34 @@ class MainActivity : FullScreenActivity() {
     }
 
     private fun showFragmentSongList(category: String) {
+        if (useComposeVersion) {
+            // New Compose version
+            showComposeSongList(category)
+        } else {
+            // Old Fragment version (commented out for now)
+            /*
+            val transaction = manager.beginTransaction()
+            val fragment = SongsListFragment(category)
+            // transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
+            transaction.replace(R.id.fragment_holder, fragment)
+            transaction.addToBackStack("changetocategory")
+            transaction.commit()
+            */
+
+            // For now, show old version if compose is disabled
+            val transaction = manager.beginTransaction()
+            val fragment = SongsListFragment(category)
+            transaction.replace(R.id.fragment_holder, fragment)
+            transaction.addToBackStack("changetocategory")
+            transaction.commit()
+        }
+    }
+
+    private fun showComposeSongList(category: String) {
+        // Create a fragment that holds the Compose content
+        val composeFragment = ComposeFragment.newInstance(category)
         val transaction = manager.beginTransaction()
-        val fragment = SongsListFragment(category)
-        // transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
-        transaction.replace(R.id.fragment_holder, fragment)
+        transaction.replace(R.id.fragment_holder, composeFragment)
         transaction.addToBackStack("changetocategory")
         transaction.commit()
     }
@@ -105,5 +141,55 @@ class MainActivity : FullScreenActivity() {
         showFragmentSongList(category)
     }
 
+    // Helper function to show the start menu dialog
+    fun showStartMenuDialog(songId: Int) {
+        val dialog = FragmentStartMenu.newInstance(songId)
+        dialog.show(manager, "StartMenuDialog")
+    }
+}
 
+// New Fragment to hold Compose content
+class ComposeFragment : Fragment() {
+
+    companion object {
+        private const val ARG_CATEGORY = "category"
+
+        fun newInstance(category: String): ComposeFragment {
+            val fragment = ComposeFragment()
+            val args = Bundle()
+            args.putString(ARG_CATEGORY, category)
+            fragment.arguments = args
+            return fragment
+        }
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        val category = arguments?.getString(ARG_CATEGORY) ?: ""
+
+        return ComposeView(requireContext()).apply {
+            setContent {
+                StepDroidTheme {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(0.dp)
+                    ) {
+                        SongsListScreen(
+                            channel = category,
+                            onBack = {
+                                (activity as? MainActivity)?.onBackPressed()
+                            },
+                            onSongClick = { songId ->
+                                (activity as? MainActivity)?.showStartMenuDialog(songId)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
