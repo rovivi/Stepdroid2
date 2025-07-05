@@ -3,11 +3,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Video de fondo BGA -->
+    <VideoView
+        android:id="@+id/bgaVideoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
+    <!-- OpenGL View transparente encima del video -->
     <com.kyagamy.step.engine.OpenGLSpriteView
         android:id="@+id/openGLView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Contador FPS encima de todo -->
     <TextView
         android:id="@+id/fpsCounter"
         android:layout_width="wrap_content"

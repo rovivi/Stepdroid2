@@ -18,7 +18,7 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     private var screenHeight = 0
 
     // Configuración de la prueba de estrés
-    private val numberOfArrows = 1000
+    private val numberOfArrows = 150
     private val arrowSize = 80 // Tamaño más pequeño para las flechas
 
     // FPS Counter
@@ -38,12 +38,16 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     )
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+        // Configurar transparencia
+        gl?.glEnable(GL10.GL_BLEND)
+        gl?.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA)
+        gl?.glClearColor(0.0f, 0.0f, 0.0f, 0.0f) // Fondo transparente
+
         // Cargar sprites de todos los tipos de flechas (5 tipos)
         loadAllArrowSprites()
         arrowSprites.forEach { sprite ->
             sprite.onSurfaceCreated(gl, config)
         }
-
     }
 
     private fun loadAllArrowSprites() {
@@ -139,6 +143,9 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     }
 
     override fun onDrawFrame(gl: GL10?) {
+        // Limpiar con transparencia
+        gl?.glClear(GL10.GL_COLOR_BUFFER_BIT or GL10.GL_DEPTH_BUFFER_BIT)
+
         // Actualizar contador de FPS
         updateFpsCounter()
 
@@ -154,7 +161,6 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
                 sprite.update()
             }
         }
-
     }
 
     private fun updateFpsCounter() {
