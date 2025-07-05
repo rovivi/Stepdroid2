@@ -34,12 +34,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kyagamy.step.room.entities.Song
@@ -49,21 +47,8 @@ import kotlinx.coroutines.delay
 import java.io.File
 import android.media.MediaPlayer
 import android.widget.VideoView
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
-import androidx.core.graphics.drawable.toBitmap
-import coil.ImageLoader
-import coil.request.SuccessResult
+import com.kyagamy.step.ui.compose.components.SongDetailItem
+import com.kyagamy.step.ui.compose.components.SplitImageWithVideo
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +82,7 @@ fun SharedTransitionScope.SongDetailScreen(
         val bgFile = File(song.PATH_SONG + "/" + song.BACKGROUND)
         if (bgFile.exists()) {
             backgroundImage = bgFile.path
-            dominantColor = Color.Blue.copy(alpha = 0.3f) // Placeholder color
+            dominantColor = Color.Black // Cambiar a negro puro sin transparencia
         }
     }
 
@@ -229,16 +214,7 @@ fun SharedTransitionScope.SongDetailScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        dominantColor.copy(alpha = 0.8f),
-                        dominantColor.copy(alpha = 0.4f),
-                        Color.Black
-                    ),
-                    radius = 800f
-                )
-            )
+            .background(Color.Black) // Fondo negro simple sin gradientes
     ) {
         // Background image with transparency
         backgroundImage?.let { imagePath ->
@@ -255,13 +231,7 @@ fun SharedTransitionScope.SongDetailScreen(
             )
         }
 
-        // Dark overlay
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.6f))
-        )
-
+        // Remover el dark overlay que afecta el video
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -458,115 +428,4 @@ fun SharedTransitionScope.SongDetailScreen(
             }
         }
     }
-}
-
-@Composable
-fun SongDetailItem(label: String, value: String, color: Color) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = value,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = Color.White.copy(alpha = 0.7f)
-        )
-    }
-}
-
-@Composable
-fun SongDetailLevelRange(type: String, range: String, color: Color) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = range,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = type,
-            fontSize = 12.sp,
-            color = Color.White.copy(alpha = 0.7f)
-        )
-    }
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-fun SplitImageWithVideo(
-    song: Song,
-    modifier: Modifier = Modifier
-) {
-    val ctx = LocalContext.current
-    val imgPath = "${song.PATH_SONG}/${song.BANNER_SONG}"
-    val vidPath = "${song.PATH_SONG}/${song.PREVIEWVID}"
-    val showVideo = remember(vidPath) { File(vidPath).exists() }
-
-    var trigger by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(song) {
-        delay(155) // Delay para que sea más visible al inicio
-        trigger = 1f
-    }
-
-    // carga bitmap sin recompos excesivas
-    val bitmap by produceState<ImageBitmap?>(null, imgPath) {
-        val loader = ImageLoader(ctx)
-        val req = ImageRequest.Builder(ctx).data(imgPath).build()
-        val res = loader.execute(req)
-        if (res is SuccessResult) value = (res.drawable.toBitmap()).asImageBitmap()
-    }
-    if (bitmap == null) return
-
-    BoxWithConstraints(modifier = modifier.clip(RoundedCornerShape(20.dp))) {
-        val w = maxWidth
-        val h = maxHeight
-        val halfW = w / 2
-        val anim = animateDpAsState(
-            targetValue = (halfW * trigger).coerceAtMost(halfW),
-            animationSpec = tween(
-                1500,
-                easing = FastOutSlowInEasing
-            ) // Duración aumentada de 1800 a 2800ms
-        )
-
-        if (showVideo) {
-            AndroidView({
-                VideoView(it).apply {
-                    setVideoPath(vidPath)
-                    setOnPreparedListener { mp -> mp.isLooping = true; mp.start() }
-                }
-            }, Modifier.fillMaxSize())
-        }
-
-        Canvas(Modifier.fillMaxSize()) {
-            val imgW = bitmap!!.width
-            val imgH = bitmap!!.height
-            val srcW = imgW / 2
-
-            // izquierda
-            drawImage(
-                image = bitmap!!,
-                srcOffset = IntOffset(0, 0),
-                srcSize = IntSize(srcW, imgH),
-                dstOffset = IntOffset(-anim.value.roundToPx(), 0),
-                dstSize = IntSize(halfW.roundToPx(), h.roundToPx())
-            )
-            // derecha
-            drawImage(
-                image = bitmap!!,
-                srcOffset = IntOffset(srcW, 0),
-                srcSize = IntSize(srcW, imgH),
-                dstOffset = IntOffset((halfW + anim.value).roundToPx(), 0),
-                dstSize = IntSize(halfW.roundToPx(), h.roundToPx())
-            )
-        }
-    }
-
 }
