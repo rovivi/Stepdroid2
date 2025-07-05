@@ -14,31 +14,32 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -63,19 +64,24 @@ class StartActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             StepDroidTheme {
-                val navController = rememberNavController()
-                NavHost(navController, startDestination = "splash") {
-                    composable("splash") {
-                        SplashScreen {
-                            navController.navigate("home") {
-                                popUpTo("splash") {
-                                    inclusive = true
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val navController = rememberNavController()
+                    NavHost(navController, startDestination = "splash") {
+                        composable("splash") {
+                            SplashScreen {
+                                navController.navigate("home") {
+                                    popUpTo("splash") {
+                                        inclusive = true
+                                    }
                                 }
                             }
                         }
-                    }
-                    composable("home") {
-                        StartScreen(viewModel)
+                        composable("home") {
+                            StartScreen(viewModel)
+                        }
                     }
                 }
             }
@@ -121,10 +127,35 @@ fun SplashScreen(onTimeout: () -> Unit) {
         kotlinx.coroutines.delay(1000)
         onTimeout()
     }
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "StepDroid", style = MaterialTheme.typography.headlineMedium)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.secondary
+                    )
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "StepDroid",
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color.White,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
+
+data class MenuItem(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val color: Color,
+    val onClick: () -> Unit
+)
 
 @Composable
 fun StartScreen(viewModel: StartViewModel) {
@@ -134,7 +165,6 @@ fun StartScreen(viewModel: StartViewModel) {
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showFileInfoDialog by remember { mutableStateOf(false) }
 
-    // SongViewModel y LevelViewModel para acceso a Room
     val songViewModel = ViewModelProvider(activity as ComponentActivity)[SongViewModel::class.java]
     val levelViewModel =
         ViewModelProvider(activity as ComponentActivity)[LevelViewModel::class.java]
@@ -196,7 +226,6 @@ fun StartScreen(viewModel: StartViewModel) {
     }
 
     LaunchedEffect(Unit) {
-        // Solo verificar permisos al inicio, no constantemente
         if (!state.permissionsGranted) {
             val notGranted = permissions.filter {
                 ContextCompat.checkSelfPermission(
@@ -241,7 +270,6 @@ fun StartScreen(viewModel: StartViewModel) {
                 TextButton(onClick = {
                     showSettingsDialog = false
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        // Para Android 11+, ir directamente a la configuración de administrar almacenamiento
                         val intent =
                             Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
                                 data = Uri.parse("package:" + BuildConfig.APPLICATION_ID)
@@ -298,20 +326,19 @@ fun StartScreen(viewModel: StartViewModel) {
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Button(onClick = {
+    // Crear lista de elementos del menú
+    val menuItems = listOf(
+        MenuItem(
+            title = "Start Game",
+            subtitle = "Begin your dance journey",
+            icon = Icons.Default.PlayArrow,
+            color = MaterialTheme.colorScheme.primary
+        ) {
             if (state.basePath != null && state.basePath!!.isNotEmpty()) {
                 val songsPath = "${state.basePath}${File.separator}stepdroid${File.separator}songs"
                 val songsFile = File(songsPath)
 
                 if (songsFile.exists() && songsFile.isDirectory) {
-                    // Buscar específicamente archivos SSC
                     val sscFiles = songsFile.walkTopDown()
                         .filter { it.isFile && it.extension.equals("ssc", true) }
                         .toList()
@@ -327,78 +354,230 @@ fun StartScreen(viewModel: StartViewModel) {
             } else {
                 showFileInfoDialog = true
             }
-        }) {
-            Text("Start")
-        }
-        Spacer(Modifier.height(8.dp))
-
-        // Botón para abrir una canción random usando Room, filtrando por niveles > 19
-        Button(
-            onClick = {
-                // Filtrar canciones que tengan al menos un nivel > 19
-                val songIdsWithHighLevel = allLevels
-                    .filter { level ->
-                        level.METER > 19
-                    }
-                    .map { it.song_fkid }
-                    .toSet()
-
-                val filteredSongs = allSongs.filter { song ->
-                    song.song_id in songIdsWithHighLevel
-                }
-
-                if (filteredSongs.isNotEmpty()) {
-                    isLoadingRandom = true
-                    coroutineScope.launch {
-                        // Elegir una canción random del filtro
-                        val randomSong = filteredSongs[Random.nextInt(filteredSongs.size)]
-                        val sscPath = randomSong.PATH_File
-                        val folderPath = randomSong.PATH_SONG
-                        val intent = Intent(
-                            context,
-                            com.kyagamy.step.views.gameplayactivity.GamePlayActivity::class.java
-                        ).apply {
-                            putExtra("ssc", sscPath)
-                            putExtra("path", folderPath)
-                            putExtra("nchar", 0) // Default character/level
-                        }
-                        isLoadingRandom = false
-                        context.startActivity(intent)
-                    }
-                } else {
-                    showFileInfoDialog = true
-                }
-            },
-            enabled = !isLoadingRandom
+        },
+        MenuItem(
+            title = "Random Challenge",
+            subtitle = "Random 500AV >19",
+            icon = Icons.Default.Star,
+            color = MaterialTheme.colorScheme.secondary
         ) {
-            Text(if (isLoadingRandom) "Loading..." else "Random 500AV >19")
-        }
+            val songIdsWithHighLevel = allLevels
+                .filter { level -> level.METER > 19 }
+                .map { it.song_fkid }
+                .toSet()
 
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, DragStepActivity::class.java)) }) {
-            Text("Drag System")
+            val filteredSongs = allSongs.filter { song ->
+                song.song_id in songIdsWithHighLevel
+            }
+
+            if (filteredSongs.isNotEmpty()) {
+                isLoadingRandom = true
+                coroutineScope.launch {
+                    val randomSong = filteredSongs[Random.nextInt(filteredSongs.size)]
+                    val sscPath = randomSong.PATH_File
+                    val folderPath = randomSong.PATH_SONG
+                    val intent = Intent(
+                        context,
+                        com.kyagamy.step.views.gameplayactivity.GamePlayActivity::class.java
+                    ).apply {
+                        putExtra("ssc", sscPath)
+                        putExtra("path", folderPath)
+                        putExtra("nchar", 0)
+                    }
+                    isLoadingRandom = false
+                    context.startActivity(intent)
+                }
+            } else {
+                showFileInfoDialog = true
+            }
+        },
+        MenuItem(
+            title = "Drag System",
+            subtitle = "Practice your moves",
+            icon = Icons.Default.Add,
+            color = MaterialTheme.colorScheme.tertiary
+        ) {
+            context.startActivity(Intent(context, DragStepActivity::class.java))
+        },
+        MenuItem(
+            title = "Reload Songs",
+            subtitle = "Refresh your music library",
+            icon = Icons.Default.Refresh,
+            color = MaterialTheme.colorScheme.primary
+        ) {
+            context.startActivity(Intent(context, LoadingSongActivity::class.java))
+        },
+        MenuItem(
+            title = "Download Songs",
+            subtitle = "Get new music packs",
+            icon = Icons.Default.Add,
+            color = MaterialTheme.colorScheme.secondary
+        ) {
+            context.startActivity(Intent(context, AddMediaFromLinkActivity::class.java))
+        },
+        MenuItem(
+            title = "Evaluation",
+            subtitle = "Check your performance",
+            icon = Icons.Default.Check,
+            color = MaterialTheme.colorScheme.tertiary
+        ) {
+            context.startActivity(Intent(context, EvaluationActivity::class.java))
+        },
+        MenuItem(
+            title = "Test GL Player",
+            subtitle = "Graphics testing mode",
+            icon = Icons.Default.Settings,
+            color = MaterialTheme.colorScheme.primary
+        ) {
+            context.startActivity(Intent(context, TestGLPlayerActivity::class.java))
         }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, LoadingSongActivity::class.java)) }) {
-            Text("Reload Songs")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, AddMediaFromLinkActivity::class.java)) }) {
-            Text("DS")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, EvaluationActivity::class.java)) }) {
-            Text("Evaluation")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { context.startActivity(Intent(context, TestGLPlayerActivity::class.java)) }) {
-            Text("Test GL Player")
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.background
+                    )
+                )
+            )
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "🎵",
+                        fontSize = 48.sp,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "StepDroid",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "Dance Revolution Experience",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+
+            // Menu items
+            items(menuItems.size) { index ->
+                val item = menuItems[index]
+                MenuItemCard(
+                    menuItem = item,
+                    isLoading = if (item.title == "Random Challenge") isLoadingRandom else false
+                )
+            }
         }
     }
 
     LaunchedEffect(state.basePath) {
         if (state.basePath == null) {
             showStorageChooser(activity) { viewModel.saveBasePath(it) }
+        }
+    }
+}
+
+@Composable
+fun MenuItemCard(
+    menuItem: MenuItem,
+    isLoading: Boolean = false
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (isLoading) 0.7f else 1f),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Button(
+            onClick = if (isLoading) {
+                {}
+            } else menuItem.onClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+            contentPadding = PaddingValues(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Card(
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = menuItem.color.copy(alpha = 0.15f)
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = menuItem.color,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = menuItem.icon,
+                                contentDescription = null,
+                                tint = menuItem.color,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = if (isLoading) "Loading..." else menuItem.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = menuItem.subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            }
         }
     }
 }
