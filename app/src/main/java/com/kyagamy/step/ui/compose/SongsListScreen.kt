@@ -41,7 +41,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun SongsListScreen(
     channel: String,
@@ -64,182 +64,205 @@ fun SongsListScreen(
         else -> songsModel.songByCategory(channel).observeAsState(emptyList())
     }
 
-    // Simple transition without shared elements for now
-    AnimatedContent(
-        targetState = showSongDetail,
-        label = "song_transition"
-    ) { targetState ->
-        if (!targetState) {
-            // Songs List
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-            ) {
-                TopAppBar(
-                    title = { Text("Songs - $channel", color = Color.White) },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    actions = {
-                        Box {
-                            TextButton(
-                                onClick = { showDropdownMenu = true }
-                            ) {
-                                Text(sortOptions[selectedSortOption], color = Color.White)
+    // SharedTransitionLayout to enable shared element transitions
+    SharedTransitionLayout {
+        AnimatedContent(
+            targetState = showSongDetail,
+            label = "song_transition"
+        ) { targetState ->
+            if (!targetState) {
+                // Songs List
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                ) {
+                    TopAppBar(
+                        title = { Text("Songs - $channel", color = Color.White) },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
                                 Icon(
-                                    Icons.Default.ArrowDropDown,
-                                    contentDescription = null,
+                                    Icons.Default.ArrowBack,
+                                    contentDescription = "Back",
                                     tint = Color.White
                                 )
                             }
-                            DropdownMenu(
-                                expanded = showDropdownMenu,
-                                onDismissRequest = { showDropdownMenu = false }
-                            ) {
-                                sortOptions.forEachIndexed { index, option ->
-                                    DropdownMenuItem(
-                                        text = { Text(option) },
-                                        onClick = {
-                                            selectedSortOption = index
-                                            showDropdownMenu = false
-                                        }
+                        },
+                        actions = {
+                            Box {
+                                TextButton(
+                                    onClick = { showDropdownMenu = true }
+                                ) {
+                                    Text(sortOptions[selectedSortOption], color = Color.White)
+                                    Icon(
+                                        Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        tint = Color.White
                                     )
                                 }
+                                DropdownMenu(
+                                    expanded = showDropdownMenu,
+                                    onDismissRequest = { showDropdownMenu = false }
+                                ) {
+                                    sortOptions.forEachIndexed { index, option ->
+                                        DropdownMenuItem(
+                                            text = { Text(option) },
+                                            onClick = {
+                                                selectedSortOption = index
+                                                showDropdownMenu = false
+                                            }
+                                        )
+                                    }
+                                }
                             }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
-                )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
+                    )
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(songs) { song ->
-                        SimpleSongCard(
-                            song = song,
-                            onClick = {
-                                selectedSong = song
-                                showSongDetail = true
-                            }
-                        )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(songs) { song ->
+                            SharedSongCard(
+                                song = song,
+                                sharedTransitionScope = this@SharedTransitionLayout,
+                                animatedVisibilityScope = this@AnimatedContent,
+                                onClick = {
+                                    selectedSong = song
+                                    showSongDetail = true
+                                }
+                            )
+                        }
                     }
                 }
-            }
-        } else {
-            // Song Detail - simple version
-            selectedSong?.let { song ->
-                SimpleSongDetailScreen(
-                    song = song,
-                    onBack = {
-                        showSongDetail = false
-                        selectedSong = null
-                    },
-                    onSelect = {
-                        showSongDetail = false
-                        onSongClick(song.song_id)
-                        selectedSong = null
-                    }
-                )
+            } else {
+                // Song Detail - with shared elements
+                selectedSong?.let { song ->
+                    SharedSongDetailScreen(
+                        song = song,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        onBack = {
+                            showSongDetail = false
+                            selectedSong = null
+                        },
+                        onSelect = {
+                            showSongDetail = false
+                            onSongClick(song.song_id)
+                            selectedSong = null
+                        }
+                    )
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun SimpleSongCard(
+fun SharedSongCard(
     song: Song,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-        Row(
+    with(sharedTransitionScope) {
+        Card(
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Blue.copy(alpha = 0.3f),
-                            Color.Magenta.copy(alpha = 0.2f),
-                            Color.Transparent
+                .fillMaxWidth()
+                .height(120.dp)
+                .clickable { onClick() },
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Transparent
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Blue.copy(alpha = 0.3f),
+                                Color.Magenta.copy(alpha = 0.2f),
+                                Color.Transparent
+                            )
                         )
                     )
-                )
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Song image
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.Gray.copy(alpha = 0.3f))
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                SongImage(
-                    song = song,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
+                // Song image with shared element
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .sharedElement(
+                            sharedContentState = rememberSharedContentState(key = "${song.song_id}-image"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Gray.copy(alpha = 0.3f))
+                ) {
+                    SongImage(
+                        song = song,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
 
-            Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
-            // Song info
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = song.TITLE,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 1
-                )
+                // Song info
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = song.TITLE,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        modifier = Modifier.sharedElement(
+                            sharedContentState = rememberSharedContentState(key = "${song.song_id}-title"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    )
 
-                Text(
-                    text = song.ARTIST,
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.8f),
-                    maxLines = 1
-                )
+                    Text(
+                        text = song.ARTIST,
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.8f),
+                        maxLines = 1,
+                        modifier = Modifier.sharedElement(
+                            sharedContentState = rememberSharedContentState(key = "${song.song_id}-artist"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    )
 
-                Text(
-                    text = "BPM: ${song.DISPLAYBPM}",
-                    fontSize = 12.sp,
-                    color = Color.White.copy(alpha = 0.6f)
-                )
+                    Text(
+                        text = "BPM: ${song.DISPLAYBPM}",
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
+                }
             }
         }
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun SimpleSongDetailScreen(
+fun SharedSongDetailScreen(
     song: Song,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit,
     onSelect: () -> Unit
 ) {
     val levelViewModel: LevelViewModel = viewModel()
-
     val levels by levelViewModel.get(song.song_id).observeAsState(emptyList())
 
     var showVideo by remember { mutableStateOf(false) }
@@ -264,278 +287,300 @@ fun SimpleSongDetailScreen(
         isVideoPlaying = true
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        // Top image section with 16:9 aspect ratio
-        Box(
+    with(sharedTransitionScope) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+                .fillMaxSize()
+                .background(Color.Black)
+                .sharedBounds(
+                    sharedContentState = rememberSharedContentState(key = "${song.song_id}-bounds"),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
+                )
         ) {
-            // Background image
-            SongImage(
-                song = song,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-
-            // Video preview overlay (if available)
-            if (showVideo && song.PREVIEWVID.isNotEmpty() && isVideoPlaying) {
-                val videoAlpha by animateFloatAsState(
-                    targetValue = 0.8f,
-                    animationSpec = tween(1000, easing = LinearEasing),
-                    label = "video_alpha"
+            // Top image section with 16:9 aspect ratio
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+            ) {
+                // Background image with shared element
+                SongImage(
+                    song = song,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .sharedElement(
+                            sharedContentState = rememberSharedContentState(key = "${song.song_id}-image"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                    contentScale = ContentScale.Crop
                 )
 
+                // Video preview overlay (if available)
+                if (showVideo && song.PREVIEWVID.isNotEmpty() && isVideoPlaying) {
+                    val videoAlpha by animateFloatAsState(
+                        targetValue = 0.8f,
+                        animationSpec = tween(1000, easing = LinearEasing),
+                        label = "video_alpha"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.3f))
+                            .graphicsLayer {
+                                alpha = videoAlpha
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "🎬",
+                                fontSize = 48.sp,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Video Preview Playing",
+                                fontSize = 16.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                // Dark gradient overlay for text readability
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f))
-                        .graphicsLayer {
-                            alpha = videoAlpha
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "🎬",
-                            fontSize = 48.sp,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Video Preview Playing",
-                            fontSize = 16.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-
-            // Dark gradient overlay for text readability
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.7f)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.7f)
+                                )
                             )
                         )
-                    )
-            )
-
-            // Close button
-            IconButton(
-                onClick = {
-                    isVideoPlaying = false
-                    onBack()
-                },
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
-                    .size(48.dp)
-                    .background(
-                        Color.Black.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(24.dp)
-                    )
-            ) {
-                Icon(
-                    Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
                 )
-            }
-        }
 
-        // Song information section
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.9f))
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                // Title and Artist
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = song.TITLE,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
-
-                    if (song.SUBTITLE.isNotEmpty()) {
-                        Text(
-                            text = song.SUBTITLE,
-                            fontSize = 18.sp,
-                            color = Color.White.copy(alpha = 0.8f),
-                            textAlign = TextAlign.Center
+                // Close button
+                IconButton(
+                    onClick = {
+                        isVideoPlaying = false
+                        onBack()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(16.dp)
+                        .size(48.dp)
+                        .background(
+                            Color.Black.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(24.dp)
                         )
-                    }
-
-                    Text(
-                        text = song.ARTIST,
-                        fontSize = 20.sp,
-                        color = Color.Cyan,
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Medium
+                ) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
 
-            item {
-                // Main song details
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.Black.copy(alpha = 0.7f)
-                    )
-                ) {
+            // Song information section
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.9f))
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    // Title and Artist with shared elements
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            InfoItem("BPM", song.DISPLAYBPM, Color.Cyan)
-                            InfoItem("Genre", song.GENRE, Color.Magenta)
-                            InfoItem("Type", song.SONGTYPE, Color.Yellow)
+                        Text(
+                            text = song.TITLE,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.sharedElement(
+                                sharedContentState = rememberSharedContentState(key = "${song.song_id}-title"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                        )
+
+                        if (song.SUBTITLE.isNotEmpty()) {
+                            Text(
+                                text = song.SUBTITLE,
+                                fontSize = 18.sp,
+                                color = Color.White.copy(alpha = 0.8f),
+                                textAlign = TextAlign.Center
+                            )
                         }
 
-                        if (song.VERSION.isNotEmpty()) {
+                        Text(
+                            text = song.ARTIST,
+                            fontSize = 20.sp,
+                            color = Color.Cyan,
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.sharedElement(
+                                sharedContentState = rememberSharedContentState(key = "${song.song_id}-artist"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                        )
+                    }
+                }
+
+                item {
+                    // Main song details
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Black.copy(alpha = 0.7f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
-                                InfoItem("Version", song.VERSION, Color.Green)
-                                InfoItem("Category", song.SONGCATEGORY, Color.Red)
-                                if (song.CDTITLE.isNotEmpty()) {
-                                    InfoItem("Album", song.CDTITLE, Color.White)
+                                InfoItem("BPM", song.DISPLAYBPM, Color.Cyan)
+                                InfoItem("Genre", song.GENRE, Color.Magenta)
+                                InfoItem("Type", song.SONGTYPE, Color.Yellow)
+                            }
+
+                            if (song.VERSION.isNotEmpty()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    InfoItem("Version", song.VERSION, Color.Green)
+                                    InfoItem("Category", song.SONGCATEGORY, Color.Red)
+                                    if (song.CDTITLE.isNotEmpty()) {
+                                        InfoItem("Album", song.CDTITLE, Color.White)
+                                    }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    // Level ranges
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Blue.copy(alpha = 0.2f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Available Difficulties",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                LevelRangeItem("Single", singleRange, Color.Cyan)
+                                LevelRangeItem("Double", doubleRange, Color.Magenta)
+                            }
+
+                            Text(
+                                text = "Total Levels: ${levels.size}",
+                                fontSize = 14.sp,
+                                color = Color.White.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    // Sample time info
+                    if (song.SAMPLESTART > 0 || song.SAMPLELENGTH > 0) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.Green.copy(alpha = 0.2f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                InfoItem(
+                                    "Sample Start",
+                                    "${song.SAMPLESTART.toInt()}s",
+                                    Color.Green
+                                )
+                                InfoItem(
+                                    "Sample Length",
+                                    "${song.SAMPLELENGTH.toInt()}s",
+                                    Color.Green
+                                )
                             }
                         }
                     }
                 }
             }
 
-            item {
-                // Level ranges
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.Blue.copy(alpha = 0.2f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Available Difficulties",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            LevelRangeItem("Single", singleRange, Color.Cyan)
-                            LevelRangeItem("Double", doubleRange, Color.Magenta)
-                        }
-
-                        Text(
-                            text = "Total Levels: ${levels.size}",
-                            fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-
-            item {
-                // Sample time info
-                if (song.SAMPLESTART > 0 || song.SAMPLELENGTH > 0) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.Green.copy(alpha = 0.2f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            InfoItem(
-                                "Sample Start",
-                                "${song.SAMPLESTART.toInt()}s",
-                                Color.Green
-                            )
-                            InfoItem(
-                                "Sample Length",
-                                "${song.SAMPLELENGTH.toInt()}s",
-                                Color.Green
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Select button at bottom
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.9f))
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Button(
-                onClick = {
-                    isVideoPlaying = false
-                    onSelect()
-                },
+            // Select button at bottom
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(60.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Cyan.copy(alpha = 0.8f)
-                ),
-                shape = RoundedCornerShape(30.dp)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.9f))
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "SELECT",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Button(
+                    onClick = {
+                        isVideoPlaying = false
+                        onSelect()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(60.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Cyan.copy(alpha = 0.8f)
+                    ),
+                    shape = RoundedCornerShape(30.dp)
+                ) {
+                    Text(
+                        text = "SELECT",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
         }
     }
@@ -580,5 +625,4 @@ fun SongImage(
         }
     }
 }
-
 
