@@ -86,8 +86,8 @@
             app:layout_constraintVertical_bias="1.0"
             app:srcCompat="@drawable/start_1_blour" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_levels"
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/compose_levels"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
 
@@ -99,7 +99,7 @@
             app:layout_constraintTop_toTopOf="@+id/image_arrow_r"
             app:layout_constraintVertical_bias="0.0">
 
-        </androidx.recyclerview.widget.RecyclerView>
+        </androidx.compose.ui.platform.ComposeView>
 
         <ImageView
             android:id="@+id/image_arrow_l"
@@ -107,7 +107,7 @@
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="@+id/image_arrow_r"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/recycler_levels"
+            app:layout_constraintTop_toTopOf="@+id/compose_levels"
             app:srcCompat="@drawable/blue_arrow_l" />
 
         <ImageView
@@ -154,7 +154,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="32dp"
-            app:layout_constraintBottom_toTopOf="@+id/recycler_levels"
+            app:layout_constraintBottom_toTopOf="@+id/compose_levels"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_damiss"

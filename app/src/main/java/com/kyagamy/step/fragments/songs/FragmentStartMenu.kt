@@ -26,15 +26,21 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import com.kyagamy.step.views.gameplayactivity.GamePlayActivity
 import com.kyagamy.step.R
-import com.kyagamy.step.adapters.LevelAdapter
-import com.kyagamy.step.common.RecyclerItemClickListener
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.databinding.FragmentFragmentStartMenuBinding
+import com.kyagamy.step.room.entities.Level
 import com.kyagamy.step.room.entities.Song
+import com.kyagamy.step.ui.compose.LevelList
+import com.kyagamy.step.ui.ui.theme.StepDroidTheme
 import com.kyagamy.step.viewmodels.LevelViewModel
 import com.kyagamy.step.viewmodels.SongViewModel
 import kotlinx.coroutines.delay
@@ -70,7 +76,7 @@ import java.util.*
         private lateinit var levelModel: LevelViewModel
         private lateinit var songsModel: SongViewModel
 
-        private lateinit var levelRecyclerView: RecyclerView
+        private lateinit var levelComposeView: ComposeView
         //var i: Intent? = null
 
         var currentSong: Song? = null
@@ -153,61 +159,30 @@ import java.util.*
             songsModel = ViewModelProvider(this).get(SongViewModel::class.java)
             levelModel = ViewModelProvider(this).get(LevelViewModel::class.java)
 
+            // Setup Compose view for levels
+            levelComposeView = view.findViewById(R.id.compose_levels)
+            levelComposeView.setContent {
+                StepDroidTheme {
+                    val levels by levelModel.get(idSong).observeAsState(emptyList())
 
+                    LevelList(
+                        levels = levels,
+                        bigMode = false,
+                        onItemClick = { level ->
+                            onLevelClick(level)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                    )
+                }
+            }
 
-
-            val levelAdapter = LevelAdapter(requireActivity().applicationContext)
-
-            levelRecyclerView = view.findViewById(R.id.recycler_levels)
-            levelRecyclerView.layoutManager = LinearLayoutManager(
-                requireActivity().applicationContext,
-                LinearLayoutManager.HORIZONTAL,
-                false
-            )
-            levelRecyclerView.adapter = levelAdapter
             songsModel.songById(idSong)
                 .observe(viewLifecycleOwner) { words ->
                     words?.let {
                         currentSong = it[0]
                     }
-                }
-            levelRecyclerView.addOnItemTouchListener(
-                RecyclerItemClickListener(activity,
-                    levelRecyclerView,
-                    object : RecyclerItemClickListener.OnItemClickListener {
-                        override fun onItemClick(view: View?, position: Int) {
-                            lifecycleScope.run {
-                                try {
-                                    val i = Intent(requireActivity(), GamePlayActivity::class.java)
-
-                                    // root.startAnimation(AnimationUtils.loadAnimation(getBaseContext(), R.anim.fade_out));
-                                    releaseMediaPlayer()
-                                    i.putExtra("ssc", currentSong?.PATH_File)
-                                    i.putExtra("nchar", levelAdapter.getLevel(position).index)
-                                    i.putExtra("path", currentSong?.PATH_SONG)
-                                    i.putExtra(
-                                        "pathDisc",
-                                        currentSong?.PATH_SONG + currentSong?.BANNER_SONG
-                                    )
-
-                                    startActivity(i)
-                                } catch (ex: Exception) {
-                                    ex.printStackTrace()
-                                }
-                            }
-                        }
-
-                        override fun onItemLongClick(
-                            view: View?,
-                            position: Int
-                        ) {
-                        }
-                    })
-            )
-
-            levelModel.get(idSong)
-                .observe(viewLifecycleOwner) { level ->
-                    level?.let { levelAdapter.setLevels(it) }
                 }
 
 
@@ -221,6 +196,27 @@ import java.util.*
             lp.width = (width * 0.9).toInt()
             constraintLayout.layoutParams = lp
             return view
+        }
+
+        private fun onLevelClick(level: Level) {
+            lifecycleScope.launch {
+                try {
+                    val i = Intent(requireActivity(), GamePlayActivity::class.java)
+
+                    releaseMediaPlayer()
+                    i.putExtra("ssc", currentSong?.PATH_File)
+                    i.putExtra("nchar", level.index)
+                    i.putExtra("path", currentSong?.PATH_SONG)
+                    i.putExtra(
+                        "pathDisc",
+                        currentSong?.PATH_SONG + currentSong?.BANNER_SONG
+                    )
+
+                    startActivity(i)
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                }
+            }
         }
 
 
