@@ -47,6 +47,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more information about contributing.
 
 Contributions to StepDroid are welcome! If you have ideas for improvements or new features, please read the `CONTRIBUTING.md` file for more information on how to contribute.
 
+## Extending data sources
+
+Song files can come from multiple locations. The `FileSource` interface abstracts
+the origin of the data with `open()`, `read()` and `close()` methods. The default
+implementation `LocalFileSource` reads from the filesystem, but additional
+sources (e.g. assets, SAF or network downloads) can be added by implementing
+`FileSource` and wiring it into the repository responsible for loading songs.
+
 ## License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
