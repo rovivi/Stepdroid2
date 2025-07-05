@@ -58,10 +58,25 @@ class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer 
     }
 
     private fun getCurrentFrameBitmap(): Bitmap? {
-        // This is a simplified approach - in practice you'd need to extract 
-        // the bitmap data from the SpriteReader
-        // For now, we'll return null and handle this case
-        return null
+        return try {
+            // Use reflection to access the frames and frameIndex from SpriteReader
+            val framesField = spriteReader.javaClass.getDeclaredField("frames")
+            framesField.isAccessible = true
+            val frames = framesField.get(spriteReader) as? Array<Bitmap>
+
+            val frameIndexField = spriteReader.javaClass.getDeclaredField("frameIndex")
+            frameIndexField.isAccessible = true
+            val frameIndex = frameIndexField.getInt(spriteReader)
+
+            if (frames != null && frameIndex < frames.size && frames[frameIndex] != null) {
+                frames[frameIndex]
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("SpriteGLAdapter", "Error getting current frame bitmap", e)
+            null
+        }
     }
 
     fun bindTexture() {

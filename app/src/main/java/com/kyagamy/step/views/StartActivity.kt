@@ -429,14 +429,29 @@ fun StartScreen(viewModel: StartViewModel) {
             icon = Icons.Default.Settings,
             color = MaterialTheme.colorScheme.primary
         ) {
-            val firstSong = allSongs.firstOrNull()
-            if (firstSong != null) {
-                val intent = Intent(context, TestGLPlayerActivity::class.java).apply {
-                    putExtra("ssc", firstSong.PATH_File)
-                    putExtra("path", firstSong.PATH_SONG)
-                    putExtra("nchar", 0)
+            val songIdsWithHighLevel = allLevels
+                .filter { level -> level.METER > 19 }
+                .map { it.song_fkid }
+                .toSet()
+
+            val filteredSongs = allSongs.filter { song ->
+                song.song_id in songIdsWithHighLevel
+            }
+
+            if (filteredSongs.isNotEmpty()) {
+                isLoadingRandom = true
+                coroutineScope.launch {
+                    val randomSong = filteredSongs[Random.nextInt(filteredSongs.size)]
+                    val sscPath = randomSong.PATH_File
+                    val folderPath = randomSong.PATH_SONG
+                    val intent = Intent(context, TestGLPlayerActivity::class.java).apply {
+                        putExtra("ssc", sscPath)
+                        putExtra("path", folderPath)
+                        putExtra("nchar", 0)
+                    }
+                    isLoadingRandom = false
+                    context.startActivity(intent)
                 }
-                context.startActivity(intent)
             } else {
                 showFileInfoDialog = true
             }
@@ -495,7 +510,7 @@ fun StartScreen(viewModel: StartViewModel) {
                 val item = menuItems[index]
                 MenuItemCard(
                     menuItem = item,
-                    isLoading = if (item.title == "Random Challenge") isLoadingRandom else false
+                    isLoading = if (item.title == "Random Challenge" || item.title == "Test GL Player") isLoadingRandom else false
                 )
             }
         }
