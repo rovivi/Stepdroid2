@@ -429,7 +429,17 @@ fun StartScreen(viewModel: StartViewModel) {
             icon = Icons.Default.Settings,
             color = MaterialTheme.colorScheme.primary
         ) {
-            context.startActivity(Intent(context, TestGLPlayerActivity::class.java))
+            val firstSong = allSongs.firstOrNull()
+            if (firstSong != null) {
+                val intent = Intent(context, TestGLPlayerActivity::class.java).apply {
+                    putExtra("ssc", firstSong.PATH_File)
+                    putExtra("path", firstSong.PATH_SONG)
+                    putExtra("nchar", 0)
+                }
+                context.startActivity(intent)
+            } else {
+                showFileInfoDialog = true
+            }
         }
     )
 

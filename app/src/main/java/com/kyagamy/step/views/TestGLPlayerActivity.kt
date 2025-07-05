@@ -1,16 +1,21 @@
 package com.kyagamy.step.views
 
+import android.graphics.Point
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
-import android.widget.VideoView
+import android.util.DisplayMetrics
 import androidx.appcompat.app.AppCompatActivity
 import com.kyagamy.step.R
+import com.kyagamy.step.common.Common.Companion.convertStreamToString
+import com.kyagamy.step.common.step.Parsers.FileSSC
 import com.kyagamy.step.databinding.ActivityTestGlplayerBinding
-import com.kyagamy.step.engine.TestSongRenderer
+import com.kyagamy.step.game.opengl.GamePlayGLRenderer
+import game.StepObject
 
 class TestGLPlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityTestGlplayerBinding
-    private var renderer: TestSongRenderer? = null
+    private var renderer: GamePlayGLRenderer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,24 +25,45 @@ class TestGLPlayerActivity : AppCompatActivity() {
         // Configurar video de fondo BGA
         setupBgaVideo()
 
-        // Usar TestSongRenderer en lugar de ArrowSpriteRenderer
-        renderer = TestSongRenderer(this)
+        // Preparar datos de la canción igual que en GamePlayActivity
+        val rawSSC = intent.extras?.getString("ssc")
+        val path = intent.extras?.getString("path")
+        val nchar = intent.extras?.getInt("nchar") ?: 0
 
-        // Configurar el renderer en el GLSurfaceView con cast explícito para resolver ambigüedad
-        binding.openGLView.setRenderer(renderer!! as android.opengl.GLSurfaceView.Renderer)
+        val step: StepObject? = try {
+            val s = convertStreamToString(java.io.FileInputStream(rawSSC))
+            FileSSC(s.toString(), nchar).parseData(false).apply { this.path = path ?: "" }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
 
-        // Actualizar el texto del FPS counter para mostrar información de los test modes
-        binding.fpsCounter.text = "StepsDrawer GL - All Test Modes Active"
+        val metrics = DisplayMetrics()
+        windowManager.defaultDisplay.getRealMetrics(metrics)
+
+        if (step != null) {
+            renderer = GamePlayGLRenderer(
+                this,
+                step,
+                binding.bgaVideoView,
+                Point(metrics.widthPixels, metrics.heightPixels)
+            )
+            binding.openGLView.setRenderer(renderer!!)
+        }
+
+        binding.fpsCounter.text = "OpenGL Renderer"
     }
 
     override fun onResume() {
         super.onResume()
         binding.openGLView.onResume()
+        renderer?.start()
     }
 
     override fun onPause() {
         super.onPause()
         binding.openGLView.onPause()
+        renderer?.stop()
     }
 
     private fun setupBgaVideo() {
