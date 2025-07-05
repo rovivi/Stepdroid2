@@ -1,7 +1,6 @@
 package com.kyagamy.step.views.gameplayactivity
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -21,6 +20,8 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.google.gson.Gson
 import com.kyagamy.step.R
 import com.kyagamy.step.common.Common.Companion.convertStreamToString
@@ -36,6 +37,7 @@ import com.kyagamy.step.ui.EvaluationActivity
 import com.kyagamy.step.game.newplayer.Evaluator
 import com.kyagamy.step.game.newplayer.MainThreadNew
 import com.kyagamy.step.game.newplayer.StepsDrawer
+import com.kyagamy.step.views.FullScreenActivity
 import com.squareup.picasso.Picasso
 import java.io.File
 import java.io.FileInputStream
@@ -43,10 +45,10 @@ import java.util.*
 import kotlin.collections.ArrayList
 import com.kyagamy.step.databinding.ActivityPlayerbgaBinding
 import com.kyagamy.step.engine.TestSongRenderer
+import com.kyagamy.step.utils.EdgeToEdgeHelper
 
 
-class GamePlayActivity : Activity() {
-    //private lateinit var binding :ActivityPlayerbgaBinding
+class GamePlayActivity : FullScreenActivity() {
 
     private val binding: ActivityPlayerbgaBinding by lazy {
         ActivityPlayerbgaBinding.inflate(LayoutInflater.from(this))
@@ -76,7 +78,14 @@ class GamePlayActivity : Activity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Remove title bar completely
+        supportActionBar?.hide()
+
         setContentView(binding.root)
+
+        // Use EdgeToEdgeHelper for game-optimized edge-to-edge
+        EdgeToEdgeHelper.setupGameEdgeToEdge(this)
 
         // Enable hardware acceleration at window level
         window.setFlags(
@@ -84,16 +93,8 @@ class GamePlayActivity : Activity() {
             WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
         )
 
-        // (Original renderer is used, OpenGL test renderer commented out)
-        //testSongRenderer = TestSongRenderer(this)
-        //binding.openGLSpriteView?.let { glView ->
-        //    glView.setRenderer(testSongRenderer!! as android.opengl.GLSurfaceView.Renderer)
-        //    glView.renderMode = android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
-        //}
-
         audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         nchar = Objects.requireNonNull(intent.extras)!!.getInt("nchar")
-        //hilo = this.binding.gamePlay?.mainTread
         i = Intent(this, EvaluationActivity::class.java)
         val sharedPref = this.getSharedPreferences(
             getString(R.string.singleArrowsPos), Context.MODE_PRIVATE
@@ -113,30 +114,18 @@ class GamePlayActivity : Activity() {
         }
     }
 
+
     override fun onStart() {
         super.onStart()
-        // Configurar inmersión completa considerando las barras de navegación
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
 
-        binding.gamePlay!!.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
+        // Remove deprecated system UI visibility code - handled by FullScreenActivity
 
-        // Activar el renderer original y ocultar el test OpenGL
+        // Activate the original renderer and hide the test OpenGL
         binding.openGLSpriteView?.visibility = View.GONE
         binding.gamePlay?.visibility = View.VISIBLE
         binding.bgPad?.visibility = View.VISIBLE
         binding.videoViewBGA?.visibility = View.VISIBLE
 
-        //set height  to bga
         startGamePlay()
     }
 
@@ -152,24 +141,16 @@ class GamePlayActivity : Activity() {
     }
 
     private fun startGamePlay() {
-        // Restaurar el renderer original y lógica de juego original
-
         try {
-            // gamePlay!!.top = 0
-            val rawSSC =
-                Objects.requireNonNull(intent.extras)?.getString("ssc")
+            val rawSSC = Objects.requireNonNull(intent.extras)?.getString("ssc")
             val path = intent.extras!!.getString("path")
             val s = convertStreamToString(
-                FileInputStream(
-                    Objects.requireNonNull(rawSSC)
-                )
+                FileInputStream(Objects.requireNonNull(rawSSC))
             )
             try {
-                val step = FileSSC(Objects.requireNonNull(s).toString(), nchar).parseData(
-                    false
-                )
+                val step = FileSSC(Objects.requireNonNull(s).toString(), nchar).parseData(false)
                 step.path = Objects.requireNonNull(path).toString()
-                //                gpo.build1Object(getBaseContext(), new SSC(z, false), nchar, path, this, pad, Common.WIDTH, Common.HEIGHT);
+
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
                 binding.gamePlay.startGamePLay(
                     binding.videoViewBGA,
@@ -183,13 +164,11 @@ class GamePlayActivity : Activity() {
                 Evaluator.songName = step.songMetadata["TITLE"].toString()
                 val bgPad =
                     BitmapFactory.decodeFile(step.path + File.separator + step.songMetadata["BACKGROUND"])
-                if (bgPad != null && bgPad != null) {
+                if (bgPad != null) {
                     Evaluator.imagePath = step.path + File.separator + step.songMetadata["BACKGROUND"]
                     Evaluator.bitmap = TransformBitmap.doBrightness(bgPad, -60)
                     binding.bgPad?.setImageBitmap(TransformBitmap.myblur(bgPad, this)?.let {
-                        doBrightness(
-                            it, -125
-                        )
+                        doBrightness(it, -125)
                     })
                 }
             } catch (e: Exception) {
@@ -200,15 +179,19 @@ class GamePlayActivity : Activity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
         binding.videoViewBGA!!.setOnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
             val path2 = "android.resource://" + packageName + "/" + R.raw.bgaoff
             binding.videoViewBGA!!.setVideoPath(path2)
             binding.videoViewBGA!!.start()
             true
         }
-        if (!gamePlayError && binding.gamePlay != null) binding.gamePlay!!.startGame() else finish()
 
-        // ... existing code ...
+        if (!gamePlayError && binding.gamePlay != null) {
+            binding.gamePlay!!.startGame()
+        } else {
+            finish()
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {

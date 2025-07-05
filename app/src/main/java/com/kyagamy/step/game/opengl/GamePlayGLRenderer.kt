@@ -22,6 +22,9 @@ import kotlin.math.abs
 /**
  * Simplified OpenGL renderer replicating [GamePlayNew] but without touch pad.
  * It reuses [GameState] logic and draws using [StepsDrawerGL].
+ *
+ * Note: When this renderer is used in an Activity, ensure edge-to-edge is properly configured
+ * by extending FullScreenActivity or using EdgeToEdgeHelper.setupGameEdgeToEdge()
  */
 class GamePlayGLRenderer(
     private val context: Context,

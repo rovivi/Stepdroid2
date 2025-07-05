@@ -6,10 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
-import android.view.WindowManager
 import android.widget.Toast
-import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.kyagamy.step.R
 import com.kyagamy.step.databinding.ActivityMainBinding
@@ -26,6 +25,7 @@ import com.kyagamy.step.fragments.songs.SongsListFragment
 import com.kyagamy.step.ui.compose.SongsListScreen
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
 import com.kyagamy.step.fragments.songs.FragmentStartMenu
+import com.kyagamy.step.utils.EdgeToEdgeHelper
 
 class MainActivity : FullScreenActivity() {
     // Reference to "name" TextView using synthetic properties.
@@ -42,18 +42,25 @@ class MainActivity : FullScreenActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        this.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN
-        )
+
+        // Remove title bar completely
+        supportActionBar?.hide()
+
         setContentView(binding.root)
 
-        fragmentCategory = CategoryFragament()
+        // EdgeToEdgeHelper is already called by FullScreenActivity
+        // We can add custom edge-to-edge handling for the main activity if needed
+        EdgeToEdgeHelper.setupCustomEdgeToEdge(
+            this,
+            binding.root,
+            applyTopInset = false,
+            applyBottomInset = false
+        )
 
+        fragmentCategory = CategoryFragament()
         showFragmentCategory()
 
-        //video
+        // Video setup
         val rawId = R.raw.ssmbg
         val path = "android.resource://$packageName/$rawId"
         binding.bgVideo.setOnPreparedListener {
@@ -96,7 +103,6 @@ class MainActivity : FullScreenActivity() {
 
     fun showFragmentCategory() {
         val transaction = manager.beginTransaction()
-        // transaction.setCustomAnimations(R.anim.fragment_fade_enter, R.anim.fragment_fade_exit)
         transaction.replace(R.id.fragment_holder, fragmentCategory)
         transaction.addToBackStack(null)
         transaction.commit()
@@ -107,17 +113,7 @@ class MainActivity : FullScreenActivity() {
             // New Compose version
             showComposeSongList(category)
         } else {
-            // Old Fragment version (commented out for now)
-            /*
-            val transaction = manager.beginTransaction()
-            val fragment = SongsListFragment(category)
-            // transaction.setCustomAnimations(R.anim.fragment_open_enter, R.anim.fragment_fade_exit)
-            transaction.replace(R.id.fragment_holder, fragment)
-            transaction.addToBackStack("changetocategory")
-            transaction.commit()
-            */
-
-            // For now, show old version if compose is disabled
+            // Old Fragment version
             val transaction = manager.beginTransaction()
             val fragment = SongsListFragment(category)
             transaction.replace(R.id.fragment_holder, fragment)
