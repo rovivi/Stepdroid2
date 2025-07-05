@@ -113,18 +113,28 @@ class UIRenderer(
             "lifebar_light_full" to R.drawable.lifebar_light_full
         )
 
-        // Load Combo textures
-        val comboTextures = mapOf(
-            "combo_number" to R.drawable.play_combo_number,
-            "combo_judge" to R.drawable.play_combo_judge,
-            "combo_text" to R.drawable.play_combo,
-            "combo_bad" to R.drawable.play_combo_bad
-        )
+        // Load Combo textures - special handling for multi-frame sprites
+        val comboBitmap =
+            BitmapFactory.decodeResource(context.resources, R.drawable.play_combo, myOpt2)
+        val comboBadBitmap =
+            BitmapFactory.decodeResource(context.resources, R.drawable.play_combo_bad, myOpt2)
+
+        // Load combo numbers (10 frames: 0-9)
+        val comboNumberBitmap =
+            BitmapFactory.decodeResource(context.resources, R.drawable.play_combo_number, myOpt2)
+        val numberFrames =
+            createFramesFromBitmap(comboNumberBitmap, 10, 1) // 10 numbers horizontally
+
+        // Load combo judge (5 frames: PERFECT, GREAT, GOOD, BAD, MISS)
+        val comboJudgeBitmap =
+            BitmapFactory.decodeResource(context.resources, R.drawable.play_combo_judge, myOpt2)
+        val judgeFrames = createFramesFromBitmap(comboJudgeBitmap, 1, 5) // 5 judge types vertically
 
         // Load all textures
-        val allTextures = lifeBarTextures + comboTextures
+        val allTextures = lifeBarTextures
         var textureIndex = 0
 
+        // Add lifebar textures
         allTextures.forEach { (name, resourceId) ->
             try {
                 val bitmap = BitmapFactory.decodeResource(context.resources, resourceId, myOpt2)
@@ -138,13 +148,65 @@ class UIRenderer(
             }
         }
 
+        // Add combo text textures
+        if (comboBitmap != null) {
+            uiTextures.add(comboBitmap)
+            textureIds["combo_text"] = textureIndex
+            textureIndex++
+        }
+
+        if (comboBadBitmap != null) {
+            uiTextures.add(comboBadBitmap)
+            textureIds["combo_bad"] = textureIndex
+            textureIndex++
+        }
+
+        // Add number frames (0-9)
+        textureIds["combo_number_base"] = textureIndex
+        numberFrames.forEach { frame ->
+            uiTextures.add(frame)
+            textureIndex++
+        }
+
+        // Add judge frames (PERFECT, GREAT, GOOD, BAD, MISS)
+        textureIds["combo_judge_base"] = textureIndex
+        judgeFrames.forEach { frame ->
+            uiTextures.add(frame)
+            textureIndex++
+        }
+
         // Create batch renderer with all UI textures
         if (uiTextures.isNotEmpty()) {
             batchRenderer = SpriteGLRenderer(context, uiTextures.toTypedArray())
         }
 
         // Initialize combo bitmap
-        currentBitMapCombo = uiTextures.getOrNull(textureIds["combo_text"] ?: 0)
+        currentBitMapCombo = comboBitmap
+    }
+
+    private fun createFramesFromBitmap(sprite: Bitmap, sizeX: Int, sizeY: Int): Array<Bitmap> {
+        val frames = Array<Bitmap>(sizeX * sizeY) {
+            Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+        }
+
+        val frameWidth = sprite.width / sizeX
+        val frameHeight = sprite.height / sizeY
+        var count = 0
+
+        for (y in 0 until sizeY) {
+            for (x in 0 until sizeX) {
+                frames[count] = Bitmap.createBitmap(
+                    sprite,
+                    x * frameWidth,
+                    y * frameHeight,
+                    frameWidth,
+                    frameHeight
+                )
+                count++
+            }
+        }
+
+        return frames
     }
 
     private fun updateAnimations(deltaTime: Long) {
@@ -321,15 +383,18 @@ class UIRenderer(
 
         var posIntYCombo = (y / 2 - (numberSizeY + labelSizeY + comboSizeY) / 2)
 
-        // Judge label
-        val judgeId = textureIds["combo_judge"] ?: 0
+        // Judge label - use correct frame based on positionJudge
+        val judgeBaseIndex = textureIds["combo_judge_base"] ?: 0
+        val judgeFrameIndex = positionJudge.toInt().coerceIn(0, 4) // 0-4 for judge types
+        val judgeTextureIndex = judgeBaseIndex + judgeFrameIndex
+
         uiElements.add(
             UIElement(
                 posLabelIntX.toFloat(),
                 posIntYCombo.toFloat(),
                 labelSizeX.toFloat(),
                 labelSizeY.toFloat(),
-                batchRenderer.getTextureId(judgeId),
+                batchRenderer.getTextureId(judgeTextureIndex),
                 currentAlpha
             )
         )
@@ -357,28 +422,32 @@ class UIRenderer(
 
             posIntYCombo += comboSizeY
 
-            // Draw combo numbers
+            // Draw combo numbers using individual frames
             val stringCombo = abs(combo).toString()
-            var drawTimes = 4
+            val stringComboAux = (100000000 + abs(combo)).toString()
+            var drawTimes = 4 // Default minimum digits to show
             if (stringCombo.length > 3) drawTimes = stringCombo.length + 1
+
+            val numberBaseIndex = textureIds["combo_number_base"] ?: 0
 
             for (w in 1 until drawTimes) {
                 val totalComboLength = (drawTimes - 1) * numberSizeX
                 val positionCurrentNumber = ((totalComboLength / 2) + x / 2) - numberSizeX * w
-                val digitIndex = if (w <= stringCombo.length) {
-                    stringCombo[stringCombo.length - w].toString().toInt()
-                } else {
-                    0
-                }
 
-                val numberTextureId = textureIds["combo_number"] ?: 0
+                // Get the digit from the padded string
+                val digitChar = stringComboAux[stringComboAux.length - w]
+                val digitIndex = digitChar.toString().toInt() // Convert char to int (0-9)
+
+                // Use the correct frame for this digit
+                val numberTextureIndex = numberBaseIndex + digitIndex
+
                 uiElements.add(
                     UIElement(
                         positionCurrentNumber.toFloat(),
                         posIntYCombo.toFloat(),
                         numberSizeX.toFloat(),
                         numberSizeY.toFloat(),
-                        batchRenderer.getTextureId(numberTextureId),
+                        batchRenderer.getTextureId(numberTextureIndex),
                         currentAlpha
                     )
                 )
