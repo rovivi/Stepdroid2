@@ -535,10 +535,16 @@ class StepsDrawerGL(
     }
 
     private fun drawSpriteInternal(rect: Rect, textureId: Int) {
-        val left = rect.left.toFloat() / viewWidth * 2f - 1f
-        val right = rect.right.toFloat() / viewWidth * 2f - 1f
-        val top = 1f - rect.top.toFloat() / viewHeight * 2f
-        val bottom = 1f - rect.bottom.toFloat() / viewHeight * 2f
+        if (DEBUG_LOGS) android.util.Log.v(
+            "StepsDrawerGL",
+            "Drawing sprite with texture $textureId at rect: $rect"
+        )
+
+        // Use pixel coordinates directly - the orthographic matrix will handle the NDC conversion
+        val left = rect.left.toFloat()
+        val right = rect.right.toFloat()
+        val top = rect.top.toFloat()
+        val bottom = rect.bottom.toFloat()
 
         vertexBuffer.clear()
         vertexBuffer.put(left)
@@ -553,7 +559,6 @@ class StepsDrawerGL(
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexVboId)
         GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, vertexBuffer.capacity() * 4, vertexBuffer)
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
 
         if (textureId != currentTextureId) {
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
@@ -565,6 +570,14 @@ class StepsDrawerGL(
         if (useVAO) {
             GLES30.glBindVertexArray(vaoId)
         } else {
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexVboId)
+            GLES20.glEnableVertexAttribArray(positionHandle)
+            GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, 0)
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, texVboId)
+            GLES20.glEnableVertexAttribArray(texHandle)
+            GLES20.glVertexAttribPointer(texHandle, 2, GLES20.GL_FLOAT, false, 0, 0)
+
             GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexVboId)
         }
 
@@ -573,42 +586,99 @@ class StepsDrawerGL(
         if (useVAO) {
             GLES30.glBindVertexArray(0)
         } else {
+            GLES20.glDisableVertexAttribArray(positionHandle)
+            GLES20.glDisableVertexAttribArray(texHandle)
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
             GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
         }
     }
 
     private fun queueSprite(rect: Rect, sprite: Any?) {
-        if (sprite == null) return
+        if (sprite == null) {
+            if (DEBUG_LOGS) android.util.Log.v(
+                "StepsDrawerGL",
+                "queueSprite: sprite is null, using default texture"
+            )
+            val list = batchMap.getOrPut(createDefaultTexture()) { mutableListOf() }
+            list.add(Rect(rect))
+            return
+        }
 
         val textureId = when (sprite) {
             is SpriteGLAdapter -> {
+                if (DEBUG_LOGS) android.util.Log.v(
+                    "StepsDrawerGL",
+                    "queueSprite: Using SpriteGLAdapter"
+                )
                 sprite.loadTexture()
-                sprite.getTextureId()
+                val id = sprite.getTextureId()
+                if (id == 0) {
+                    if (DEBUG_LOGS) android.util.Log.w(
+                        "StepsDrawerGL",
+                        "SpriteGLAdapter returned 0 texture ID, using default"
+                    )
+                    createDefaultTexture()
+                } else {
+                    id
+                }
             }
             is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
+                if (DEBUG_LOGS) android.util.Log.v(
+                    "StepsDrawerGL",
+                    "queueSprite: Using SpriteReader"
+                )
                 textureCache[sprite] ?: run {
                     val adapter = SpriteGLAdapter(sprite)
                     adapter.loadTexture()
                     val id = adapter.getTextureId()
-                    textureCache[sprite] = id
-                    id
+                    if (id == 0) {
+                        if (DEBUG_LOGS) android.util.Log.w(
+                            "StepsDrawerGL",
+                            "SpriteReader texture loading failed, using default"
+                        )
+                        createDefaultTexture()
+                    } else {
+                        textureCache[sprite] = id
+                        id
+                    }
                 }
             }
-            else -> createDefaultTexture()
+            else -> {
+                if (DEBUG_LOGS) android.util.Log.v(
+                    "StepsDrawerGL",
+                    "queueSprite: Unknown sprite type, using default texture"
+                )
+                createDefaultTexture()
+            }
         }
 
+        if (DEBUG_LOGS) android.util.Log.v(
+            "StepsDrawerGL",
+            "queueSprite: Queueing sprite with texture $textureId at rect: $rect"
+        )
         val list = batchMap.getOrPut(textureId) { mutableListOf() }
         list.add(Rect(rect))
     }
 
     private fun flushBatches() {
+        if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "Flushing ${batchMap.size} batches")
+
+        // Set up matrix for screen coordinates
         GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0)
+
         for ((textureId, rects) in batchMap) {
-            for (r in rects) {
-                drawSpriteInternal(r, textureId)
+            if (DEBUG_LOGS) android.util.Log.v(
+                "StepsDrawerGL",
+                "Drawing batch for texture $textureId with ${rects.size} rects"
+            )
+            for (rect in rects) {
+                drawSpriteInternal(rect, textureId)
             }
         }
         batchMap.clear()
+
+        // Reset current texture to force rebinding next time
+        currentTextureId = -1
     }
 
     override fun draw(rect: Rect) {
@@ -801,14 +871,13 @@ class StepsDrawerGL(
             val skin = noteSkins[skinType.ordinal]
             if (skin != null) {
                 currentY += rowHeight
-                drawSkinVariants(skin, skinType.name, currentY, spriteSize, spacing)
+                drawSkinVariantsDirect(skin, skinType.name, currentY, spriteSize, spacing)
             }
         }
-        flushBatches()
     }
 
-    // Helper method: draws all the variants of this skin in a single horizontal row
-    private fun drawSkinVariants(
+    // Helper method: draws all the variants of this skin in a single horizontal row using direct drawing
+    private fun drawSkinVariantsDirect(
         skin: NoteSkin,
         skinName: String,
         startY: Int,
@@ -821,7 +890,7 @@ class StepsDrawerGL(
         // Draw arrows for each step
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            queueSprite(drawRect, skin.arrows[i])
+            drawSpriteDirect(drawRect, skin.arrows[i])
             currentX += columnWidth
         }
 
@@ -831,7 +900,7 @@ class StepsDrawerGL(
         // Draw receptors
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            queueSprite(drawRect, skin.receptors[i])
+            drawSpriteDirect(drawRect, skin.receptors[i])
             currentX += columnWidth
         }
 
@@ -840,7 +909,7 @@ class StepsDrawerGL(
         // Draw long note components
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            queueSprite(drawRect, skin.longs[i])
+            drawSpriteDirect(drawRect, skin.longs[i])
             currentX += columnWidth
         }
 
@@ -849,7 +918,7 @@ class StepsDrawerGL(
         // Draw tails
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            queueSprite(drawRect, skin.tails[i])
+            drawSpriteDirect(drawRect, skin.tails[i])
             currentX += columnWidth
         }
 
@@ -858,7 +927,7 @@ class StepsDrawerGL(
         // Draw explosions
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            queueSprite(drawRect, skin.explotions[i])
+            drawSpriteDirect(drawRect, skin.explotions[i])
             currentX += columnWidth
         }
 
@@ -867,7 +936,7 @@ class StepsDrawerGL(
         // Draw explosion tails
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            queueSprite(drawRect, skin.explotionTails[i])
+            drawSpriteDirect(drawRect, skin.explotionTails[i])
             currentX += columnWidth
         }
 
@@ -876,7 +945,7 @@ class StepsDrawerGL(
         // Draw tap effects
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            queueSprite(drawRect, skin.tapsEffect[i])
+            drawSpriteDirect(drawRect, skin.tapsEffect[i])
             currentX += columnWidth
         }
 
@@ -884,7 +953,7 @@ class StepsDrawerGL(
 
         // Draw mine
         drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-        queueSprite(drawRect, skin.mine)
+        drawSpriteDirect(drawRect, skin.mine)
     }
 
     // Method to draw all skin variants in a grid layout
@@ -937,10 +1006,10 @@ class StepsDrawerGL(
                 // Add mine
                 allSprites.add(skin.mine)
 
-                // Draw all sprites in grid
+                // Draw all sprites in grid using direct drawing
                 for (sprite in allSprites) {
                     drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-                    queueSprite(drawRect, sprite)
+                    drawSpriteDirect(drawRect, sprite)
 
                     itemCount++
                     if (itemCount % columnsPerRow == 0) {
@@ -952,7 +1021,6 @@ class StepsDrawerGL(
                 }
             }
         }
-        flushBatches()
     }
 
     // Method to draw specific skin type components
@@ -977,7 +1045,7 @@ class StepsDrawerGL(
         // Draw arrows
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            queueSprite(drawRect, skin.arrows[i])
+            drawSpriteDirect(drawRect, skin.arrows[i])
             currentX += spriteSize + spacing
         }
 
@@ -988,7 +1056,7 @@ class StepsDrawerGL(
         // Draw receptors
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            queueSprite(drawRect, skin.receptors[i])
+            drawSpriteDirect(drawRect, skin.receptors[i])
             currentX += spriteSize + spacing
         }
 
@@ -999,17 +1067,123 @@ class StepsDrawerGL(
         // Draw effects
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            queueSprite(drawRect, skin.explotions[i])
+            drawSpriteDirect(drawRect, skin.explotions[i])
             currentX += spriteSize + spacing
         }
-        flushBatches()
     }
 
-    // --- END: SKIN TESTING METHODS ---
+    // Fallback direct drawing method for debugging/testing
+    private fun drawSpriteDirect(rect: Rect, sprite: Any?) {
+        if (sprite == null) {
+            if (DEBUG_LOGS) android.util.Log.v(
+                "StepsDrawerGL",
+                "drawSpriteDirect: sprite is null, skipping"
+            )
+            return
+        }
+
+        // Use pixel coordinates directly - the orthographic matrix will handle the NDC conversion
+        val left = rect.left.toFloat()
+        val right = rect.right.toFloat()
+        val top = rect.top.toFloat()
+        val bottom = rect.bottom.toFloat()
+
+        val vertices = floatArrayOf(
+            left, top,
+            left, bottom,
+            right, top,
+            right, bottom
+        )
+
+        val texCoords = floatArrayOf(
+            0f, 0f,
+            0f, 1f,
+            1f, 0f,
+            1f, 1f
+        )
+
+        // Create buffers for this sprite
+        val vertexBuffer = ByteBuffer.allocateDirect(vertices.size * 4)
+            .order(ByteOrder.nativeOrder())
+            .asFloatBuffer()
+        vertexBuffer.put(vertices).position(0)
+
+        val texBuffer = ByteBuffer.allocateDirect(texCoords.size * 4)
+            .order(ByteOrder.nativeOrder())
+            .asFloatBuffer()
+        texBuffer.put(texCoords).position(0)
+
+        // Set vertex attributes
+        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
+        GLES20.glEnableVertexAttribArray(positionHandle)
+
+        GLES20.glVertexAttribPointer(texHandle, 2, GLES20.GL_FLOAT, false, 0, texBuffer)
+        GLES20.glEnableVertexAttribArray(texHandle)
+
+        // Set matrix
+        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0)
+
+        // Handle sprite texture binding
+        when (sprite) {
+            is SpriteGLAdapter -> {
+                sprite.loadTexture()
+                sprite.bindTexture()
+                GLES20.glUniform1i(textureHandle, 0)
+            }
+
+            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
+                // Convert SpriteReader to SpriteGLAdapter and use its texture
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                if (adapter.getTextureId() != 0) {
+                    adapter.bindTexture()
+                    GLES20.glUniform1i(textureHandle, 0)
+                } else {
+                    // Fallback to default texture if loading fails
+                    val defaultTexture = createDefaultTexture()
+                    GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
+                    GLES20.glUniform1i(textureHandle, 0)
+                }
+            }
+
+            else -> {
+                // For sprites that don't have GL texture support yet,
+                // create and bind a default colored texture
+                val defaultTexture = createDefaultTexture()
+                GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
+                GLES20.glUniform1i(textureHandle, 0)
+            }
+        }
+
+        // Draw
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+
+        // Cleanup
+        when (sprite) {
+            is SpriteGLAdapter -> {
+                sprite.unbindTexture()
+            }
+
+            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+            }
+
+            else -> {
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+            }
+        }
+
+        GLES20.glDisableVertexAttribArray(positionHandle)
+        GLES20.glDisableVertexAttribArray(texHandle)
+    }
+
+// --- END: SKIN TESTING METHODS ---
 
     companion object {
         // Constants
-        private const val DEBUG_LOGS = false
+        private const val DEBUG_LOGS = true
         private const val NOT_USED = -999
         private const val STEPS_Y_COUNT = 9.3913f
         private const val RECEPTOR_Y_FACTOR = 0.7f
