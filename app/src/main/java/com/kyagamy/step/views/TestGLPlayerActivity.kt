@@ -15,6 +15,14 @@ class TestGLPlayerActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         renderer = ArrowSpriteRenderer(this)
+
+        // Configurar callback para recibir datos de FPS
+        renderer?.fpsCallback = { fps, arrowCount ->
+            runOnUiThread {
+                binding.fpsCounter.text = "FPS: ${String.format("%.1f", fps)} | Arrows: $arrowCount"
+            }
+        }
+
         binding.openGLView.setRenderer(renderer!!)
     }
 

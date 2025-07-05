@@ -21,6 +21,15 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     private val numberOfArrows = 1000
     private val arrowSize = 80 // Tamaño más pequeño para las flechas
 
+    // FPS Counter
+    private var frameCount = 0
+    private var lastFpsTime = System.currentTimeMillis()
+    private var currentFps = 0f
+    private val fpsUpdateInterval = 500L // Actualizar FPS cada 500ms
+
+    // Callback para enviar FPS al Activity
+    var fpsCallback: ((Float, Int) -> Unit)? = null
+
     data class ArrowData(
         val rect: Rect,
         val spriteIndex: Int,
@@ -34,6 +43,7 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         arrowSprites.forEach { sprite ->
             sprite.onSurfaceCreated(gl, config)
         }
+
     }
 
     private fun loadAllArrowSprites() {
@@ -97,10 +107,12 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         return frames
     }
 
+
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         arrowSprites.forEach { sprite ->
             sprite.onSurfaceChanged(gl, width, height)
         }
+
         screenWidth = width
         screenHeight = height
 
@@ -127,6 +139,9 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     }
 
     override fun onDrawFrame(gl: GL10?) {
+        // Actualizar contador de FPS
+        updateFpsCounter()
+
         // Actualizar posiciones de las flechas
         updateArrowPositions()
 
@@ -138,6 +153,23 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
                 sprite.onDrawFrame(gl)
                 sprite.update()
             }
+        }
+
+    }
+
+    private fun updateFpsCounter() {
+        frameCount++
+        val currentTime = System.currentTimeMillis()
+
+        if (currentTime - lastFpsTime >= fpsUpdateInterval) {
+            val deltaTime = (currentTime - lastFpsTime) / 1000f
+            currentFps = frameCount / deltaTime
+
+            // Enviar FPS al Activity a través del callback
+            fpsCallback?.invoke(currentFps, numberOfArrows)
+
+            frameCount = 0
+            lastFpsTime = currentTime
         }
     }
 
