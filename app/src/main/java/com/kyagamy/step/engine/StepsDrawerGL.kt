@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Point
 import android.graphics.Rect
 import android.opengl.GLES20
+import android.opengl.GLES30
+import android.os.Build
 import android.opengl.Matrix
 import com.kyagamy.step.common.step.CommonSteps
 import com.kyagamy.step.common.step.Game.GameRow
@@ -13,6 +15,7 @@ import game.Note
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
+import java.nio.ShortBuffer
 import kotlin.math.abs
 
 class StepsDrawerGL(
@@ -57,6 +60,13 @@ class StepsDrawerGL(
     var textureHandle = 0
     private lateinit var vertexBuffer: FloatBuffer
     private lateinit var texBuffer: FloatBuffer
+    private lateinit var indexBuffer: ShortBuffer
+    private var vertexVboId = 0
+    private var texVboId = 0
+    private var indexVboId = 0
+    private var vaoId = 0
+    private val useVAO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2
+    private var currentTextureId = -1
     private val mvpMatrix = FloatArray(16)
     private val projectionMatrix = FloatArray(16)
     private val viewMatrix = FloatArray(16)
@@ -83,6 +93,8 @@ class StepsDrawerGL(
 
     // Reusable objects
     private val drawRect: Rect = Rect()
+    private val batchMap: MutableMap<Int, MutableList<Rect>> = mutableMapOf()
+    private val textureCache: MutableMap<Any, Int> = mutableMapOf()
 
     init {
         this.gameMode = GameMode.fromString(gameModeStr)
@@ -94,20 +106,22 @@ class StepsDrawerGL(
     }
 
     private fun initializeGL() {
-        // Initialize vertex buffer for quad
+        // Initialize buffers for quad
         val vertices = floatArrayOf(
-            -1f, 1f,   // Top left
-            -1f, -1f,  // Bottom left
-            1f, 1f,    // Top right
-            1f, -1f    // Bottom right
+            -1f, 1f,
+            -1f, -1f,
+            1f, 1f,
+            1f, -1f
         )
 
         val texCoords = floatArrayOf(
-            0f, 0f,    // Top left
-            0f, 1f,    // Bottom left
-            1f, 0f,    // Top right
-            1f, 1f     // Bottom right
+            0f, 0f,
+            0f, 1f,
+            1f, 0f,
+            1f, 1f
         )
+
+        val indices = shortArrayOf(0, 1, 2, 2, 1, 3)
 
         vertexBuffer = ByteBuffer.allocateDirect(vertices.size * 4)
             .order(ByteOrder.nativeOrder())
@@ -118,21 +132,68 @@ class StepsDrawerGL(
             .order(ByteOrder.nativeOrder())
             .asFloatBuffer()
         texBuffer.put(texCoords).position(0)
+
+        indexBuffer = ByteBuffer.allocateDirect(indices.size * 2)
+            .order(ByteOrder.nativeOrder())
+            .asShortBuffer()
+        indexBuffer.put(indices).position(0)
+
+        val buffers = IntArray(2)
+        GLES20.glGenBuffers(2, buffers, 0)
+        vertexVboId = buffers[0]
+        texVboId = buffers[1]
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexVboId)
+        GLES20.glBufferData(
+            GLES20.GL_ARRAY_BUFFER,
+            vertexBuffer.capacity() * 4,
+            vertexBuffer,
+            GLES20.GL_DYNAMIC_DRAW
+        )
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, texVboId)
+        GLES20.glBufferData(
+            GLES20.GL_ARRAY_BUFFER,
+            texBuffer.capacity() * 4,
+            texBuffer,
+            GLES20.GL_STATIC_DRAW
+        )
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+
+        val idx = IntArray(1)
+        GLES20.glGenBuffers(1, idx, 0)
+        indexVboId = idx[0]
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexVboId)
+        GLES20.glBufferData(
+            GLES20.GL_ELEMENT_ARRAY_BUFFER,
+            indexBuffer.capacity() * 2,
+            indexBuffer,
+            GLES20.GL_STATIC_DRAW
+        )
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
+
+        if (useVAO) {
+            val vaos = IntArray(1)
+            GLES30.glGenVertexArrays(1, vaos, 0)
+            vaoId = vaos[0]
+        }
     }
 
     fun initializeGLProgram() {
-        android.util.Log.d("StepsDrawerGL", "initializeGLProgram called")
+        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "initializeGLProgram called")
         // Initialize shader program
         program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
-        android.util.Log.d("StepsDrawerGL", "Created shader program: $program")
+        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "Created shader program: $program")
         positionHandle = GLES20.glGetAttribLocation(program, "aPosition")
         texHandle = GLES20.glGetAttribLocation(program, "aTexCoord")
         mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
         textureHandle = GLES20.glGetUniformLocation(program, "uTexture")
-        android.util.Log.d(
-            "StepsDrawerGL",
-            "Shader handles: pos=$positionHandle tex=$texHandle mvp=$mvpMatrixHandle texture=$textureHandle"
-        )
+        if (DEBUG_LOGS) {
+            android.util.Log.d(
+                "StepsDrawerGL",
+                "Shader handles: pos=$positionHandle tex=$texHandle mvp=$mvpMatrixHandle texture=$textureHandle"
+            )
+        }
 
         // Validate shader handles for debugging
         if (positionHandle < 0) {
@@ -147,6 +208,31 @@ class StepsDrawerGL(
         if (textureHandle < 0) {
             android.util.Log.e("StepsDrawerGL", "Shader uniform 'uTexture' handle is invalid!")
         }
+
+        if (useVAO) {
+            GLES30.glBindVertexArray(vaoId)
+        }
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexVboId)
+        GLES20.glEnableVertexAttribArray(positionHandle)
+        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, 0)
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, texVboId)
+        GLES20.glEnableVertexAttribArray(texHandle)
+        GLES20.glVertexAttribPointer(texHandle, 2, GLES20.GL_FLOAT, false, 0, 0)
+
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexVboId)
+
+        if (useVAO) {
+            GLES30.glBindVertexArray(0)
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
+        } else {
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
+        }
+
+        preloadTextures()
     }
 
     fun setViewport(width: Int, height: Int) {
@@ -158,6 +244,50 @@ class StepsDrawerGL(
         Matrix.orthoM(projectionMatrix, 0, 0f, width.toFloat(), height.toFloat(), 0f, -1f, 1f)
         Matrix.setIdentityM(viewMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
+    }
+
+    private fun preloadTextures() {
+        for (skin in noteSkins) {
+            if (skin == null) continue
+            for (sprite in skin.arrows) {
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                textureCache[sprite] = adapter.getTextureId()
+            }
+            for (sprite in skin.longs) {
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                textureCache[sprite] = adapter.getTextureId()
+            }
+            for (sprite in skin.tails) {
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                textureCache[sprite] = adapter.getTextureId()
+            }
+            for (sprite in skin.explotions) {
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                textureCache[sprite] = adapter.getTextureId()
+            }
+            for (sprite in skin.explotionTails) {
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                textureCache[sprite] = adapter.getTextureId()
+            }
+            for (sprite in skin.tapsEffect) {
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                textureCache[sprite] = adapter.getTextureId()
+            }
+            for (sprite in skin.receptors) {
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                textureCache[sprite] = adapter.getTextureId()
+            }
+            val mineAdapter = SpriteGLAdapter(skin.mine)
+            mineAdapter.loadTexture()
+            textureCache[skin.mine] = mineAdapter.getTextureId()
+        }
     }
 
 
@@ -230,7 +360,7 @@ class StepsDrawerGL(
     }
 
     fun drawGame(listRow: ArrayList<GameRow>) {
-        android.util.Log.v("StepsDrawerGL", "drawGame called with ${listRow.size} rows")
+        if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "drawGame called with ${listRow.size} rows")
         if (program == 0) {
             android.util.Log.e("StepsDrawerGL", "drawGame: OpenGL program is 0, cannot draw")
             return
@@ -241,20 +371,23 @@ class StepsDrawerGL(
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
 
         resetLastPositionDraw()
-        android.util.Log.v("StepsDrawerGL", "drawGame: Drawing receptors and effects")
+        if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "drawGame: Drawing receptors and effects")
         drawReceptorsAndEffects()
-        android.util.Log.v("StepsDrawerGL", "drawGame: Drawing notes")
+        if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "drawGame: Drawing notes")
         drawNotes(listRow)
-        android.util.Log.v("StepsDrawerGL", "drawGame: Complete")
+        flushBatches()
+        if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "drawGame: Complete")
     }
 
     private fun drawReceptorsAndEffects() {
         val selectedSkin = noteSkins[SkinType.SELECTED.ordinal] ?: return
-        android.util.Log.v(
-            "StepsDrawerGL",
-            "drawReceptorsAndEffects: selectedSkin is ${if (selectedSkin != null) "available" else "null"}"
-        )
-        android.util.Log.v("StepsDrawerGL", "drawReceptorsAndEffects: Drawing ${steps} receptors")
+        if (DEBUG_LOGS) {
+            android.util.Log.v(
+                "StepsDrawerGL",
+                "drawReceptorsAndEffects: selectedSkin is ${if (selectedSkin != null) "available" else "null"}"
+            )
+            android.util.Log.v("StepsDrawerGL", "drawReceptorsAndEffects: Drawing ${steps} receptors")
+        }
 
         for (j in 0 until steps) {
             val startNoteX = posInitialX + sizeNote * j
@@ -262,13 +395,13 @@ class StepsDrawerGL(
 
             // Draw receptors
             drawRect.set(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize)
-            android.util.Log.v("StepsDrawerGL", "Drawing receptor $j at rect: $drawRect")
-            drawSprite(drawRect, selectedSkin.receptors[j])
+            if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "Drawing receptor $j at rect: $drawRect")
+            queueSprite(drawRect, selectedSkin.receptors[j])
 
             // Draw effects
-            drawSprite(drawRect, selectedSkin.explotions[j])
-            drawSprite(drawRect, selectedSkin.explotionTails[j])
-            drawSprite(drawRect, selectedSkin.tapsEffect[j])
+            queueSprite(drawRect, selectedSkin.explotions[j])
+            queueSprite(drawRect, selectedSkin.explotionTails[j])
+            queueSprite(drawRect, selectedSkin.tapsEffect[j])
         }
     }
 
@@ -299,7 +432,7 @@ class StepsDrawerGL(
                     endNoteX,
                     gameRow.getPosY() + scaledNoteSize
                 )
-                drawSprite(drawRect, selectedSkin.arrows[columnIndex])
+                queueSprite(drawRect, selectedSkin.arrows[columnIndex])
             }
 
             CommonSteps.NOTE_LONG_START -> {
@@ -317,7 +450,7 @@ class StepsDrawerGL(
                     endNoteX,
                     gameRow.getPosY() + scaledNoteSize
                 )
-                drawSprite(drawRect, selectedSkin.mine)
+                queueSprite(drawRect, selectedSkin.mine)
             }
         }
     }
@@ -345,17 +478,17 @@ class StepsDrawerGL(
 
         // Draw body
         drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        drawSprite(drawRect, skin.longs[columnIndex])
+        queueSprite(drawRect, skin.longs[columnIndex])
 
         // Draw tail (if end exists)
         if (endYRaw != NOT_DRAWABLE) {
             drawRect.set(startNoteX, endY, endNoteX, tailBottom)
-            drawSprite(drawRect, skin.tails[columnIndex])
+            queueSprite(drawRect, skin.tails[columnIndex])
         }
 
         // Draw head
         drawRect.set(startNoteX, startY, endNoteX, headBottom)
-        drawSprite(drawRect, skin.arrows[columnIndex])
+        queueSprite(drawRect, skin.arrows[columnIndex])
     }
 
     private fun drawLongNoteBody(
@@ -388,123 +521,99 @@ class StepsDrawerGL(
 
         // Draw body
         drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        drawSprite(drawRect, skin.longs[columnIndex])
+        queueSprite(drawRect, skin.longs[columnIndex])
 
         // Draw tail (if end exists)
         if (endYRaw != NOT_DRAWABLE) {
             drawRect.set(startNoteX, endY, endNoteX, tailBottom)
-            drawSprite(drawRect, skin.tails[columnIndex])
+            queueSprite(drawRect, skin.tails[columnIndex])
         }
 
         // Draw head
         drawRect.set(startNoteX, startY, endNoteX, headBottom)
-        drawSprite(drawRect, skin.arrows[columnIndex])
+        queueSprite(drawRect, skin.arrows[columnIndex])
     }
 
-    private fun drawSprite(rect: Rect, sprite: Any?) {
-        if (sprite == null) {
-            android.util.Log.v("StepsDrawerGL", "drawSprite: sprite is null, skipping")
-            return
-        }
-
-        // Convert screen coordinates to OpenGL coordinates (-1 to 1)
+    private fun drawSpriteInternal(rect: Rect, textureId: Int) {
         val left = rect.left.toFloat() / viewWidth * 2f - 1f
         val right = rect.right.toFloat() / viewWidth * 2f - 1f
         val top = 1f - rect.top.toFloat() / viewHeight * 2f
         val bottom = 1f - rect.bottom.toFloat() / viewHeight * 2f
 
-        val vertices = floatArrayOf(
-            left, top,
-            left, bottom,
-            right, top,
-            right, bottom
-        )
+        vertexBuffer.clear()
+        vertexBuffer.put(left)
+        vertexBuffer.put(top)
+        vertexBuffer.put(left)
+        vertexBuffer.put(bottom)
+        vertexBuffer.put(right)
+        vertexBuffer.put(top)
+        vertexBuffer.put(right)
+        vertexBuffer.put(bottom)
+        vertexBuffer.position(0)
 
-        val texCoords = floatArrayOf(
-            0f, 0f,
-            0f, 1f,
-            1f, 0f,
-            1f, 1f
-        )
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexVboId)
+        GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, vertexBuffer.capacity() * 4, vertexBuffer)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
 
-        // Create buffers for this sprite
-        val vertexBuffer = java.nio.ByteBuffer.allocateDirect(vertices.size * 4)
-            .order(java.nio.ByteOrder.nativeOrder())
-            .asFloatBuffer()
-        vertexBuffer.put(vertices).position(0)
+        if (textureId != currentTextureId) {
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
+            GLES20.glUniform1i(textureHandle, 0)
+            currentTextureId = textureId
+        }
 
-        val texBuffer = java.nio.ByteBuffer.allocateDirect(texCoords.size * 4)
-            .order(java.nio.ByteOrder.nativeOrder())
-            .asFloatBuffer()
-        texBuffer.put(texCoords).position(0)
+        if (useVAO) {
+            GLES30.glBindVertexArray(vaoId)
+        } else {
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexVboId)
+        }
 
-        // Set vertex attributes
-        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
-        GLES20.glEnableVertexAttribArray(positionHandle)
+        GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6, GLES20.GL_UNSIGNED_SHORT, 0)
 
-        GLES20.glVertexAttribPointer(texHandle, 2, GLES20.GL_FLOAT, false, 0, texBuffer)
-        GLES20.glEnableVertexAttribArray(texHandle)
+        if (useVAO) {
+            GLES30.glBindVertexArray(0)
+        } else {
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
+        }
+    }
 
-        // Set identity matrix (no transformations)
-        val identityMatrix = FloatArray(16)
-        android.opengl.Matrix.setIdentityM(identityMatrix, 0)
-        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, identityMatrix, 0)
+    private fun queueSprite(rect: Rect, sprite: Any?) {
+        if (sprite == null) return
 
-        // Handle sprite texture binding
-        when (sprite) {
+        val textureId = when (sprite) {
             is SpriteGLAdapter -> {
                 sprite.loadTexture()
-                sprite.bindTexture()
-                GLES20.glUniform1i(textureHandle, 0)
+                sprite.getTextureId()
             }
             is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
-                // Convert SpriteReader to SpriteGLAdapter and use its texture
-                val adapter = SpriteGLAdapter(sprite)
-                adapter.loadTexture()
-                if (adapter.getTextureId() != 0) {
-                    adapter.bindTexture()
-                    GLES20.glUniform1i(textureHandle, 0)
-                } else {
-                    // Fallback to default texture if loading fails
-                    val defaultTexture = createDefaultTexture()
-                    GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
-                    GLES20.glUniform1i(textureHandle, 0)
+                textureCache[sprite] ?: run {
+                    val adapter = SpriteGLAdapter(sprite)
+                    adapter.loadTexture()
+                    val id = adapter.getTextureId()
+                    textureCache[sprite] = id
+                    id
                 }
             }
-            else -> {
-                // For sprites that don't have GL texture support yet,
-                // create and bind a default colored texture
-                val defaultTexture = createDefaultTexture()
-                GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
-                GLES20.glUniform1i(textureHandle, 0)
-            }
+            else -> createDefaultTexture()
         }
 
-        // Draw
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+        val list = batchMap.getOrPut(textureId) { mutableListOf() }
+        list.add(Rect(rect))
+    }
 
-        // Cleanup
-        when (sprite) {
-            is SpriteGLAdapter -> {
-                sprite.unbindTexture()
-            }
-            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
-            }
-            else -> {
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+    private fun flushBatches() {
+        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0)
+        for ((textureId, rects) in batchMap) {
+            for (r in rects) {
+                drawSpriteInternal(r, textureId)
             }
         }
-
-        GLES20.glDisableVertexAttribArray(positionHandle)
-        GLES20.glDisableVertexAttribArray(texHandle)
+        batchMap.clear()
     }
 
     override fun draw(rect: Rect) {
         // Implementation for ISpriteRenderer interface
-        drawSprite(rect, null)
+        queueSprite(rect, null)
     }
 
     override fun update() {
@@ -543,14 +652,16 @@ class StepsDrawerGL(
         get() = noteSkins[SkinType.SELECTED.ordinal]
 
     private fun createProgram(vertexSource: String, fragmentSource: String): Int {
-        android.util.Log.d("StepsDrawerGL", "Creating shader program...")
+        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "Creating shader program...")
         val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource)
         val fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource)
 
-        android.util.Log.d(
-            "StepsDrawerGL",
-            "Vertex shader: $vertexShader, Fragment shader: $fragmentShader"
-        )
+        if (DEBUG_LOGS) {
+            android.util.Log.d(
+                "StepsDrawerGL",
+                "Vertex shader: $vertexShader, Fragment shader: $fragmentShader"
+            )
+        }
 
         if (vertexShader == 0 || fragmentShader == 0) {
             android.util.Log.e("StepsDrawerGL", "Failed to create shaders")
@@ -558,7 +669,7 @@ class StepsDrawerGL(
         }
 
         val program = GLES20.glCreateProgram()
-        android.util.Log.d("StepsDrawerGL", "Created program: $program")
+        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "Created program: $program")
 
         GLES20.glAttachShader(program, vertexShader)
         GLES20.glAttachShader(program, fragmentShader)
@@ -574,13 +685,13 @@ class StepsDrawerGL(
             return 0
         }
 
-        android.util.Log.d("StepsDrawerGL", "Program linked successfully")
+        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "Program linked successfully")
         return program
     }
 
     private fun loadShader(type: Int, shaderCode: String): Int {
         val shader = GLES20.glCreateShader(type)
-        android.util.Log.d("StepsDrawerGL", "Created shader $shader of type $type")
+        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "Created shader $shader of type $type")
 
         GLES20.glShaderSource(shader, shaderCode)
         GLES20.glCompileShader(shader)
@@ -595,7 +706,7 @@ class StepsDrawerGL(
             return 0
         }
 
-        android.util.Log.d("StepsDrawerGL", "Shader compiled successfully")
+        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "Shader compiled successfully")
         return shader
     }
 
@@ -643,7 +754,7 @@ class StepsDrawerGL(
             GLES20.GL_CLAMP_TO_EDGE
         )
 
-        android.util.Log.d("StepsDrawerGL", "Created default texture with ID: $textureId")
+        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "Created default texture with ID: $textureId")
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
 
@@ -693,6 +804,7 @@ class StepsDrawerGL(
                 drawSkinVariants(skin, skinType.name, currentY, spriteSize, spacing)
             }
         }
+        flushBatches()
     }
 
     // Helper method: draws all the variants of this skin in a single horizontal row
@@ -709,7 +821,7 @@ class StepsDrawerGL(
         // Draw arrows for each step
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.arrows[i])
+            queueSprite(drawRect, skin.arrows[i])
             currentX += columnWidth
         }
 
@@ -719,7 +831,7 @@ class StepsDrawerGL(
         // Draw receptors
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.receptors[i])
+            queueSprite(drawRect, skin.receptors[i])
             currentX += columnWidth
         }
 
@@ -728,7 +840,7 @@ class StepsDrawerGL(
         // Draw long note components
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.longs[i])
+            queueSprite(drawRect, skin.longs[i])
             currentX += columnWidth
         }
 
@@ -737,7 +849,7 @@ class StepsDrawerGL(
         // Draw tails
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.tails[i])
+            queueSprite(drawRect, skin.tails[i])
             currentX += columnWidth
         }
 
@@ -746,7 +858,7 @@ class StepsDrawerGL(
         // Draw explosions
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.explotions[i])
+            queueSprite(drawRect, skin.explotions[i])
             currentX += columnWidth
         }
 
@@ -755,7 +867,7 @@ class StepsDrawerGL(
         // Draw explosion tails
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.explotionTails[i])
+            queueSprite(drawRect, skin.explotionTails[i])
             currentX += columnWidth
         }
 
@@ -764,7 +876,7 @@ class StepsDrawerGL(
         // Draw tap effects
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.tapsEffect[i])
+            queueSprite(drawRect, skin.tapsEffect[i])
             currentX += columnWidth
         }
 
@@ -772,7 +884,7 @@ class StepsDrawerGL(
 
         // Draw mine
         drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-        drawSprite(drawRect, skin.mine)
+        queueSprite(drawRect, skin.mine)
     }
 
     // Method to draw all skin variants in a grid layout
@@ -828,7 +940,7 @@ class StepsDrawerGL(
                 // Draw all sprites in grid
                 for (sprite in allSprites) {
                     drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-                    drawSprite(drawRect, sprite)
+                    queueSprite(drawRect, sprite)
 
                     itemCount++
                     if (itemCount % columnsPerRow == 0) {
@@ -840,6 +952,7 @@ class StepsDrawerGL(
                 }
             }
         }
+        flushBatches()
     }
 
     // Method to draw specific skin type components
@@ -864,7 +977,7 @@ class StepsDrawerGL(
         // Draw arrows
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.arrows[i])
+            queueSprite(drawRect, skin.arrows[i])
             currentX += spriteSize + spacing
         }
 
@@ -875,7 +988,7 @@ class StepsDrawerGL(
         // Draw receptors
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.receptors[i])
+            queueSprite(drawRect, skin.receptors[i])
             currentX += spriteSize + spacing
         }
 
@@ -886,15 +999,17 @@ class StepsDrawerGL(
         // Draw effects
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.explotions[i])
+            queueSprite(drawRect, skin.explotions[i])
             currentX += spriteSize + spacing
         }
+        flushBatches()
     }
 
     // --- END: SKIN TESTING METHODS ---
 
     companion object {
         // Constants
+        private const val DEBUG_LOGS = false
         private const val NOT_USED = -999
         private const val STEPS_Y_COUNT = 9.3913f
         private const val RECEPTOR_Y_FACTOR = 0.7f
