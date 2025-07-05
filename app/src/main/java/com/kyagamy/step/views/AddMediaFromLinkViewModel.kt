@@ -123,8 +123,8 @@ class AddMediaFromLinkViewModel(application: Application) : AndroidViewModel(app
                 // Custom logic to handle different packs
                 when (packId) {
                     "phoenix2" -> destDir = File(songsDir, "PHOENIX")
-                    "mobile" -> destDir = File(songsDir, "Mobile")
-                    "xx" -> destDir = File(songsDir, "XX")
+                    "mobile" -> destDir = songsDir
+                    "xx" -> destDir = songsDir
                 }
 
                 if (!destDir.exists()) destDir.mkdirs()
