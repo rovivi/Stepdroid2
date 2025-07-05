@@ -17,7 +17,7 @@ import javax.microedition.khronos.opengles.GL10
 data class DrawCommand(
     val textureId: Int,
     val model: FloatArray,
-    val uvOff: FloatArray
+    val uvCoords: UVCoords
 )
 
 class SpriteGLRenderer(private val context: Context, private val frames: Array<Bitmap>) : GLSurfaceView.Renderer, ISpriteRenderer {
@@ -25,7 +25,7 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
     private val textureIds = IntArray(frames.size)
     private var program = 0
     private var quadVBO = 0
-    private var indexBuffer = 0
+    private var indexVBO = 0
 
     // Shader handles
     private var positionHandle = 0
@@ -39,11 +39,16 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
     private var viewWidth = 0
     private var viewHeight = 0
 
-    // Batching system
+    // Optimized batching system
     private val drawCommands = mutableListOf<DrawCommand>()
     private var vertexBuffer: FloatBuffer
     private var texBuffer: FloatBuffer
-    private var indexBuffer2: ShortBuffer
+    private var indexBuffer: ShortBuffer
+    private var batchActive = false
+
+    // Matrix pool for avoiding allocations
+    private val matrixPool = Array(100) { FloatArray(16) }
+    private var matrixPoolIndex = 0
 
     // Animation
     private var frameIndex = 0
@@ -78,10 +83,10 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
             .asFloatBuffer()
         texBuffer.put(texCoords).position(0)
 
-        indexBuffer2 = ByteBuffer.allocateDirect(indices.size * 2)
+        indexBuffer = ByteBuffer.allocateDirect(indices.size * 2)
             .order(ByteOrder.nativeOrder())
             .asShortBuffer()
-        indexBuffer2.put(indices).position(0)
+        indexBuffer.put(indices).position(0)
 
         Matrix.setIdentityM(projectionMatrix, 0)
         Matrix.setIdentityM(viewMatrix, 0)
@@ -105,13 +110,52 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
         mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
         textureHandle = GLES20.glGetUniformLocation(program, "uTexture")
 
+        // Crear VBOs estáticos
+        createVBOs()
+
+        // Cargar texturas
+        loadTextures()
+
         android.util.Log.d(
             "SpriteGLRenderer",
             "Handles: pos=$positionHandle, tex=$texCoordHandle, mvp=$mvpMatrixHandle, texture=$textureHandle"
         )
+    }
 
-        // Cargar texturas
-        loadTextures()
+    private fun createVBOs() {
+        val vbos = IntArray(2)
+        GLES20.glGenBuffers(2, vbos, 0)
+
+        quadVBO = vbos[0]
+        indexVBO = vbos[1]
+
+        // Vertex buffer
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, quadVBO)
+        GLES20.glBufferData(
+            GLES20.GL_ARRAY_BUFFER,
+            (vertexBuffer.capacity() + texBuffer.capacity()) * 4,
+            null,
+            GLES20.GL_STATIC_DRAW
+        )
+        GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, vertexBuffer.capacity() * 4, vertexBuffer)
+        GLES20.glBufferSubData(
+            GLES20.GL_ARRAY_BUFFER,
+            vertexBuffer.capacity() * 4,
+            texBuffer.capacity() * 4,
+            texBuffer
+        )
+
+        // Index buffer
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexVBO)
+        GLES20.glBufferData(
+            GLES20.GL_ELEMENT_ARRAY_BUFFER,
+            indexBuffer.capacity() * 2,
+            indexBuffer,
+            GLES20.GL_STATIC_DRAW
+        )
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
     }
 
     private fun loadTextures() {
@@ -157,11 +201,115 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        // El frame será dibujado llamando flushBatch() externamente
+        // El frame será dibujado llamando end() externamente
     }
 
-    override fun drawCommand(textureId: Int, model: FloatArray, uvOff: FloatArray) {
-        drawCommands.add(DrawCommand(textureId, model.clone(), uvOff.clone()))
+    // New optimized interface
+    override fun begin() {
+        if (batchActive) {
+            android.util.Log.w("SpriteGLRenderer", "begin() called while batch is already active")
+            return
+        }
+        batchActive = true
+        drawCommands.clear()
+        matrixPoolIndex = 0
+    }
+
+    override fun drawCommand(textureId: Int, model: FloatArray, uvCoords: UVCoords) {
+        if (!batchActive) {
+            android.util.Log.w("SpriteGLRenderer", "drawCommand() called outside of begin()/end()")
+            return
+        }
+
+        // Use matrix pool to avoid allocation
+        val pooledMatrix = getPooledMatrix()
+        System.arraycopy(model, 0, pooledMatrix, 0, 16)
+
+        drawCommands.add(DrawCommand(textureId, pooledMatrix, uvCoords))
+    }
+
+    private fun getPooledMatrix(): FloatArray {
+        if (matrixPoolIndex >= matrixPool.size) {
+            // Expand pool if needed
+            matrixPoolIndex = 0
+            android.util.Log.w("SpriteGLRenderer", "Matrix pool exhausted, recycling from start")
+        }
+        return matrixPool[matrixPoolIndex++]
+    }
+
+    override fun end() {
+        if (!batchActive) {
+            android.util.Log.w("SpriteGLRenderer", "end() called without begin()")
+            return
+        }
+
+        executeBatch()
+        batchActive = false
+    }
+
+    private fun executeBatch() {
+        if (drawCommands.isEmpty()) return
+
+        android.util.Log.d("SpriteGLRenderer", "Executing batch with ${drawCommands.size} commands")
+
+        GLES20.glUseProgram(program)
+
+        // Bind VBOs
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, quadVBO)
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexVBO)
+
+        // Configure vertex attributes
+        GLES20.glEnableVertexAttribArray(positionHandle)
+        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, 0)
+
+        GLES20.glEnableVertexAttribArray(texCoordHandle)
+        GLES20.glVertexAttribPointer(
+            texCoordHandle,
+            2,
+            GLES20.GL_FLOAT,
+            false,
+            0,
+            vertexBuffer.capacity() * 4
+        )
+
+        // Configure texture
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+        GLES20.glUniform1i(textureHandle, 0)
+
+        // Group commands by texture for optimal batching
+        val groupedCommands = drawCommands.groupBy { it.textureId }
+        android.util.Log.d(
+            "SpriteGLRenderer",
+            "Batched into ${groupedCommands.size} texture groups"
+        )
+
+        for ((textureId, commands) in groupedCommands) {
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
+
+            // Draw each command
+            for (command in commands) {
+                // Calculate MVP matrix
+                Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, command.model, 0)
+
+                // Apply MVP matrix
+                GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0)
+
+                // Draw
+                GLES20.glDrawElements(
+                    GLES20.GL_TRIANGLES,
+                    6,
+                    GLES20.GL_UNSIGNED_SHORT,
+                    0
+                )
+            }
+        }
+
+        // Cleanup
+        GLES20.glDisableVertexAttribArray(positionHandle)
+        GLES20.glDisableVertexAttribArray(texCoordHandle)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
     }
 
     override fun update(deltaMs: Long) {
@@ -172,62 +320,28 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
         }
     }
 
+    // Backward compatibility methods
+    @Deprecated("Use begin()/end() pattern instead")
     override fun flushBatch() {
-        if (drawCommands.isEmpty()) return
-
-        android.util.Log.d("SpriteGLRenderer", "Flushing ${drawCommands.size} draw commands")
-
-        GLES20.glUseProgram(program)
-
-        // Configurar atributos de vértices
-        GLES20.glEnableVertexAttribArray(positionHandle)
-        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
-
-        GLES20.glEnableVertexAttribArray(texCoordHandle)
-        GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 0, texBuffer)
-
-        // Configurar textura
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        GLES20.glUniform1i(textureHandle, 0)
-
-        // Agrupar comandos por textura
-        val groupedCommands = drawCommands.groupBy { it.textureId }
-        android.util.Log.d(
-            "SpriteGLRenderer",
-            "Grouped into ${groupedCommands.size} texture groups"
-        )
-
-        for ((textureId, commands) in groupedCommands) {
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
-
-            // Dibujar cada comando individualmente
-            for (command in commands) {
-                // Calcular matriz MVP
-                Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, command.model, 0)
-
-                // Aplicar matriz MVP
-                GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0)
-
-                // Dibujar
-                GLES20.glDrawElements(
-                    GLES20.GL_TRIANGLES,
-                    6,
-                    GLES20.GL_UNSIGNED_SHORT,
-                    indexBuffer2
-                )
-            }
+        if (!batchActive) {
+            begin()
         }
-
-        GLES20.glDisableVertexAttribArray(positionHandle)
-        GLES20.glDisableVertexAttribArray(texCoordHandle)
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+        executeBatch()
     }
 
+    @Deprecated("Use begin()/end() pattern instead")
     override fun clearCommands() {
         drawCommands.clear()
     }
 
+    @Deprecated("Use drawCommand with UVCoords instead")
+    fun drawCommand(textureId: Int, model: FloatArray, uvOff: FloatArray) {
+        val uvCoords = UVCoords(uvOff[0], uvOff[1], uvOff[2], uvOff[3])
+        drawCommand(textureId, model, uvCoords)
+    }
+
     // Compatibility methods
+    @Deprecated("Use drawCommand instead")
     override fun draw(rect: Rect) {
         // Convertir rect a matriz modelo
         val model = FloatArray(16)
@@ -243,15 +357,42 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
 
         // Usar textura actual
         val textureId = if (textureIds.isNotEmpty()) textureIds[frameIndex] else 0
-        drawCommand(textureId, model, floatArrayOf(0f, 0f, 1f, 1f))
+        drawCommand(textureId, model, UVCoords())
     }
 
+    @Deprecated("Use update(deltaMs) instead")
     override fun update() {
         update(16L) // ~60 FPS
     }
 
     fun getCurrentTextureId(): Int {
         return if (textureIds.isNotEmpty()) textureIds[frameIndex] else 0
+    }
+
+    fun getTextureId(frameIndex: Int): Int {
+        return if (frameIndex < textureIds.size) textureIds[frameIndex] else 0
+    }
+
+    fun getTextureCount(): Int {
+        return textureIds.size
+    }
+
+    // Utility function to create transformation matrix with rotation
+    fun createTransformMatrix(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        rotation: Float = 0f
+    ): FloatArray {
+        val model = FloatArray(16)
+        Matrix.setIdentityM(model, 0)
+        Matrix.translateM(model, 0, x, y, 0f)
+        if (rotation != 0f) {
+            Matrix.rotateM(model, 0, rotation, 0f, 0f, 1f)
+        }
+        Matrix.scaleM(model, 0, width, height, 1f)
+        return model
     }
 
     private fun createProgram(vs: String, fs: String): Int {

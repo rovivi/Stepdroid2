@@ -13,6 +13,7 @@ import com.kyagamy.step.common.step.CommonGame.ParamsSong
 import com.kyagamy.step.common.step.Game.GameRow
 import com.kyagamy.step.engine.ISpriteRenderer
 import com.kyagamy.step.engine.StepsDrawerGL
+import com.kyagamy.step.engine.UVCoords
 import com.kyagamy.step.game.newplayer.*
 import game.StepObject
 import javax.microedition.khronos.egl.EGLConfig
@@ -56,6 +57,9 @@ class GamePlayGLRenderer(
     private var soundPool: SoundPool? = null
     private var soundPullBeat: Int = 0
     private var soundPullMine: Int = 0
+
+    // Batching state
+    private var batchActive = false
 
     init {
         initializeSoundPool()
@@ -333,31 +337,63 @@ class GamePlayGLRenderer(
         }
     }
 
+    override fun begin() {
+        if (batchActive) {
+            android.util.Log.w("GamePlayGLRenderer", "begin() called while batch is already active")
+            return
+        }
+        batchActive = true
+        stepsDrawer?.begin()
+    }
+
     override fun drawCommand(
         textureId: Int,
         model: FloatArray,
-        uvOff: FloatArray
+        uvCoords: UVCoords
     ) {
-        TODO("Not yet implemented")
+        if (!batchActive) {
+            android.util.Log.w(
+                "GamePlayGLRenderer",
+                "drawCommand() called outside of begin()/end()"
+            )
+            return
+        }
+        stepsDrawer?.drawCommand(textureId, model, uvCoords)
+    }
+
+    override fun end() {
+        if (!batchActive) {
+            android.util.Log.w("GamePlayGLRenderer", "end() called without begin()")
+            return
+        }
+        batchActive = false
+        stepsDrawer?.end()
     }
 
     override fun update(deltaMs: Long) {
-        TODO("Not yet implemented")
+        if (isGameStarted) {
+            updateGame()
+        }
     }
 
+    // Backward compatibility methods
+    @Deprecated("Use begin()/end() pattern instead")
     override fun flushBatch() {
-        TODO("Not yet implemented")
+        stepsDrawer?.flushBatch()
     }
 
+    @Deprecated("Use begin()/end() pattern instead")
     override fun clearCommands() {
-        TODO("Not yet implemented")
+        stepsDrawer?.clearCommands()
     }
 
     // ISpriteRenderer implementation (no-op wrappers)
+    @Deprecated("Use drawCommand instead")
     override fun draw(rect: android.graphics.Rect) {
         // Rendering is handled in onDrawFrame
     }
 
+    @Deprecated("Use update(deltaMs) instead")
     override fun update() {
         // No operation needed; game and UI update is handled in updateGame().
     }

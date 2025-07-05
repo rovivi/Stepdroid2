@@ -17,6 +17,7 @@ class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer 
 
     // Batching system
     private val drawCommands = mutableListOf<DrawCommand>()
+    private var batchActive = false
 
     fun loadTexture() {
         if (isTextureLoaded) return
@@ -94,8 +95,30 @@ class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer 
     }
 
     // New batching interface implementation
-    override fun drawCommand(textureId: Int, model: FloatArray, uvOff: FloatArray) {
-        drawCommands.add(DrawCommand(textureId, model.clone(), uvOff.clone()))
+    override fun begin() {
+        if (batchActive) {
+            android.util.Log.w("SpriteGLAdapter", "begin() called while batch is already active")
+            return
+        }
+        batchActive = true
+        drawCommands.clear()
+    }
+
+    override fun drawCommand(textureId: Int, model: FloatArray, uvCoords: UVCoords) {
+        if (!batchActive) {
+            android.util.Log.w("SpriteGLAdapter", "drawCommand() called outside of begin()/end()")
+            return
+        }
+        drawCommands.add(DrawCommand(textureId, model.clone(), uvCoords))
+    }
+
+    override fun end() {
+        if (!batchActive) {
+            android.util.Log.w("SpriteGLAdapter", "end() called without begin()")
+            return
+        }
+        batchActive = false
+        // Commands are stored for external processing
     }
 
     override fun update(deltaMs: Long) {
@@ -121,7 +144,7 @@ class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer 
         drawCommands.clear()
     }
 
-    // Backward compatibility methods
+    @Deprecated("Use drawCommand instead")
     override fun draw(rect: Rect) {
         // Convert rect to model matrix for compatibility
         val model = FloatArray(16)
@@ -131,9 +154,11 @@ class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer 
 
         // Use current texture ID
         val currentTextureId = if (isTextureLoaded) textureId else 0
-        drawCommand(currentTextureId, model, floatArrayOf(0f, 0f, 1f, 1f))
+        val uvCoords = UVCoords(0f, 0f, 1f, 1f)
+        drawCommand(currentTextureId, model, uvCoords)
     }
 
+    @Deprecated("Use update(deltaMs) instead")
     override fun update() {
         update(16L) // ~60 FPS
     }

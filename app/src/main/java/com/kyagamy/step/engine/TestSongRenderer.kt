@@ -25,6 +25,7 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
     }
 
     private var testMode = TestMode.SKIN_VARIANTS
+    private var batchActive = false
 
     private val notes = mutableListOf<Note>()
     private var program = 0
@@ -378,32 +379,59 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
     }
 
+    override fun begin() {
+        if (batchActive) {
+            android.util.Log.w("TestSongRenderer", "begin() called while batch is already active")
+            return
+        }
+        batchActive = true
+        stepsDrawer?.begin()
+    }
+
     override fun drawCommand(
         textureId: Int,
         model: FloatArray,
-        uvOff: FloatArray
+        uvCoords: UVCoords
     ) {
-        TODO("Not yet implemented")
+        if (!batchActive) {
+            android.util.Log.w("TestSongRenderer", "drawCommand() called outside of begin()/end()")
+            return
+        }
+        stepsDrawer?.drawCommand(textureId, model, uvCoords)
+    }
+
+    override fun end() {
+        if (!batchActive) {
+            android.util.Log.w("TestSongRenderer", "end() called without begin()")
+            return
+        }
+        batchActive = false
+        stepsDrawer?.end()
     }
 
     override fun update(deltaMs: Long) {
-        TODO("Not yet implemented")
+        stepsDrawer?.update(deltaMs)
     }
 
+    // Backward compatibility methods
+    @Deprecated("Use begin()/end() pattern instead")
     override fun flushBatch() {
-        TODO("Not yet implemented")
+        stepsDrawer?.flushBatch()
     }
 
+    @Deprecated("Use begin()/end() pattern instead")
     override fun clearCommands() {
-        TODO("Not yet implemented")
+        stepsDrawer?.clearCommands()
     }
 
     // ISpriteRenderer interface methods
+    @Deprecated("Use drawCommand instead")
     override fun draw(rect: android.graphics.Rect) {
         // This method is required by ISpriteRenderer but our rendering is handled in onDrawFrame
         // We can use this for any additional drawing if needed
     }
 
+    @Deprecated("Use update(deltaMs) instead")
     override fun update() {
         // Update sprites - this is called by the OpenGLSpriteView
         stepsDrawer?.update()
