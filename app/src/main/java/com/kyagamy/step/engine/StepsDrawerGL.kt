@@ -153,16 +153,16 @@ class StepsDrawerGL(
         }
     }
 
-    fun drawGame(listRow: ArrayList<GameRow>) {
+    fun drawGame(listRow: ArrayList<GameRow>, skinType: SkinType = SkinType.SELECTED) {
         resetLastPositionDraw()
         gameArrows.clear()
-        drawReceptorsAndEffects()
-        drawNotes(listRow)
+        drawReceptorsAndEffects(skinType)
+        drawNotes(listRow, skinType)
         arrowRenderer?.populateArrows(gameArrows.toList())
     }
 
-    private fun drawReceptorsAndEffects() {
-        val selectedSkin = noteSkins[SkinType.SELECTED.ordinal] ?: return
+    private fun drawReceptorsAndEffects(skinType: SkinType = SkinType.SELECTED) {
+        val selectedSkin = noteSkins[skinType.ordinal] ?: return
 
         for (j in 0 until steps) {
             val startNoteX = posInitialX + sizeNote * j
@@ -170,31 +170,56 @@ class StepsDrawerGL(
 
             // Draw receptors
             drawRect.set(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize)
-            drawSprite(drawRect, selectedSkin.receptors[j], j)
+            drawSprite(
+                drawRect,
+                selectedSkin.receptors[j],
+                j,
+                ArrowSpriteRenderer.NoteType.RECEPTOR
+            )
 
             // Draw effects
-            drawSprite(drawRect, selectedSkin.explotions[j], j)
-            drawSprite(drawRect, selectedSkin.explotionTails[j], j)
-            drawSprite(drawRect, selectedSkin.tapsEffect[j], j)
+            drawSprite(
+                drawRect,
+                selectedSkin.explotions[j],
+                j,
+                ArrowSpriteRenderer.NoteType.EXPLOSION
+            )
+            drawSprite(
+                drawRect,
+                selectedSkin.explotionTails[j],
+                j,
+                ArrowSpriteRenderer.NoteType.EXPLOSION_TAIL
+            )
+            drawSprite(
+                drawRect,
+                selectedSkin.tapsEffect[j],
+                j,
+                ArrowSpriteRenderer.NoteType.TAP_EFFECT
+            )
         }
     }
 
-    private fun drawNotes(listRow: ArrayList<GameRow>) {
+    private fun drawNotes(listRow: ArrayList<GameRow>, skinType: SkinType = SkinType.SELECTED) {
         for (gameRow in listRow) {
             val notes = gameRow.notes
             if (notes != null) {
                 for (count in notes.indices) {
                     val note = notes[count]
                     if (note.type != CommonSteps.NOTE_EMPTY) {
-                        drawSingleNote(note, gameRow, count)
+                        drawSingleNote(note, gameRow, count, skinType)
                     }
                 }
             }
         }
     }
 
-    private fun drawSingleNote(note: Note, gameRow: GameRow, columnIndex: Int) {
-        val selectedSkin = noteSkins[SkinType.SELECTED.ordinal] ?: return
+    private fun drawSingleNote(
+        note: Note,
+        gameRow: GameRow,
+        columnIndex: Int,
+        skinType: SkinType = SkinType.SELECTED
+    ) {
+        val selectedSkin = noteSkins[skinType.ordinal] ?: return
         val startNoteX = posInitialX + sizeNote * columnIndex
         val endNoteX = startNoteX + scaledNoteSize
 
@@ -206,7 +231,12 @@ class StepsDrawerGL(
                     endNoteX,
                     gameRow.getPosY() + scaledNoteSize
                 )
-                drawSprite(drawRect, selectedSkin.arrows[columnIndex], columnIndex)
+                drawSprite(
+                    drawRect,
+                    selectedSkin.arrows[columnIndex],
+                    columnIndex,
+                    ArrowSpriteRenderer.NoteType.NORMAL
+                )
             }
 
             CommonSteps.NOTE_LONG_START -> {
@@ -224,7 +254,12 @@ class StepsDrawerGL(
                     endNoteX,
                     gameRow.getPosY() + scaledNoteSize
                 )
-                drawSprite(drawRect, selectedSkin.mine, columnIndex)
+                drawSprite(
+                    drawRect,
+                    selectedSkin.mine,
+                    columnIndex,
+                    ArrowSpriteRenderer.NoteType.MINE
+                )
             }
         }
     }
@@ -252,17 +287,32 @@ class StepsDrawerGL(
 
         // Draw body
         drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        drawSprite(drawRect, skin.longs[columnIndex], columnIndex)
+        drawSprite(
+            drawRect,
+            skin.longs[columnIndex],
+            columnIndex,
+            ArrowSpriteRenderer.NoteType.LONG_BODY
+        )
 
         // Draw tail (if end exists)
         if (endYRaw != NOT_DRAWABLE) {
             drawRect.set(startNoteX, endY, endNoteX, tailBottom)
-            drawSprite(drawRect, skin.tails[columnIndex], columnIndex)
+            drawSprite(
+                drawRect,
+                skin.tails[columnIndex],
+                columnIndex,
+                ArrowSpriteRenderer.NoteType.LONG_TAIL
+            )
         }
 
         // Draw head
         drawRect.set(startNoteX, startY, endNoteX, headBottom)
-        drawSprite(drawRect, skin.arrows[columnIndex], columnIndex)
+        drawSprite(
+            drawRect,
+            skin.arrows[columnIndex],
+            columnIndex,
+            ArrowSpriteRenderer.NoteType.LONG_HEAD
+        )
     }
 
     private fun drawLongNoteBody(
@@ -295,25 +345,50 @@ class StepsDrawerGL(
 
         // Draw body
         drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        drawSprite(drawRect, skin.longs[columnIndex], columnIndex)
+        drawSprite(
+            drawRect,
+            skin.longs[columnIndex],
+            columnIndex,
+            ArrowSpriteRenderer.NoteType.LONG_BODY
+        )
 
         // Draw tail (if end exists)
         if (endYRaw != NOT_DRAWABLE) {
             drawRect.set(startNoteX, endY, endNoteX, tailBottom)
-            drawSprite(drawRect, skin.tails[columnIndex], columnIndex)
+            drawSprite(
+                drawRect,
+                skin.tails[columnIndex],
+                columnIndex,
+                ArrowSpriteRenderer.NoteType.LONG_TAIL
+            )
         }
 
         // Draw head
         drawRect.set(startNoteX, startY, endNoteX, headBottom)
-        drawSprite(drawRect, skin.arrows[columnIndex], columnIndex)
+        drawSprite(
+            drawRect,
+            skin.arrows[columnIndex],
+            columnIndex,
+            ArrowSpriteRenderer.NoteType.LONG_HEAD
+        )
     }
 
-    private fun drawSprite(rect: Rect, sprite: Any?, arrowType: Int = 0) {
+    private fun drawSprite(
+        rect: Rect,
+        sprite: Any?,
+        arrowType: Int = 0,
+        noteType: ArrowSpriteRenderer.NoteType = ArrowSpriteRenderer.NoteType.NORMAL
+    ) {
         if (sprite != null && arrowRenderer != null) {
+            // Convert sprite drawing call to arrow instruction using actual calculated sizes
             val gameArrow = ArrowSpriteRenderer.GameArrowData(
                 x = rect.left.toFloat(),
                 y = rect.top.toFloat(),
-                arrowType = arrowType % 5,
+                width = rect.width().toFloat(),  // Use actual width from StepsDrawerGL calculations
+                height = rect.height()
+                    .toFloat(), // Use actual height from StepsDrawerGL calculations
+                arrowType = arrowType % 5, // Ensure it's 0-4
+                noteType = noteType,
                 rotation = 0f
             )
             gameArrows.add(gameArrow)
@@ -368,7 +443,7 @@ class StepsDrawerGL(
 
     @Deprecated("Use drawCommand instead")
     override fun draw(rect: Rect) {
-        drawSprite(rect, null, 0)
+        drawSprite(rect, null, 0, ArrowSpriteRenderer.NoteType.NORMAL)
     }
 
     @Deprecated("Use update(deltaMs) instead")
@@ -415,7 +490,7 @@ class StepsDrawerGL(
         // Draw arrows for each step
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.arrows[i], i)
+            drawSprite(drawRect, skin.arrows[i], i, ArrowSpriteRenderer.NoteType.NORMAL)
             currentX += columnWidth
         }
 
@@ -423,48 +498,53 @@ class StepsDrawerGL(
         currentX += spacing
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.receptors[i], i)
+            drawSprite(drawRect, skin.receptors[i], i, ArrowSpriteRenderer.NoteType.RECEPTOR)
             currentX += columnWidth
         }
 
         currentX += spacing
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.longs[i], i)
+            drawSprite(drawRect, skin.longs[i], i, ArrowSpriteRenderer.NoteType.LONG_BODY)
             currentX += columnWidth
         }
 
         currentX += spacing
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.tails[i], i)
+            drawSprite(drawRect, skin.tails[i], i, ArrowSpriteRenderer.NoteType.LONG_TAIL)
             currentX += columnWidth
         }
 
         currentX += spacing
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.explotions[i], i)
+            drawSprite(drawRect, skin.explotions[i], i, ArrowSpriteRenderer.NoteType.EXPLOSION)
             currentX += columnWidth
         }
 
         currentX += spacing
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.explotionTails[i], i)
+            drawSprite(
+                drawRect,
+                skin.explotionTails[i],
+                i,
+                ArrowSpriteRenderer.NoteType.EXPLOSION_TAIL
+            )
             currentX += columnWidth
         }
 
         currentX += spacing
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.tapsEffect[i], i)
+            drawSprite(drawRect, skin.tapsEffect[i], i, ArrowSpriteRenderer.NoteType.TAP_EFFECT)
             currentX += columnWidth
         }
 
         currentX += spacing
         drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-        drawSprite(drawRect, skin.mine, 0)
+        drawSprite(drawRect, skin.mine, 0, ArrowSpriteRenderer.NoteType.MINE)
     }
 
     fun pruebaGrid() {
@@ -481,20 +561,20 @@ class StepsDrawerGL(
         for (skinType in SkinType.values()) {
             val skin = noteSkins[skinType.ordinal]
             if (skin != null) {
-                val allSprites = mutableListOf<Any>()
+                val allSprites = mutableListOf<Pair<Any, ArrowSpriteRenderer.NoteType>>()
 
-                skin.arrows.forEach { allSprites.add(it) }
-                skin.receptors.forEach { allSprites.add(it) }
-                skin.longs.forEach { allSprites.add(it) }
-                skin.tails.forEach { allSprites.add(it) }
-                skin.explotions.forEach { allSprites.add(it) }
-                skin.explotionTails.forEach { allSprites.add(it) }
-                skin.tapsEffect.forEach { allSprites.add(it) }
-                allSprites.add(skin.mine)
+                skin.arrows.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.NORMAL) }
+                skin.receptors.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.RECEPTOR) }
+                skin.longs.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.LONG_BODY) }
+                skin.tails.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.LONG_TAIL) }
+                skin.explotions.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.EXPLOSION) }
+                skin.explotionTails.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.EXPLOSION_TAIL) }
+                skin.tapsEffect.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.TAP_EFFECT) }
+                allSprites.add(skin.mine to ArrowSpriteRenderer.NoteType.MINE)
 
-                for (sprite in allSprites) {
+                for ((sprite, noteType) in allSprites) {
                     drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-                    drawSprite(drawRect, sprite, 0)
+                    drawSprite(drawRect, sprite, 0, noteType)
 
                     itemCount++
                     if (itemCount % columnsPerRow == 0) {
@@ -521,7 +601,7 @@ class StepsDrawerGL(
         // Draw arrows
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.arrows[i], i)
+            drawSprite(drawRect, skin.arrows[i], i, ArrowSpriteRenderer.NoteType.NORMAL)
             currentX += spriteSize + spacing
         }
 
@@ -532,7 +612,7 @@ class StepsDrawerGL(
         // Draw receptors
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.receptors[i], i)
+            drawSprite(drawRect, skin.receptors[i], i, ArrowSpriteRenderer.NoteType.RECEPTOR)
             currentX += spriteSize + spacing
         }
 
@@ -543,7 +623,7 @@ class StepsDrawerGL(
         // Draw effects
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.explotions[i], i)
+            drawSprite(drawRect, skin.explotions[i], i, ArrowSpriteRenderer.NoteType.EXPLOSION)
             currentX += spriteSize + spacing
         }
     }

@@ -48,7 +48,10 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         var velocityX: Float = 0f,
         var velocityY: Float = 0f,
         var animationTime: Long = 0L,
-        var rotation: Float = 0f
+        var rotation: Float = 0f,
+        var width: Float = 0f,
+        var height: Float = 0f,
+        var noteType: NoteType = NoteType.NORMAL
     ) {
         fun getCurrentTextureId(batchRenderer: SpriteGLRenderer): Int {
             return if (baseTextureIds.isNotEmpty()) {
@@ -214,7 +217,10 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
                     0f, // velocityX - no movement for game arrows
                     0f, // velocityY - no movement for game arrows
                     0L, // animationTime
-                    gameArrow.rotation
+                    gameArrow.rotation,
+                    gameArrow.width,
+                    gameArrow.height,
+                    gameArrow.noteType
                 )
 
                 arrows.add(arrowData)
@@ -231,9 +237,25 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     data class GameArrowData(
         val x: Float,
         val y: Float,
+        val width: Float,  // Use actual size from StepsDrawerGL
+        val height: Float, // Use actual size from StepsDrawerGL
         val arrowType: Int, // 0-4 for different arrow types
+        val noteType: NoteType = NoteType.NORMAL, // Type of note for different sprites
         val rotation: Float = 0f
     )
+
+    // Enum for different note types
+    enum class NoteType {
+        NORMAL,      // Regular arrows
+        RECEPTOR,    // Receptors at bottom
+        LONG_HEAD,   // Head of long note
+        LONG_BODY,   // Body of long note
+        LONG_TAIL,   // Tail of long note
+        MINE,        // Mine note
+        EXPLOSION,   // Explosion effect
+        EXPLOSION_TAIL, // Explosion tail effect
+        TAP_EFFECT   // Tap effect
+    }
 
     private fun generateStressTestArrows() {
         // This method is now unused - kept for reference
@@ -294,10 +316,10 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         arrows.forEach { arrow ->
             // Usar la función optimizada para crear la matriz de transformación
             val model = batchRenderer.createTransformMatrix(
-                arrow.x + arrowSize / 2f,
-                arrow.y + arrowSize / 2f,
-                arrowSize.toFloat() / 2f,
-                arrowSize.toFloat() / 2f,
+                arrow.x + arrow.width / 2f,
+                arrow.y + arrow.height / 2f,
+                arrow.width / 2f,
+                arrow.height / 2f,
                 arrow.rotation
             )
 
@@ -344,16 +366,16 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
                 if (arrow.x < 0) {
                     arrow.x = 0f
                     arrow.velocityX = -arrow.velocityX
-                } else if (arrow.x + arrowSize > screenWidth) {
-                    arrow.x = (screenWidth - arrowSize).toFloat()
+                } else if (arrow.x + arrow.width > screenWidth) {
+                    arrow.x = (screenWidth - arrow.width).toFloat()
                     arrow.velocityX = -arrow.velocityX
                 }
 
                 if (arrow.y < 0) {
                     arrow.y = 0f
                     arrow.velocityY = -arrow.velocityY
-                } else if (arrow.y + arrowSize > screenHeight) {
-                    arrow.y = (screenHeight - arrowSize).toFloat()
+                } else if (arrow.y + arrow.height > screenHeight) {
+                    arrow.y = (screenHeight - arrow.height).toFloat()
                     arrow.velocityY = -arrow.velocityY
                 }
             }
