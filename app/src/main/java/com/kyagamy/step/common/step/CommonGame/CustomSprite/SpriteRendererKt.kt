@@ -188,6 +188,26 @@ class SpriteRendererKt : ISpriteRenderer {
         }
     }
 
+    override fun drawCommand(
+        textureId: Int,
+        model: FloatArray,
+        uvOff: FloatArray
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override fun update(deltaMs: Long) {
+        TODO("Not yet implemented")
+    }
+
+    override fun flushBatch() {
+        TODO("Not yet implemented")
+    }
+
+    override fun clearCommands() {
+        TODO("Not yet implemented")
+    }
+
     // ISpriteRenderer implementation
     override fun draw(rect: Rect) {
         if (useCanvas) {

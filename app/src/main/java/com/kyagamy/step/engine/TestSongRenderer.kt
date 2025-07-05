@@ -378,6 +378,26 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
     }
 
+    override fun drawCommand(
+        textureId: Int,
+        model: FloatArray,
+        uvOff: FloatArray
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override fun update(deltaMs: Long) {
+        TODO("Not yet implemented")
+    }
+
+    override fun flushBatch() {
+        TODO("Not yet implemented")
+    }
+
+    override fun clearCommands() {
+        TODO("Not yet implemented")
+    }
+
     // ISpriteRenderer interface methods
     override fun draw(rect: android.graphics.Rect) {
         // This method is required by ISpriteRenderer but our rendering is handled in onDrawFrame

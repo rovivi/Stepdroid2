@@ -1,4 +1,4 @@
-package com.kyagamy.step.common.step.CommonGame.CustomSprite;
+package com.kyagamy.step.common.step.commonGame.customSprite;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,8 +11,9 @@ import android.graphics.Shader;
 import com.kyagamy.step.engine.ISpriteRenderer;
 import com.kyagamy.step.engine.SpriteGLRenderer;
 
-
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -37,6 +38,21 @@ public class SpriteReader implements ISpriteRenderer {
     private Canvas currentCanvas;
     private SpriteGLRenderer glRenderer;
 
+    // Simple command storage without DrawCommand class
+    private ArrayList<CommandData> drawCommands = new ArrayList<>();
+
+    // Simple data holder for draw commands
+    private static class CommandData {
+        int textureId;
+        float[] model;
+        float[] uvOff;
+
+        CommandData(int textureId, float[] model, float[] uvOff) {
+            this.textureId = textureId;
+            this.model = model.clone();
+            this.uvOff = uvOff.clone();
+        }
+    }
 
     /**
      * This constructor request bitmap array for each frame in the sprite animation
@@ -49,7 +65,6 @@ public class SpriteReader implements ISpriteRenderer {
         frameTime = timeFrame / frames.length;
     }
 
-
     /***
      * Create sprite since a long bitmap resource and create square whit the parameter size X and size Y
      * @param sprite bitmap of sprite image
@@ -60,7 +75,6 @@ public class SpriteReader implements ISpriteRenderer {
     public SpriteReader(Bitmap sprite, int sizeX, int sizeY, float timeFrame) {
         paint = new Paint();
         painShader = new Paint();
-
 
         painShader.setAntiAlias(true);
         painShader.setDither(true);
@@ -82,17 +96,7 @@ public class SpriteReader implements ISpriteRenderer {
         }
         this.frameIndex = 0;
         frameTime = timeFrame / frames.length;
-
-
-
-
-
-       // paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
-      //  paint.setShader(new LinearGradient(0, 10, 0, 20,  0xFF000000, 0x00000000, Shader.TileMode.CLAMP));
-
     }
-
-
 
     public void play() {
         isPlaying = true;
@@ -118,20 +122,17 @@ public class SpriteReader implements ISpriteRenderer {
             canvas.drawBitmap(frames[frameIndex], null, destiny, paint);
     }
 
-    public void opacityDraw(Canvas canvas, Rect destiny,int transparency) {
-        if (transparency== 0)
-            draw(canvas,destiny);
-        else{
-            paint.setAlpha((int) (transparency*2.55));
-            draw(canvas,destiny);
+    public void opacityDraw(Canvas canvas, Rect destiny, int transparency) {
+        if (transparency == 0)
+            draw(canvas, destiny);
+        else {
+            paint.setAlpha((int) (transparency * 2.55));
+            draw(canvas, destiny);
             paint.setAlpha(0);
         }
-
     }
 
-
     public void drawWhitShader(Canvas canvas, Rect destino, int percent) {
-
         Bitmap backing = Bitmap.createBitmap(frames[frameIndex].getWidth(), frames[frameIndex].getHeight(), Bitmap.Config.ARGB_8888);
         Canvas offscreen = new Canvas(backing);
         offscreen.drawBitmap(frames[frameIndex], 0, 0, null);
@@ -140,9 +141,7 @@ public class SpriteReader implements ISpriteRenderer {
         paint2.setShader(new LinearGradient(0, 0, 0, frames[0].getHeight(), 0x15000000, 0x00000000, Shader.TileMode.CLAMP));
         offscreen.drawRect(0, 0, frames[0].getWidth(), frames[0].getHeight(), paint2);
         canvas.drawBitmap(backing, null, destino, paint2);
-
     }
-
 
     /**
      * Draw only a one time the sprite
@@ -203,6 +202,42 @@ public class SpriteReader implements ISpriteRenderer {
     public void setGlRenderer(SpriteGLRenderer renderer) {
         this.glRenderer = renderer;
     }
+
+    @Override
+    public void drawCommand(int textureId, float @NotNull [] model, float @NotNull [] uvOff) {
+        drawCommands.add(new CommandData(textureId, model, uvOff));
+    }
+
+    @Override
+    public void update(long deltaMs) {
+        updateFrame();
+        if (!useCanvas && glRenderer != null) {
+            glRenderer.update(deltaMs);
+        }
+    }
+
+    @Override
+    public void flushBatch() {
+        if (glRenderer != null) {
+            for (CommandData command : drawCommands) {
+                glRenderer.drawCommand(command.textureId, command.model, command.uvOff);
+            }
+            glRenderer.flushBatch();
+        }
+        drawCommands.clear();
+    }
+
+    @Override
+    public void clearCommands() {
+        drawCommands.clear();
+    }
+
+    public int getFrameIndex() {
+        return frameIndex;
+    }
+
+    public Bitmap[] getFrames() {
+        return frames;
+    }
     // endregion
 }
-

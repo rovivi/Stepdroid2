@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Rect
+import android.opengl.GLES20
 import android.opengl.GLSurfaceView
+import android.opengl.Matrix
 import com.kyagamy.step.R
 import com.kyagamy.step.common.Common
 import javax.microedition.khronos.egl.EGLConfig
@@ -18,7 +20,7 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     private var screenHeight = 0
 
     // Configuración de la prueba de estrés
-    private val numberOfArrows = 1
+    private val numberOfArrows = 3000
     private val arrowSize = 80 // Tamaño más pequeño para las flechas
 
     // FPS Counter
@@ -30,23 +32,36 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     // Callback para enviar FPS al Activity
     var fpsCallback: ((Float, Int) -> Unit)? = null
 
+    // Optimización: usar un solo renderer para todo el batching
+    private lateinit var batchRenderer: SpriteGLRenderer
+    private var lastUpdateTime = System.currentTimeMillis()
+
     data class ArrowData(
-        val rect: Rect,
+        var x: Float,
+        var y: Float,
         val spriteIndex: Int,
         var velocityX: Float = 0f,
-        var velocityY: Float = 0f
+        var velocityY: Float = 0f,
+        var animationTime: Long = 0L
     )
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         // Configurar transparencia
-        gl?.glEnable(GL10.GL_BLEND)
-        gl?.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA)
-        gl?.glClearColor(0.0f, 0.0f, 0.0f, 0.0f) // Fondo transparente
+        GLES20.glEnable(GLES20.GL_BLEND)
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f) // Fondo transparente
 
         // Cargar sprites de todos los tipos de flechas (5 tipos)
         loadAllArrowSprites()
+
+        // Inicializar cada sprite renderer
         arrowSprites.forEach { sprite ->
             sprite.onSurfaceCreated(gl, config)
+        }
+
+        // Usar el primer sprite como batch renderer principal
+        if (arrowSprites.isNotEmpty()) {
+            batchRenderer = arrowSprites[0]
         }
     }
 
@@ -111,7 +126,6 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         return frames
     }
 
-
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         arrowSprites.forEach { sprite ->
             sprite.onSurfaceChanged(gl, width, height)
@@ -120,7 +134,7 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         screenWidth = width
         screenHeight = height
 
-        // Generar las 1000 flechas
+        // Generar las flechas para el stress test
         generateStressTestArrows()
     }
 
@@ -128,38 +142,77 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         arrows.clear()
         if (screenWidth > 0 && screenHeight > 0 && arrowSprites.isNotEmpty()) {
             repeat(numberOfArrows) {
-                val left = Random.nextInt(0, screenWidth - arrowSize)
-                val top = Random.nextInt(0, screenHeight - arrowSize)
-                val rect = Rect(left, top, left + arrowSize, top + arrowSize)
+                val x = Random.nextFloat() * (screenWidth - arrowSize)
+                val y = Random.nextFloat() * (screenHeight - arrowSize)
                 val spriteIndex = Random.nextInt(arrowSprites.size)
 
                 // Velocidades aleatorias para movimiento
                 val velocityX = Random.nextFloat() * 4f - 2f // -2 a 2
                 val velocityY = Random.nextFloat() * 4f - 2f // -2 a 2
 
-                arrows.add(ArrowData(rect, spriteIndex, velocityX, velocityY))
+                arrows.add(ArrowData(x, y, spriteIndex, velocityX, velocityY))
             }
         }
     }
 
     override fun onDrawFrame(gl: GL10?) {
         // Limpiar con transparencia
-        gl?.glClear(GL10.GL_COLOR_BUFFER_BIT or GL10.GL_DEPTH_BUFFER_BIT)
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
 
         // Actualizar contador de FPS
         updateFpsCounter()
 
-        // Actualizar posiciones de las flechas
-        updateArrowPositions()
+        // Actualizar posiciones y animaciones
+        val currentTime = System.currentTimeMillis()
+        val deltaTime = currentTime - lastUpdateTime
+        lastUpdateTime = currentTime
 
-        // Renderizar todas las flechas
+        updateArrowPositions()
+        updateAnimations(deltaTime)
+
+        // Usar el sistema de batching optimizado
+        renderArrowsBatched()
+    }
+
+    private fun updateAnimations(deltaTime: Long) {
+        // Actualizar animaciones de todos los sprites
+        arrowSprites.forEach { sprite ->
+            sprite.update(deltaTime)
+        }
+
+        // Actualizar tiempo de animación de cada flecha
+        arrows.forEach { arrow ->
+            arrow.animationTime += deltaTime
+        }
+    }
+
+    private fun renderArrowsBatched() {
+        // Limpiar comandos previos
+        arrowSprites.forEach { it.clearCommands() }
+
+        // Preparar comandos de dibujo para cada flecha
         arrows.forEach { arrow ->
             if (arrow.spriteIndex < arrowSprites.size) {
                 val sprite = arrowSprites[arrow.spriteIndex]
-                sprite.draw(arrow.rect)
-                sprite.onDrawFrame(gl)
-                sprite.update()
+                val textureId = sprite.getCurrentTextureId()
+
+                // Crear matriz modelo
+                val model = FloatArray(16)
+                Matrix.setIdentityM(model, 0)
+                Matrix.translateM(model, 0, arrow.x, arrow.y, 0f)
+                Matrix.scaleM(model, 0, arrowSize.toFloat(), arrowSize.toFloat(), 1f)
+
+                // UV offset por defecto (toda la textura)
+                val uvOff = floatArrayOf(0f, 0f, 1f, 1f)
+
+                // Encolar comando de dibujo
+                sprite.drawCommand(textureId, model, uvOff)
             }
+        }
+
+        // Ejecutar todos los lotes de dibujo
+        arrowSprites.forEach { sprite ->
+            sprite.flushBatch()
         }
     }
 
@@ -182,29 +235,23 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
     private fun updateArrowPositions() {
         arrows.forEach { arrow ->
             // Mover la flecha
-            arrow.rect.offset(arrow.velocityX.toInt(), arrow.velocityY.toInt())
+            arrow.x += arrow.velocityX
+            arrow.y += arrow.velocityY
 
             // Rebotar en los bordes
-            if (arrow.rect.left <= 0 || arrow.rect.right >= screenWidth) {
+            if (arrow.x <= 0 || arrow.x >= screenWidth - arrowSize) {
                 arrow.velocityX = -arrow.velocityX
                 // Asegurar que esté dentro de los límites
-                if (arrow.rect.left < 0) {
-                    arrow.rect.offsetTo(0, arrow.rect.top)
-                }
-                if (arrow.rect.right > screenWidth) {
-                    arrow.rect.offsetTo(screenWidth - arrowSize, arrow.rect.top)
-                }
+                if (arrow.x < 0) arrow.x = 0f
+                if (arrow.x > screenWidth - arrowSize) arrow.x = (screenWidth - arrowSize).toFloat()
             }
 
-            if (arrow.rect.top <= 0 || arrow.rect.bottom >= screenHeight) {
+            if (arrow.y <= 0 || arrow.y >= screenHeight - arrowSize) {
                 arrow.velocityY = -arrow.velocityY
                 // Asegurar que esté dentro de los límites
-                if (arrow.rect.top < 0) {
-                    arrow.rect.offsetTo(arrow.rect.left, 0)
-                }
-                if (arrow.rect.bottom > screenHeight) {
-                    arrow.rect.offsetTo(arrow.rect.left, screenHeight - arrowSize)
-                }
+                if (arrow.y < 0) arrow.y = 0f
+                if (arrow.y > screenHeight - arrowSize) arrow.y =
+                    (screenHeight - arrowSize).toFloat()
             }
         }
     }

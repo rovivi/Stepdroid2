@@ -5,8 +5,8 @@ import android.graphics.Point
 import android.graphics.Rect
 import android.opengl.GLES20
 import android.opengl.GLES30
-import android.os.Build
 import android.opengl.Matrix
+import android.os.Build
 import com.kyagamy.step.common.step.CommonSteps
 import com.kyagamy.step.common.step.Game.GameRow
 import com.kyagamy.step.common.step.Game.NOT_DRAWABLE
@@ -360,7 +360,10 @@ class StepsDrawerGL(
     }
 
     fun drawGame(listRow: ArrayList<GameRow>) {
-        if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "drawGame called with ${listRow.size} rows")
+        if (DEBUG_LOGS) android.util.Log.v(
+            "StepsDrawerGL",
+            "drawGame called with ${listRow.size} rows"
+        )
         if (program == 0) {
             android.util.Log.e("StepsDrawerGL", "drawGame: OpenGL program is 0, cannot draw")
             return
@@ -371,7 +374,10 @@ class StepsDrawerGL(
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
 
         resetLastPositionDraw()
-        if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "drawGame: Drawing receptors and effects")
+        if (DEBUG_LOGS) android.util.Log.v(
+            "StepsDrawerGL",
+            "drawGame: Drawing receptors and effects"
+        )
         drawReceptorsAndEffects()
         if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "drawGame: Drawing notes")
         drawNotes(listRow)
@@ -386,7 +392,10 @@ class StepsDrawerGL(
                 "StepsDrawerGL",
                 "drawReceptorsAndEffects: selectedSkin is ${if (selectedSkin != null) "available" else "null"}"
             )
-            android.util.Log.v("StepsDrawerGL", "drawReceptorsAndEffects: Drawing ${steps} receptors")
+            android.util.Log.v(
+                "StepsDrawerGL",
+                "drawReceptorsAndEffects: Drawing ${steps} receptors"
+            )
         }
 
         for (j in 0 until steps) {
@@ -395,7 +404,10 @@ class StepsDrawerGL(
 
             // Draw receptors
             drawRect.set(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize)
-            if (DEBUG_LOGS) android.util.Log.v("StepsDrawerGL", "Drawing receptor $j at rect: $drawRect")
+            if (DEBUG_LOGS) android.util.Log.v(
+                "StepsDrawerGL",
+                "Drawing receptor $j at rect: $drawRect"
+            )
             queueSprite(drawRect, selectedSkin.receptors[j])
 
             // Draw effects
@@ -622,27 +634,7 @@ class StepsDrawerGL(
                     id
                 }
             }
-            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
-                if (DEBUG_LOGS) android.util.Log.v(
-                    "StepsDrawerGL",
-                    "queueSprite: Using SpriteReader"
-                )
-                textureCache[sprite] ?: run {
-                    val adapter = SpriteGLAdapter(sprite)
-                    adapter.loadTexture()
-                    val id = adapter.getTextureId()
-                    if (id == 0) {
-                        if (DEBUG_LOGS) android.util.Log.w(
-                            "StepsDrawerGL",
-                            "SpriteReader texture loading failed, using default"
-                        )
-                        createDefaultTexture()
-                    } else {
-                        textureCache[sprite] = id
-                        id
-                    }
-                }
-            }
+
             else -> {
                 if (DEBUG_LOGS) android.util.Log.v(
                     "StepsDrawerGL",
@@ -679,6 +671,26 @@ class StepsDrawerGL(
 
         // Reset current texture to force rebinding next time
         currentTextureId = -1
+    }
+
+    override fun drawCommand(
+        textureId: Int,
+        model: FloatArray,
+        uvOff: FloatArray
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override fun update(deltaMs: Long) {
+        TODO("Not yet implemented")
+    }
+
+    override fun flushBatch() {
+        TODO("Not yet implemented")
+    }
+
+    override fun clearCommands() {
+        TODO("Not yet implemented")
     }
 
     override fun draw(rect: Rect) {
@@ -824,7 +836,10 @@ class StepsDrawerGL(
             GLES20.GL_CLAMP_TO_EDGE
         )
 
-        if (DEBUG_LOGS) android.util.Log.d("StepsDrawerGL", "Created default texture with ID: $textureId")
+        if (DEBUG_LOGS) android.util.Log.d(
+            "StepsDrawerGL",
+            "Created default texture with ID: $textureId"
+        )
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
 
@@ -1131,22 +1146,6 @@ class StepsDrawerGL(
                 GLES20.glUniform1i(textureHandle, 0)
             }
 
-            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
-                // Convert SpriteReader to SpriteGLAdapter and use its texture
-                val adapter = SpriteGLAdapter(sprite)
-                adapter.loadTexture()
-                if (adapter.getTextureId() != 0) {
-                    adapter.bindTexture()
-                    GLES20.glUniform1i(textureHandle, 0)
-                } else {
-                    // Fallback to default texture if loading fails
-                    val defaultTexture = createDefaultTexture()
-                    GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
-                    GLES20.glUniform1i(textureHandle, 0)
-                }
-            }
-
             else -> {
                 // For sprites that don't have GL texture support yet,
                 // create and bind a default colored texture
@@ -1164,10 +1163,6 @@ class StepsDrawerGL(
         when (sprite) {
             is SpriteGLAdapter -> {
                 sprite.unbindTexture()
-            }
-
-            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
             }
 
             else -> {

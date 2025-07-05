@@ -333,6 +333,26 @@ class GamePlayGLRenderer(
         }
     }
 
+    override fun drawCommand(
+        textureId: Int,
+        model: FloatArray,
+        uvOff: FloatArray
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override fun update(deltaMs: Long) {
+        TODO("Not yet implemented")
+    }
+
+    override fun flushBatch() {
+        TODO("Not yet implemented")
+    }
+
+    override fun clearCommands() {
+        TODO("Not yet implemented")
+    }
+
     // ISpriteRenderer implementation (no-op wrappers)
     override fun draw(rect: android.graphics.Rect) {
         // Rendering is handled in onDrawFrame
