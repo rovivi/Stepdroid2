@@ -33,7 +33,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
-import com.kyagamy.step.views.gameplayactivity.GamePlayActivity
+import com.kyagamy.step.views.TestGLPlayerActivity
 import com.kyagamy.step.R
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.databinding.FragmentFragmentStartMenuBinding
@@ -201,7 +201,7 @@ import java.util.*
         private fun onLevelClick(level: Level) {
             lifecycleScope.launch {
                 try {
-                    val i = Intent(requireActivity(), GamePlayActivity::class.java)
+                    val i = Intent(requireActivity(), TestGLPlayerActivity::class.java)
 
                     releaseMediaPlayer()
                     i.putExtra("ssc", currentSong?.PATH_File)

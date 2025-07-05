@@ -430,7 +430,7 @@ fun StartScreen(viewModel: StartViewModel) {
             color = MaterialTheme.colorScheme.primary
         ) {
             val songIdsWithHighLevel = allLevels
-                .filter { level -> level.METER > 19 }
+                .filter { level -> level.METER > 23 }
                 .map { it.song_fkid }
                 .toSet()
 

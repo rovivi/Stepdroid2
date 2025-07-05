@@ -42,7 +42,7 @@ class GamePlayGLRenderer(
 
     private val drawList = ArrayList<GameRow>()
     private var speed = 0
-    private val autoVelocity = 10//ParamsSong.av
+    private val autoVelocity = ParamsSong.av
 
     // FPS tracking
     private var frameCount = 0
