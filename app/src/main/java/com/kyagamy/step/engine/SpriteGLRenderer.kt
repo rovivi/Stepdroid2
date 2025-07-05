@@ -65,10 +65,10 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
         )
 
         val texCoords = floatArrayOf(
-            0f, 0f,  // Top left
-            0f, 1f,  // Bottom left
-            1f, 0f,  // Top right
-            1f, 1f   // Bottom right
+            0f, 1f,  // Top left - flipped Y
+            0f, 0f,  // Bottom left - flipped Y
+            1f, 1f,  // Top right - flipped Y
+            1f, 0f   // Bottom right - flipped Y
         )
 
         val indices = shortArrayOf(0, 1, 2, 1, 3, 2)
