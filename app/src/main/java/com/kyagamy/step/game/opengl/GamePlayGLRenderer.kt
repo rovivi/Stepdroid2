@@ -14,6 +14,7 @@ import com.kyagamy.step.common.step.Game.GameRow
 import com.kyagamy.step.engine.ArrowSpriteRenderer
 import com.kyagamy.step.engine.ISpriteRenderer
 import com.kyagamy.step.engine.StepsDrawerGL
+import com.kyagamy.step.engine.UIRenderer
 import com.kyagamy.step.engine.UVCoords
 import com.kyagamy.step.game.newplayer.*
 import game.StepObject
@@ -38,6 +39,7 @@ class GamePlayGLRenderer(
     private var gameState: GameState? = null
     private var stepsDrawer: StepsDrawerGL? = null
     private var arrowRenderer: ArrowSpriteRenderer? = null
+    private var uiRenderer: UIRenderer? = null
     private var bar: LifeBar? = null
     private var combo: Combo? = null
     private var bgPlayer: BgPlayer? = null
@@ -120,10 +122,17 @@ class GamePlayGLRenderer(
         stepsDrawer = StepsDrawerGL(context, stepData.stepType, "16:9", false, screenSize)
         arrowRenderer = ArrowSpriteRenderer(context)
         stepsDrawer?.setArrowRenderer(arrowRenderer!!)
-        // Regular StepsDrawer is required only for lifebar/combo compatibility
+
+        // Regular StepsDrawer is required for lifebar/combo compatibility
         val regularStepsDrawer = StepsDrawer(context, stepData.stepType, "16:9", false, screenSize)
+
+        // Initialize UIRenderer instead of individual components
+        uiRenderer = UIRenderer(context, regularStepsDrawer)
+
+        // Keep these for backward compatibility (some parts of GameState might need them)
         bar = LifeBar(context, regularStepsDrawer)
         combo = Combo(context, regularStepsDrawer)
+
         bgPlayer = BgPlayer(stepData.path, stepData.getBgChanges(), videoView, context, gameState!!.BPM)
 
         // Set up audio exactly like GamePlayNew
@@ -235,15 +244,17 @@ class GamePlayGLRenderer(
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         setupGame()
-        // Initialize ArrowSpriteRenderer
+        // Initialize renderers
         arrowRenderer?.onSurfaceCreated(gl, config)
+        uiRenderer?.onSurfaceCreated(gl, config)
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
         stepsDrawer?.setViewport(width, height)
-        // Initialize ArrowSpriteRenderer viewport
+        // Initialize renderers viewport
         arrowRenderer?.onSurfaceChanged(gl, width, height)
+        uiRenderer?.onSurfaceChanged(gl, width, height)
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -262,6 +273,9 @@ class GamePlayGLRenderer(
         // Draw arrow sprites using ArrowSpriteRenderer
         arrowRenderer?.onDrawFrame(gl)
 
+        // Draw UI elements using UIRenderer
+        uiRenderer?.onDrawFrame(gl)
+
         if (gameState != null && gameState!!.currentElement + 1 >= gameState!!.steps.size) {
             stop()
         }
@@ -279,11 +293,51 @@ class GamePlayGLRenderer(
 
     private fun updateGame() {
         gameState?.update()
+
+        // Update UI renderer instead of individual components
+        uiRenderer?.let { ui ->
+            // Sync UI state with game state
+            bar?.let { b ->
+                // Transfer life state to UI renderer
+                if (ui.getLife() != b.life) {
+                    // Update UI life to match game life
+                    val lifeDiff = b.life - ui.getLife()
+                    if (lifeDiff > 0) {
+                        ui.updateLife(Combo.VALUE_PERFECT, 1)
+                    } else if (lifeDiff < 0) {
+                        ui.updateLife(Combo.VALUE_MISS, 1)
+                    }
+                }
+            }
+
+            combo?.let { c ->
+                // Transfer combo state to UI renderer if needed
+                if (c.positionJudge != 0.toShort()) {
+                    ui.setComboUpdate(c.positionJudge)
+                    // Reset the judge position to avoid repeated updates
+                    c.positionJudge = 0
+                }
+            }
+        }
+
+        // Keep original components for compatibility
         combo?.update()
         bgPlayer?.update(gameState!!.currentBeat)
         bar?.update()
         syncAudioVideo()
     }
+
+    // Method to manually trigger UI updates from external game logic
+    fun updateUIFromGameState(typeTap: Short, comboValue: Int) {
+        uiRenderer?.let { ui ->
+            ui.updateLife(typeTap, comboValue)
+            ui.setComboUpdate(typeTap)
+        }
+    }
+
+    // Getters for UI state
+    fun getUILife(): Float = uiRenderer?.getLife() ?: 50f
+    fun getUICombo(): Int = uiRenderer?.getCombo() ?: 0
 
     private fun syncAudioVideo() {
         val diff = (gameState!!.currentSecond / 100.0) - gameState!!.offset -
