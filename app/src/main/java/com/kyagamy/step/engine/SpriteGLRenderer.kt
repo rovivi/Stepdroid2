@@ -47,7 +47,7 @@ class SpriteGLRenderer(private val context: Context, private val frames: Array<B
     private var batchActive = false
 
     // Matrix pool for avoiding allocations
-    private val matrixPool = Array(100) { FloatArray(16) }
+    private val matrixPool = Array(20000) { FloatArray(16) }
     private var matrixPoolIndex = 0
 
     // Animation
