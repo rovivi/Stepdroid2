@@ -1,6 +1,7 @@
 package com.kyagamy.step.views
 
 import android.content.DialogInterface
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -16,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyagamy.step.R
-import com.kyagamy.step.ui.compose.StartMenuDialog
+import com.kyagamy.step.ui.compose.SongDetailScreen
 import com.kyagamy.step.ui.compose.SongsListScreen
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
 import com.kyagamy.step.viewmodels.CategoryViewModel
@@ -42,7 +43,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.compose.ui.viewinterop.AndroidView
 import android.widget.VideoView
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.Transition
+import androidx.compose.runtime.livedata.observeAsState
+import com.kyagamy.step.ui.compose.SongDetailScreen
 import com.kyagamy.step.views.FullScreenActivity
+import com.kyagamy.step.room.entities.Level
+import com.kyagamy.step.room.entities.Song
 
 class MainActivity : FullScreenActivity() {
     private var mediaPlayer: MediaPlayer? = null
@@ -88,10 +98,13 @@ class MainActivity : FullScreenActivity() {
                         handleBackPress()
                     },
                     onSongSelected = { songId ->
-                        showStartMenuDialog(songId)
+                        showSongDetail(songId)
                     },
-                    onDialogDismissed = {
+                    onSongDetailDismissed = {
                         _selectedSongId.value = null
+                    },
+                    onLevelSelected = { song, level ->
+                        startGame(song, level)
                     }
                 )
             }
@@ -181,8 +194,23 @@ class MainActivity : FullScreenActivity() {
         _selectedCategory.value = null
     }
 
-    private fun showStartMenuDialog(songId: Int) {
+    private fun showSongDetail(songId: Int) {
         _selectedSongId.value = songId
+    }
+
+    private fun startGame(song: Song, level: Level) {
+        try {
+            val intent = Intent(this, TestGLPlayerActivity::class.java).apply {
+                putExtra("ssc", song.PATH_File)
+                putExtra("nchar", level.index)
+                putExtra("path", song.PATH_SONG)
+                putExtra("pathDisc", song.PATH_SONG + song.BANNER_SONG)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Error starting game: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 }
 
@@ -199,7 +227,8 @@ fun MainScreen(
     onCategorySelected: (String, Int) -> Unit,
     onBackPressed: () -> Unit,
     onSongSelected: (Int) -> Unit,
-    onDialogDismissed: () -> Unit
+    onSongDetailDismissed: () -> Unit,
+    onLevelSelected: (Song, Level) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -236,18 +265,20 @@ fun MainScreen(
                         SongsListScreen(
                             channel = category,
                             onBack = onBackPressed,
-                            onSongClick = onSongSelected
+                            onSongClick = onSongSelected,
+                            onLevelSelected = onLevelSelected
                         )
                     }
                 }
             }
         }
 
-        // Start menu dialog
+        // Song detail screen
         selectedSongId.value?.let { songId ->
-            StartMenuDialog(
+            SongDetailWrapper(
                 songId = songId,
-                onDismiss = onDialogDismissed
+                onDismiss = onSongDetailDismissed,
+                onLevelSelected = onLevelSelected
             )
         }
     }
@@ -292,4 +323,45 @@ fun CategoryScreen(
             // Por ejemplo, reproducir sonido de la categoría
         }
     )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun SongDetailWrapper(
+    songId: Int,
+    onDismiss: () -> Unit,
+    onLevelSelected: (Song, Level) -> Unit
+) {
+    val songViewModel: SongViewModel = viewModel()
+    val songs by songViewModel.songById(songId).observeAsState(emptyList())
+
+    if (songs.isNotEmpty()) {
+        val song = songs[0]
+
+        // Create fullscreen overlay
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            SharedTransitionLayout {
+                AnimatedContent(
+                    targetState = true,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut()
+                    },
+                    label = "song_detail"
+                ) { _ ->
+                    SongDetailScreen(
+                        song = song,
+                        onBack = onDismiss,
+                        onLevelSelect = { level ->
+                            onLevelSelected(song, level)
+                        },
+                        animatedVisibilityScope = this@AnimatedContent
+                    )
+                }
+            }
+        }
+    }
 }

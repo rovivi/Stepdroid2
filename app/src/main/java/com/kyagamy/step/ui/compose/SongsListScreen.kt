@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kyagamy.step.room.entities.Song
+import com.kyagamy.step.room.entities.Level
 import com.kyagamy.step.viewmodels.SongViewModel
 import com.kyagamy.step.viewmodels.LevelViewModel
 
@@ -56,7 +57,8 @@ import androidx.compose.animation.core.spring
 fun SongsListScreen(
     channel: String,
     onBack: () -> Unit,
-    onSongClick: (Int) -> Unit
+    onSongClick: (Int) -> Unit,
+    onLevelSelected: (Song, Level) -> Unit = { _, _ -> }
 ) {
     val songsModel: SongViewModel = viewModel()
 
@@ -215,20 +217,21 @@ fun SongsListScreen(
             } else {
                 // Song Detail - with shared elements
                 selectedSong?.let { song ->
-                    SharedSongDetailScreen(
-                        song = song,
-                        sharedTransitionScope = this@SharedTransitionLayout,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        onBack = {
-                            showSongDetail = false
-                            selectedSong = null
-                        },
-                        onSelect = {
-                            showSongDetail = false
-                            onSongClick(song.song_id)
-                            selectedSong = null
-                        }
-                    )
+                    with(this@SharedTransitionLayout) {
+                        SongDetailScreen(
+                            song = song,
+                            onBack = {
+                                showSongDetail = false
+                                selectedSong = null
+                            },
+                            onLevelSelect = { level ->
+                                showSongDetail = false
+                                onLevelSelected(song, level)
+                                selectedSong = null
+                            },
+                            animatedVisibilityScope = this@AnimatedContent
+                        )
+                    }
                 }
             }
         }
