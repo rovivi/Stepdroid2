@@ -191,64 +191,53 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
         screenWidth = width
         screenHeight = height
 
-        // Generar las flechas para el stress test
-        generateStressTestArrows()
+        // Clear any existing arrows - we'll populate them via populateArrows()
+        arrows.clear()
     }
 
-    private fun generateStressTestArrows() {
+    // Method to add arrows based on game instructions from StepsDrawerGL
+    fun populateArrows(gameArrows: List<GameArrowData>) {
         arrows.clear()
         if (screenWidth > 0 && screenHeight > 0 && ::batchRenderer.isInitialized) {
-            android.util.Log.d("ArrowSpriteRenderer", "Generating $numberOfArrows arrows")
-            android.util.Log.d(
-                "ArrowSpriteRenderer",
-                "Total textures available: ${batchRenderer.getTextureCount()}"
-            )
+            android.util.Log.d("ArrowSpriteRenderer", "Populating ${gameArrows.size} game arrows")
 
-            val textureUsageCount = mutableMapOf<Int, Int>()
+            for (gameArrow in gameArrows) {
+                // Convert game arrow to internal ArrowData format
+                val textureIds = arrowTypeToTextureIds[gameArrow.arrowType]
 
-            repeat(numberOfArrows) {
-                // Posiciones completamente aleatorias en toda la pantalla
-                val x = Random.nextFloat() * (screenWidth - arrowSize)
-                val y = Random.nextFloat() * (screenHeight - arrowSize)
-
-                // Elegir un tipo de flecha aleatorio (0-4)
-                val arrowType = Random.nextInt(5)
-                val textureIds = arrowTypeToTextureIds[arrowType]
-
-                // Crear ArrowData con la lista de IDs de textura para animación
                 val arrowData = ArrowData(
-                    x,
-                    y,
-                    arrowType,
+                    gameArrow.x,
+                    gameArrow.y,
+                    gameArrow.arrowType,
                     textureIds ?: emptyList(),
-                    0,
-                    Random.nextFloat() * 6f - 3f, // -3 a 3 (más rápido)
-                    Random.nextFloat() * 6f - 3f, // -3 a 3 (más rápido)
-                    0L,
-                    Random.nextFloat() * 360f // Rotación inicial aleatoria
+                    0, // currentFrameIndex
+                    0f, // velocityX - no movement for game arrows
+                    0f, // velocityY - no movement for game arrows
+                    0L, // animationTime
+                    gameArrow.rotation
                 )
 
-                // Contar uso de texturas para debug
-                val firstTextureId = arrowData.baseTextureIds.firstOrNull() ?: -1
-                textureUsageCount[firstTextureId] = (textureUsageCount[firstTextureId] ?: 0) + 1
-
                 arrows.add(arrowData)
-
-                // Debug cada 1000 flechas para verificar posiciones
-                if ((it + 1) % 1000 == 0) {
-                    android.util.Log.d(
-                        "ArrowSpriteRenderer",
-                        "Arrow ${it + 1}: x=$x, y=$y, textureId=${arrowData.baseTextureIds.firstOrNull()}"
-                    )
-                }
             }
 
-            // Debug: mostrar distribución de texturas
-            android.util.Log.d("ArrowSpriteRenderer", "Texture usage distribution:")
-            textureUsageCount.forEach { (textureId, count) ->
-                android.util.Log.d("ArrowSpriteRenderer", "Texture ID $textureId: $count arrows")
-            }
+            android.util.Log.d(
+                "ArrowSpriteRenderer",
+                "Populated ${arrows.size} arrows for rendering"
+            )
         }
+    }
+
+    // Data class for game arrow instructions
+    data class GameArrowData(
+        val x: Float,
+        val y: Float,
+        val arrowType: Int, // 0-4 for different arrow types
+        val rotation: Float = 0f
+    )
+
+    private fun generateStressTestArrows() {
+        // This method is now unused - kept for reference
+        // Real arrows are populated via populateArrows()
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -286,9 +275,12 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
                 arrow.animationTime = 0L
             }
 
-            // Rotación más sutil y lenta
-            arrow.rotation += deltaTime * 0.02f // Mucho más lento
-            if (arrow.rotation > 360f) arrow.rotation -= 360f
+            // Only rotate if arrow has velocity (stress test arrows)
+            // Game arrows should stay in place
+            if (arrow.velocityX != 0f || arrow.velocityY != 0f) {
+                arrow.rotation += deltaTime * 0.02f
+                if (arrow.rotation > 360f) arrow.rotation -= 360f
+            }
         }
     }
 
@@ -341,25 +333,29 @@ class ArrowSpriteRenderer(private val context: Context) : GLSurfaceView.Renderer
 
     private fun updateArrowPositions() {
         arrows.forEach { arrow ->
-            // Mover la flecha
-            arrow.x += arrow.velocityX
-            arrow.y += arrow.velocityY
+            // Only move arrows that have velocity (stress test arrows)
+            // Game arrows should stay in place
+            if (arrow.velocityX != 0f || arrow.velocityY != 0f) {
+                // Mover la flecha
+                arrow.x += arrow.velocityX
+                arrow.y += arrow.velocityY
 
-            // Rebotar en los bordes con mejor detección
-            if (arrow.x < 0) {
-                arrow.x = 0f
-                arrow.velocityX = -arrow.velocityX
-            } else if (arrow.x + arrowSize > screenWidth) {
-                arrow.x = (screenWidth - arrowSize).toFloat()
-                arrow.velocityX = -arrow.velocityX
-            }
+                // Rebotar en los bordes con mejor detección
+                if (arrow.x < 0) {
+                    arrow.x = 0f
+                    arrow.velocityX = -arrow.velocityX
+                } else if (arrow.x + arrowSize > screenWidth) {
+                    arrow.x = (screenWidth - arrowSize).toFloat()
+                    arrow.velocityX = -arrow.velocityX
+                }
 
-            if (arrow.y < 0) {
-                arrow.y = 0f
-                arrow.velocityY = -arrow.velocityY
-            } else if (arrow.y + arrowSize > screenHeight) {
-                arrow.y = (screenHeight - arrowSize).toFloat()
-                arrow.velocityY = -arrow.velocityY
+                if (arrow.y < 0) {
+                    arrow.y = 0f
+                    arrow.velocityY = -arrow.velocityY
+                } else if (arrow.y + arrowSize > screenHeight) {
+                    arrow.y = (screenHeight - arrowSize).toFloat()
+                    arrow.velocityY = -arrow.velocityY
+                }
             }
         }
     }

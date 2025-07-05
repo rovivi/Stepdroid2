@@ -11,6 +11,7 @@ import com.kyagamy.step.R
 import com.kyagamy.step.common.Common.Companion.second2Beat
 import com.kyagamy.step.common.step.CommonGame.ParamsSong
 import com.kyagamy.step.common.step.Game.GameRow
+import com.kyagamy.step.engine.ArrowSpriteRenderer
 import com.kyagamy.step.engine.ISpriteRenderer
 import com.kyagamy.step.engine.StepsDrawerGL
 import com.kyagamy.step.engine.UVCoords
@@ -22,7 +23,7 @@ import kotlin.math.abs
 
 /**
  * Simplified OpenGL renderer replicating [GamePlayNew] but without touch pad.
- * It reuses [GameState] logic and draws using [StepsDrawerGL].
+ * It reuses [GameState] logic and draws using [StepsDrawerGL] with [ArrowSpriteRenderer].
  *
  * Note: When this renderer is used in an Activity, ensure edge-to-edge is properly configured
  * by extending FullScreenActivity or using EdgeToEdgeHelper.setupGameEdgeToEdge()
@@ -36,6 +37,7 @@ class GamePlayGLRenderer(
 
     private var gameState: GameState? = null
     private var stepsDrawer: StepsDrawerGL? = null
+    private var arrowRenderer: ArrowSpriteRenderer? = null
     private var bar: LifeBar? = null
     private var combo: Combo? = null
     private var bgPlayer: BgPlayer? = null
@@ -116,6 +118,8 @@ class GamePlayGLRenderer(
         gameState = GameState(stepData, ByteArray(10))
         gameState?.reset()
         stepsDrawer = StepsDrawerGL(context, stepData.stepType, "16:9", false, screenSize)
+        arrowRenderer = ArrowSpriteRenderer(context)
+        stepsDrawer?.setArrowRenderer(arrowRenderer!!)
         // Regular StepsDrawer is required only for lifebar/combo compatibility
         val regularStepsDrawer = StepsDrawer(context, stepData.stepType, "16:9", false, screenSize)
         bar = LifeBar(context, regularStepsDrawer)
@@ -231,12 +235,15 @@ class GamePlayGLRenderer(
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         setupGame()
-        stepsDrawer?.initializeGLProgram()
+        // Initialize ArrowSpriteRenderer
+        arrowRenderer?.onSurfaceCreated(gl, config)
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
         stepsDrawer?.setViewport(width, height)
+        // Initialize ArrowSpriteRenderer viewport
+        arrowRenderer?.onSurfaceChanged(gl, width, height)
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -247,8 +254,14 @@ class GamePlayGLRenderer(
         updateGame()
         drawList.clear()
         calculateVisibleNotes()
+
+        // Draw game notes using StepsDrawerGL
         stepsDrawer?.drawGame(drawList)
         stepsDrawer?.update()
+
+        // Draw arrow sprites using ArrowSpriteRenderer
+        arrowRenderer?.onDrawFrame(gl)
+
         if (gameState != null && gameState!!.currentElement + 1 >= gameState!!.steps.size) {
             stop()
         }

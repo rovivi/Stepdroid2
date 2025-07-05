@@ -109,8 +109,8 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         colorHandle = GLES20.glGetUniformLocation(program, "uColor")
         mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
 
-        // Initialize StepsDrawerGL program
-        stepsDrawer?.initializeGLProgram()
+        // Note: StepsDrawerGL no longer needs GL program initialization
+        // as it delegates rendering to ArrowSpriteRenderer
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
