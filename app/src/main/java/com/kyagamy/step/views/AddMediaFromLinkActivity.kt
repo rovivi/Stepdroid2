@@ -224,6 +224,78 @@ fun AddMediaFromLinkScreen(viewModel: AddMediaFromLinkViewModel = viewModel()) {
                             "Download Phoenix Pack 2"
                     )
                 }
+
+                // Mobile Pack
+                Button(
+                    onClick = {
+                        viewModel.startPackDownload(
+                            context,
+                            "https://storage.pumpitup.com.mx/MOBILE.zip",
+                            "mobile"
+                        )
+                    },
+                    enabled = !uiState.isMobileDownloaded && !uiState.isWorking,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (uiState.isMobileDownloaded)
+                            MaterialTheme.colorScheme.tertiary
+                        else
+                            MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (uiState.isMobileDownloaded)
+                            Icons.Default.Check
+                        else
+                            Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        if (uiState.isMobileDownloaded)
+                            "Mobile Pack ✓"
+                        else
+                            "Download Mobile Pack"
+                    )
+                }
+
+                // XX Pack
+                Button(
+                    onClick = {
+                        viewModel.startPackDownload(
+                            context,
+                            "https://storage.pumpitup.com.mx/XX.zip",
+                            "xx"
+                        )
+                    },
+                    enabled = !uiState.isXXDownloaded && !uiState.isWorking,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (uiState.isXXDownloaded)
+                            MaterialTheme.colorScheme.tertiary
+                        else
+                            MaterialTheme.colorScheme.secondary
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (uiState.isXXDownloaded)
+                            Icons.Default.Check
+                        else
+                            Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        if (uiState.isXXDownloaded)
+                            "XX Pack ✓"
+                        else
+                            "Download XX Pack"
+                    )
+                }
             }
         }
 

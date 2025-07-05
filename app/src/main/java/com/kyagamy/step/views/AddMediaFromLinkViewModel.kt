@@ -2,6 +2,7 @@ package com.kyagamy.step.views
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,9 @@ data class AddMediaUiState(
     val isWorking: Boolean = false,
     val error: String? = null,
     val isPhoenixDownloaded: Boolean = false,
-    val isPhoenix2Downloaded: Boolean = false
+    val isPhoenix2Downloaded: Boolean = false,
+    val isMobileDownloaded: Boolean = false,
+    val isXXDownloaded: Boolean = false
 ) {
     val phaseLabel: String
         get() = when (phase) {
@@ -47,10 +50,14 @@ class AddMediaFromLinkViewModel(application: Application) : AndroidViewModel(app
     fun checkForExistingDownloads() {
         val phoenix1Done = downloadPrefs.getBoolean("phoenix1_downloaded", false)
         val phoenix2Done = downloadPrefs.getBoolean("phoenix2_downloaded", false)
+        val mobileDone = downloadPrefs.getBoolean("mobile_downloaded", false)
+        val xxDone = downloadPrefs.getBoolean("xx_downloaded", false)
         _uiState.update {
             it.copy(
                 isPhoenixDownloaded = phoenix1Done,
-                isPhoenix2Downloaded = phoenix2Done
+                isPhoenix2Downloaded = phoenix2Done,
+                isMobileDownloaded = mobileDone,
+                isXXDownloaded = xxDone
             )
         }
     }
@@ -113,8 +120,11 @@ class AddMediaFromLinkViewModel(application: Application) : AndroidViewModel(app
                 val songsDir = File(basePath, "stepdroid/songs")
                 var destDir = songsDir
 
-                if (packId == "phoenix2") {
-                    destDir = File(songsDir, "PHOENIX")
+                // Custom logic to handle different packs
+                when (packId) {
+                    "phoenix2" -> destDir = File(songsDir, "PHOENIX")
+                    "mobile" -> destDir = File(songsDir, "Mobile")
+                    "xx" -> destDir = File(songsDir, "XX")
                 }
 
                 if (!destDir.exists()) destDir.mkdirs()
@@ -124,12 +134,26 @@ class AddMediaFromLinkViewModel(application: Application) : AndroidViewModel(app
                 }
                 tempFile.delete()
                 packId?.let {
-                    if (packId == "phoenix1") {
-                        downloadPrefs.edit().putBoolean("phoenix1_downloaded", true).apply()
-                        _uiState.update { it.copy(isPhoenixDownloaded = true) }
-                    } else if (packId == "phoenix2") {
-                        downloadPrefs.edit().putBoolean("phoenix2_downloaded", true).apply()
-                        _uiState.update { it.copy(isPhoenix2Downloaded = true) }
+                    when (packId) {
+                        "phoenix1" -> {
+                            downloadPrefs.edit().putBoolean("phoenix1_downloaded", true).apply()
+                            _uiState.update { it.copy(isPhoenixDownloaded = true) }
+                        }
+
+                        "phoenix2" -> {
+                            downloadPrefs.edit().putBoolean("phoenix2_downloaded", true).apply()
+                            _uiState.update { it.copy(isPhoenix2Downloaded = true) }
+                        }
+
+                        "mobile" -> {
+                            downloadPrefs.edit().putBoolean("mobile_downloaded", true).apply()
+                            _uiState.update { it.copy(isMobileDownloaded = true) }
+                        }
+
+                        "xx" -> {
+                            downloadPrefs.edit().putBoolean("xx_downloaded", true).apply()
+                            _uiState.update { it.copy(isXXDownloaded = true) }
+                        }
                     }
                 }
                 _uiState.update {
@@ -139,6 +163,12 @@ class AddMediaFromLinkViewModel(application: Application) : AndroidViewModel(app
                         progress = 1f
                     )
                 }
+
+                // Launch LoadingSongActivity after extraction
+                val intent = Intent(context, LoadingSongActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+
             } catch (e: Exception) {
                 _uiState.update { it.copy(isWorking = false, error = e.message) }
             }
