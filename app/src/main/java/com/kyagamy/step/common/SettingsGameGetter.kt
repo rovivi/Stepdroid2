@@ -14,12 +14,15 @@ class SettingsGameGetter internal constructor(context: Context) {
                 setting!!.dataType == "Float" -> {
                     preferences.edit().putFloat(name, value as Float).apply()
                 }
+
                 setting.dataType == "Boolean" -> {
                     preferences.edit().putBoolean(name, value as Boolean).apply()
                 }
+
                 setting.dataType == "int" -> {
                     preferences.edit().putInt(name, value as Int).apply()
                 }
+
                 setting.dataType == "String" -> {
                     preferences.edit().putString(name, value as String).apply()
                 }
@@ -31,6 +34,11 @@ class SettingsGameGetter internal constructor(context: Context) {
 
 
     fun getValueInt(name: String): Int {
+        if (name == AV) {
+            if (preferences.getInt(name, 1) == 1) {
+                return 600
+            }
+        }
         return preferences.getInt(name, 1)
     }
 

@@ -52,6 +52,12 @@ class MenuOptionFragment : Fragment() {
 
         autoVelocity = settingsGameGetter.getValueInt(SettingsGameGetter.AV)
         ParamsSong.av = autoVelocity
+
+        // Ensure AV is saved in preferences if it's the first time
+        if (autoVelocity == 600) {
+            settingsGameGetter.saveSetting(SettingsGameGetter.AV, autoVelocity)
+        }
+
         ParamsSong.speed = settingsGameGetter.getValueFloat(SettingsGameGetter.SPEED)
         speed = ParamsSong.speed
 

@@ -9,7 +9,7 @@ package com.kyagamy.step.common.step.CommonGame
     var speed = 2f
     @JvmField
     var judgment = 3
-    var av = 650
+    var av = 600
     @JvmField
     var delayMS = 0
     @JvmField
