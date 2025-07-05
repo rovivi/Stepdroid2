@@ -106,7 +106,24 @@ class EvaluationActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         mediaPlayer?.release()
+        mediaPlayer = null
         soundPool?.release()
+        soundPool = null
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mediaPlayer?.pause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mediaPlayer?.start()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        mediaPlayer?.stop()
     }
 }
 

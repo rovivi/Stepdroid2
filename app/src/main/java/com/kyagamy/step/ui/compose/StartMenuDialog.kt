@@ -30,6 +30,27 @@ import coil.request.ImageRequest
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.viewmodels.LevelViewModel
 import com.kyagamy.step.ui.compose.SongImage
+import com.kyagamy.step.viewmodels.SongViewModel
+
+@Composable
+fun StartMenuDialog(
+    songId: Int,
+    onDismiss: () -> Unit
+) {
+    val songViewModel: SongViewModel = viewModel()
+    val songs by songViewModel.songById(songId).observeAsState(emptyList())
+
+    if (songs.isNotEmpty()) {
+        StartMenuDialog(
+            song = songs[0],
+            onDismiss = onDismiss,
+            onSelect = {
+                // Aquí se puede manejar la selección
+                onDismiss()
+            }
+        )
+    }
+}
 
 @Composable
 fun StartMenuDialog(

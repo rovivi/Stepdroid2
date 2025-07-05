@@ -3,42 +3,60 @@ package com.kyagamy.step.views
 import android.content.DialogInterface
 import android.net.Uri
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.Fragment
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyagamy.step.R
-import com.kyagamy.step.databinding.ActivityMainBinding
-import com.kyagamy.step.fragments.CategoryFragament
-import com.kyagamy.step.fragments.songs.SongsListFragment
+import com.kyagamy.step.ui.compose.StartMenuDialog
 import com.kyagamy.step.ui.compose.SongsListScreen
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
-import com.kyagamy.step.fragments.songs.FragmentStartMenu
+import com.kyagamy.step.viewmodels.CategoryViewModel
+import com.kyagamy.step.viewmodels.SongViewModel
 import com.kyagamy.step.utils.EdgeToEdgeHelper
+import android.media.MediaPlayer
+import android.view.KeyEvent
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.ui.viewinterop.AndroidView
+import android.widget.VideoView
+import com.kyagamy.step.views.FullScreenActivity
 
 class MainActivity : FullScreenActivity() {
-    // Reference to "name" TextView using synthetic properties.
-    private val binding: ActivityMainBinding by lazy {
-        ActivityMainBinding.inflate(LayoutInflater.from(this))
-    }
-    // Reference to "name" TextView using the binding class instance.
-    private lateinit var fragmentCategory: CategoryFragament
+    private var mediaPlayer: MediaPlayer? = null
     private var positionCategory = 2
-    private val manager = supportFragmentManager
 
-    // Flag to enable/disable Compose version
-    private val useComposeVersion = true // Set to false to use old fragment version
+    // Estado de navegación
+    private val _navigationState = MutableStateFlow(NavigationState.Categories)
+    private val navigationState: StateFlow<NavigationState> = _navigationState.asStateFlow()
+
+    private val _selectedCategory = MutableStateFlow<String?>(null)
+    private val selectedCategory: StateFlow<String?> = _selectedCategory.asStateFlow()
+
+    private val _selectedSongId = MutableStateFlow<Int?>(null)
+    private val selectedSongId: StateFlow<Int?> = _selectedSongId.asStateFlow()
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,146 +64,232 @@ class MainActivity : FullScreenActivity() {
         // Remove title bar completely
         supportActionBar?.hide()
 
-        setContentView(binding.root)
-
-        // EdgeToEdgeHelper is already called by FullScreenActivity
-        // We can add custom edge-to-edge handling for the main activity if needed
+        // EdgeToEdgeHelper setup
         EdgeToEdgeHelper.setupCustomEdgeToEdge(
             this,
-            binding.root,
+            findViewById(android.R.id.content),
             applyTopInset = false,
             applyBottomInset = false
         )
 
-        fragmentCategory = CategoryFragament()
-        showFragmentCategory()
+        // Setup background video
+        setupBackgroundVideo()
 
-        // Video setup
+        setContent {
+            StepDroidTheme {
+                MainScreen(
+                    navigationState = navigationState.collectAsStateWithLifecycle(),
+                    selectedCategory = selectedCategory.collectAsStateWithLifecycle(),
+                    selectedSongId = selectedSongId.collectAsStateWithLifecycle(),
+                    onCategorySelected = { categoryName, position ->
+                        changeCategory(categoryName, position)
+                    },
+                    onBackPressed = {
+                        handleBackPress()
+                    },
+                    onSongSelected = { songId ->
+                        showStartMenuDialog(songId)
+                    },
+                    onDialogDismissed = {
+                        _selectedSongId.value = null
+                    }
+                )
+            }
+        }
+    }
+
+    private fun setupBackgroundVideo() {
         val rawId = R.raw.ssmbg
         val path = "android.resource://$packageName/$rawId"
-        binding.bgVideo.setOnPreparedListener {
-            it.isLooping = true
-            it.setVolume(0f, 0f)
+
+        try {
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(path)
+                isLooping = true
+                setVolume(0f, 0f)
+                prepareAsync()
+                setOnPreparedListener { start() }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        binding.bgVideo.setVideoURI(Uri.parse(path))
-        binding.bgVideo.start()
     }
 
     override fun onPause() {
         super.onPause()
-        binding.bgVideo.pause()
+        mediaPlayer?.pause()
     }
 
     override fun onStop() {
         super.onStop()
-        binding.bgVideo.pause()
+        mediaPlayer?.pause()
     }
 
-    override fun onPostResume() {
-        super.onPostResume()
-        binding.bgVideo.start()
+    override fun onResume() {
+        super.onResume()
+        mediaPlayer?.start()
     }
 
-    override fun onBackPressed() {
-        if (manager.fragments.size > 1)
-            super.onBackPressed()
-        else {
-            AlertDialog.Builder(this)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle("Confirm")
-                .setMessage("Are you sure you want to close StepDroid")
-                .setPositiveButton("Yes",
-                    DialogInterface.OnClickListener { _, _ -> finish() })
-                .setNegativeButton("No", null)
-                .show()
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
+
+    private fun handleBackPress() {
+        when (_navigationState.value) {
+            NavigationState.Categories -> {
+                // En categorías, mostrar diálogo de salida
+                showExitDialog()
+            }
+
+            NavigationState.Songs -> {
+                // En canciones, volver a categorías
+                _navigationState.value = NavigationState.Categories
+                _selectedCategory.value = null
+            }
         }
     }
 
-    fun showFragmentCategory() {
-        val transaction = manager.beginTransaction()
-        transaction.replace(R.id.fragment_holder, fragmentCategory)
-        transaction.addToBackStack(null)
-        transaction.commit()
-    }
-
-    private fun showFragmentSongList(category: String) {
-        if (useComposeVersion) {
-            // New Compose version
-            showComposeSongList(category)
-        } else {
-            // Old Fragment version
-            val transaction = manager.beginTransaction()
-            val fragment = SongsListFragment(category)
-            transaction.replace(R.id.fragment_holder, fragment)
-            transaction.addToBackStack("changetocategory")
-            transaction.commit()
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            handleBackPress()
+            return true
         }
+        return super.onKeyDown(keyCode, event)
     }
 
-    private fun showComposeSongList(category: String) {
-        // Create a fragment that holds the Compose content
-        val composeFragment = ComposeFragment.newInstance(category)
-        val transaction = manager.beginTransaction()
-        transaction.replace(R.id.fragment_holder, composeFragment)
-        transaction.addToBackStack("changetocategory")
-        transaction.commit()
+    private fun showExitDialog() {
+        AlertDialog.Builder(this)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .setTitle("Confirm")
+            .setMessage("Are you sure you want to close StepDroid")
+            .setPositiveButton("Yes") { _, _ -> finish() }
+            .setNegativeButton("No", null)
+            .show()
     }
 
-    fun changeCategory(category: String, categoryPosition: Int) {
+    public fun changeCategory(category: String, categoryPosition: Int) {
         positionCategory = categoryPosition
-        Toast.makeText(this, "value:${category}", Toast.LENGTH_SHORT).show()
-        showFragmentSongList(category)
+        Toast.makeText(this, "Category: $category", Toast.LENGTH_SHORT).show()
+        _selectedCategory.value = category
+        _navigationState.value = NavigationState.Songs
     }
 
-    // Helper function to show the start menu dialog
-    fun showStartMenuDialog(songId: Int) {
-        val dialog = FragmentStartMenu.newInstance(songId)
-        dialog.show(manager, "StartMenuDialog")
+    public fun showFragmentCategory() {
+        _navigationState.value = NavigationState.Categories
+        _selectedCategory.value = null
+    }
+
+    private fun showStartMenuDialog(songId: Int) {
+        _selectedSongId.value = songId
     }
 }
 
-// New Fragment to hold Compose content
-class ComposeFragment : Fragment() {
+enum class NavigationState {
+    Categories,
+    Songs
+}
 
-    companion object {
-        private const val ARG_CATEGORY = "category"
+@Composable
+fun MainScreen(
+    navigationState: State<NavigationState>,
+    selectedCategory: State<String?>,
+    selectedSongId: State<Int?>,
+    onCategorySelected: (String, Int) -> Unit,
+    onBackPressed: () -> Unit,
+    onSongSelected: (Int) -> Unit,
+    onDialogDismissed: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        // Background video placeholder
+        BackgroundVideoView()
 
-        fun newInstance(category: String): ComposeFragment {
-            val fragment = ComposeFragment()
-            val args = Bundle()
-            args.putString(ARG_CATEGORY, category)
-            fragment.arguments = args
-            return fragment
-        }
-    }
+        // Main content with animations
+        AnimatedContent(
+            targetState = navigationState.value,
+            transitionSpec = {
+                slideInHorizontally(
+                    initialOffsetX = { width -> if (targetState == NavigationState.Songs) width else -width },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(300)) togetherWith
+                        slideOutHorizontally(
+                            targetOffsetX = { width -> if (targetState == NavigationState.Songs) -width else width },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+            },
+            label = "navigation_animation"
+        ) { state ->
+            when (state) {
+                NavigationState.Categories -> {
+                    CategoryScreen(
+                        onCategorySelected = onCategorySelected
+                    )
+                }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        val category = arguments?.getString(ARG_CATEGORY) ?: ""
-
-        return ComposeView(requireContext()).apply {
-            setContent {
-                StepDroidTheme {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(0.dp)
-                    ) {
+                NavigationState.Songs -> {
+                    selectedCategory.value?.let { category ->
                         SongsListScreen(
                             channel = category,
-                            onBack = {
-                                (activity as? MainActivity)?.onBackPressed()
-                            },
-                            onSongClick = { songId ->
-                                (activity as? MainActivity)?.showStartMenuDialog(songId)
-                            }
+                            onBack = onBackPressed,
+                            onSongClick = onSongSelected
                         )
                     }
                 }
             }
         }
+
+        // Start menu dialog
+        selectedSongId.value?.let { songId ->
+            StartMenuDialog(
+                songId = songId,
+                onDismiss = onDialogDismissed
+            )
+        }
     }
+}
+
+@Composable
+fun BackgroundVideoView() {
+    val context = LocalContext.current
+    AndroidView(
+        factory = { ctx ->
+            VideoView(ctx).apply {
+                val rawId = R.raw.ssmbg
+                val path = "android.resource://${ctx.packageName}/$rawId"
+                setOnPreparedListener { mediaPlayer ->
+                    mediaPlayer.isLooping = true
+                    mediaPlayer.setVolume(0f, 0f)
+                }
+                setVideoURI(Uri.parse(path))
+                start()
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+@Composable
+fun CategoryScreen(
+    onCategorySelected: (String, Int) -> Unit
+) {
+    val categoryViewModel: CategoryViewModel = viewModel()
+    val songViewModel: SongViewModel = viewModel()
+
+    CategoryCarousel(
+        categoryViewModel = categoryViewModel,
+        songViewModel = songViewModel,
+        initialPosition = 2,
+        onCategorySelected = { category, position ->
+            onCategorySelected(category.name, position)
+        },
+        onCategoryChanged = { category ->
+            // Aquí se puede manejar el cambio de categoría
+            // Por ejemplo, reproducir sonido de la categoría
+        }
+    )
 }
