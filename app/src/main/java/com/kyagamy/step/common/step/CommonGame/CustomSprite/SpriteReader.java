@@ -12,6 +12,7 @@ import com.kyagamy.step.engine.ISpriteRenderer;
 import com.kyagamy.step.engine.SpriteGLRenderer;
 
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap;
+import com.kyagamy.step.engine.UVCoords;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 /**
  * Created by Rodrigo Vidal February 2018
  */
-public class SpriteReader implements ISpriteRenderer {
+public  class SpriteReader implements ISpriteRenderer {
     public Bitmap[] frames;
     private int frameIndex;
     private float frameTime;
@@ -40,6 +41,21 @@ public class SpriteReader implements ISpriteRenderer {
 
     // Simple command storage without DrawCommand class
     private ArrayList<CommandData> drawCommands = new ArrayList<>();
+
+    @Override
+    public void begin() {
+
+    }
+
+    @Override
+    public void drawCommand(int textureId, float @NotNull [] model, @NotNull UVCoords uvCoords) {
+
+    }
+
+    @Override
+    public void end() {
+
+    }
 
     // Simple data holder for draw commands
     private static class CommandData {
@@ -203,7 +219,7 @@ public class SpriteReader implements ISpriteRenderer {
         this.glRenderer = renderer;
     }
 
-    @Override
+
     public void drawCommand(int textureId, float @NotNull [] model, float @NotNull [] uvOff) {
         drawCommands.add(new CommandData(textureId, model, uvOff));
     }
