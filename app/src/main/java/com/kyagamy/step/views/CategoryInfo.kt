@@ -78,15 +78,16 @@ fun CategoryInfo(
 fun InfoItem(
     label: String,
     value: String,
-    icon: String
+    colr: Color = Color.Yellow,
+    icon: String = ""
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = icon,
-            fontSize = 20.sp
-        )
+//        Text(
+//            text = icon,
+//            fontSize = 20.sp
+//        )
         Text(
             text = value,
             color = Color.Yellow,

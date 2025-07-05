@@ -32,6 +32,7 @@ class StepsDrawerGL(
         DANCE_SINGLE("dance-single", 4),
         EMPTY("", 0);
 
+
         companion object {
             fun fromString(value: String?): GameMode {
                 for (mode in entries) {
@@ -49,11 +50,11 @@ class StepsDrawerGL(
     }
 
     // OpenGL rendering variables
-    private var program = 0
-    private var positionHandle = 0
-    private var texHandle = 0
-    private var mvpMatrixHandle = 0
-    private var textureHandle = 0
+    var program = 0
+    var positionHandle = 0
+    var texHandle = 0
+    var mvpMatrixHandle = 0
+    var textureHandle = 0
     private lateinit var vertexBuffer: FloatBuffer
     private lateinit var texBuffer: FloatBuffer
     private val mvpMatrix = FloatArray(16)
@@ -69,10 +70,11 @@ class StepsDrawerGL(
     var scaledNoteSize: Int = 0
     var offsetX: Int = 0
     var offsetY: Int = 0
-    private var posInitialX: Int = 0
+    var posInitialX: Int = 0
     private var startValueY: Int = 0
     private var viewWidth = 0
     private var viewHeight = 0
+    private var defaultTextureId = 0
 
     private val gameMode: GameMode
     private val steps: Int
@@ -119,12 +121,32 @@ class StepsDrawerGL(
     }
 
     fun initializeGLProgram() {
+        android.util.Log.d("StepsDrawerGL", "initializeGLProgram called")
         // Initialize shader program
         program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
+        android.util.Log.d("StepsDrawerGL", "Created shader program: $program")
         positionHandle = GLES20.glGetAttribLocation(program, "aPosition")
         texHandle = GLES20.glGetAttribLocation(program, "aTexCoord")
         mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
         textureHandle = GLES20.glGetUniformLocation(program, "uTexture")
+        android.util.Log.d(
+            "StepsDrawerGL",
+            "Shader handles: pos=$positionHandle tex=$texHandle mvp=$mvpMatrixHandle texture=$textureHandle"
+        )
+
+        // Validate shader handles for debugging
+        if (positionHandle < 0) {
+            android.util.Log.e("StepsDrawerGL", "Shader attribute 'aPosition' handle is invalid!")
+        }
+        if (texHandle < 0) {
+            android.util.Log.e("StepsDrawerGL", "Shader attribute 'aTexCoord' handle is invalid!")
+        }
+        if (mvpMatrixHandle < 0) {
+            android.util.Log.e("StepsDrawerGL", "Shader uniform 'uMVPMatrix' handle is invalid!")
+        }
+        if (textureHandle < 0) {
+            android.util.Log.e("StepsDrawerGL", "Shader uniform 'uTexture' handle is invalid!")
+        }
     }
 
     fun setViewport(width: Int, height: Int) {
@@ -137,6 +159,7 @@ class StepsDrawerGL(
         Matrix.setIdentityM(viewMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
     }
+
 
     private fun calculateDimensions(aspectRatio: String, landScape: Boolean, screenSize: Point) {
         posInitialX = (screenSize.x * SCREEN_WIDTH_FACTOR).toInt()
@@ -207,19 +230,31 @@ class StepsDrawerGL(
     }
 
     fun drawGame(listRow: ArrayList<GameRow>) {
-        if (program == 0) return
+        android.util.Log.v("StepsDrawerGL", "drawGame called with ${listRow.size} rows")
+        if (program == 0) {
+            android.util.Log.e("StepsDrawerGL", "drawGame: OpenGL program is 0, cannot draw")
+            return
+        }
 
         GLES20.glUseProgram(program)
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
 
         resetLastPositionDraw()
+        android.util.Log.v("StepsDrawerGL", "drawGame: Drawing receptors and effects")
         drawReceptorsAndEffects()
+        android.util.Log.v("StepsDrawerGL", "drawGame: Drawing notes")
         drawNotes(listRow)
+        android.util.Log.v("StepsDrawerGL", "drawGame: Complete")
     }
 
     private fun drawReceptorsAndEffects() {
         val selectedSkin = noteSkins[SkinType.SELECTED.ordinal] ?: return
+        android.util.Log.v(
+            "StepsDrawerGL",
+            "drawReceptorsAndEffects: selectedSkin is ${if (selectedSkin != null) "available" else "null"}"
+        )
+        android.util.Log.v("StepsDrawerGL", "drawReceptorsAndEffects: Drawing ${steps} receptors")
 
         for (j in 0 until steps) {
             val startNoteX = posInitialX + sizeNote * j
@@ -227,6 +262,7 @@ class StepsDrawerGL(
 
             // Draw receptors
             drawRect.set(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize)
+            android.util.Log.v("StepsDrawerGL", "Drawing receptor $j at rect: $drawRect")
             drawSprite(drawRect, selectedSkin.receptors[j])
 
             // Draw effects
@@ -366,45 +402,82 @@ class StepsDrawerGL(
     }
 
     private fun drawSprite(rect: Rect, sprite: Any?) {
-        if (sprite == null) return
+        if (sprite == null) {
+            android.util.Log.v("StepsDrawerGL", "drawSprite: sprite is null, skipping")
+            return
+        }
 
-        // Convert screen coordinates to OpenGL coordinates
+        // Convert screen coordinates to OpenGL coordinates (-1 to 1)
         val left = rect.left.toFloat() / viewWidth * 2f - 1f
         val right = rect.right.toFloat() / viewWidth * 2f - 1f
         val top = 1f - rect.top.toFloat() / viewHeight * 2f
         val bottom = 1f - rect.bottom.toFloat() / viewHeight * 2f
 
-        val scaleX = (right - left) / 2f
-        val scaleY = (top - bottom) / 2f
+        val vertices = floatArrayOf(
+            left, top,
+            left, bottom,
+            right, top,
+            right, bottom
+        )
 
-        Matrix.setIdentityM(modelMatrix, 0)
-        Matrix.translateM(modelMatrix, 0, left + scaleX, bottom + scaleY, 0f)
-        Matrix.scaleM(modelMatrix, 0, scaleX, scaleY, 1f)
-        Matrix.multiplyMM(tempMatrix, 0, mvpMatrix, 0, modelMatrix, 0)
+        val texCoords = floatArrayOf(
+            0f, 0f,
+            0f, 1f,
+            1f, 0f,
+            1f, 1f
+        )
 
-        // Set up vertex attributes
-        vertexBuffer.position(0)
+        // Create buffers for this sprite
+        val vertexBuffer = java.nio.ByteBuffer.allocateDirect(vertices.size * 4)
+            .order(java.nio.ByteOrder.nativeOrder())
+            .asFloatBuffer()
+        vertexBuffer.put(vertices).position(0)
+
+        val texBuffer = java.nio.ByteBuffer.allocateDirect(texCoords.size * 4)
+            .order(java.nio.ByteOrder.nativeOrder())
+            .asFloatBuffer()
+        texBuffer.put(texCoords).position(0)
+
+        // Set vertex attributes
         GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
         GLES20.glEnableVertexAttribArray(positionHandle)
 
-        texBuffer.position(0)
         GLES20.glVertexAttribPointer(texHandle, 2, GLES20.GL_FLOAT, false, 0, texBuffer)
         GLES20.glEnableVertexAttribArray(texHandle)
 
-        // Set matrix
-        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, tempMatrix, 0)
+        // Set identity matrix (no transformations)
+        val identityMatrix = FloatArray(16)
+        android.opengl.Matrix.setIdentityM(identityMatrix, 0)
+        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, identityMatrix, 0)
 
         // Handle sprite texture binding
         when (sprite) {
             is SpriteGLAdapter -> {
+                sprite.loadTexture()
                 sprite.bindTexture()
                 GLES20.glUniform1i(textureHandle, 0)
             }
-
+            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
+                // Convert SpriteReader to SpriteGLAdapter and use its texture
+                val adapter = SpriteGLAdapter(sprite)
+                adapter.loadTexture()
+                if (adapter.getTextureId() != 0) {
+                    adapter.bindTexture()
+                    GLES20.glUniform1i(textureHandle, 0)
+                } else {
+                    // Fallback to default texture if loading fails
+                    val defaultTexture = createDefaultTexture()
+                    GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
+                    GLES20.glUniform1i(textureHandle, 0)
+                }
+            }
             else -> {
                 // For sprites that don't have GL texture support yet,
-                // we can use a default white texture or skip drawing
+                // create and bind a default colored texture
+                val defaultTexture = createDefaultTexture()
                 GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
                 GLES20.glUniform1i(textureHandle, 0)
             }
         }
@@ -416,6 +489,12 @@ class StepsDrawerGL(
         when (sprite) {
             is SpriteGLAdapter -> {
                 sprite.unbindTexture()
+            }
+            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+            }
+            else -> {
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
             }
         }
 
@@ -464,36 +543,78 @@ class StepsDrawerGL(
         get() = noteSkins[SkinType.SELECTED.ordinal]
 
     private fun createProgram(vertexSource: String, fragmentSource: String): Int {
+        android.util.Log.d("StepsDrawerGL", "Creating shader program...")
         val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource)
         val fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource)
 
+        android.util.Log.d(
+            "StepsDrawerGL",
+            "Vertex shader: $vertexShader, Fragment shader: $fragmentShader"
+        )
+
+        if (vertexShader == 0 || fragmentShader == 0) {
+            android.util.Log.e("StepsDrawerGL", "Failed to create shaders")
+            return 0
+        }
+
         val program = GLES20.glCreateProgram()
+        android.util.Log.d("StepsDrawerGL", "Created program: $program")
+
         GLES20.glAttachShader(program, vertexShader)
         GLES20.glAttachShader(program, fragmentShader)
         GLES20.glLinkProgram(program)
 
+        // Check link status
+        val linkStatus = IntArray(1)
+        GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0)
+        if (linkStatus[0] != GLES20.GL_TRUE) {
+            val error = GLES20.glGetProgramInfoLog(program)
+            android.util.Log.e("StepsDrawerGL", "Program link failed: $error")
+            GLES20.glDeleteProgram(program)
+            return 0
+        }
+
+        android.util.Log.d("StepsDrawerGL", "Program linked successfully")
         return program
     }
 
     private fun loadShader(type: Int, shaderCode: String): Int {
         val shader = GLES20.glCreateShader(type)
+        android.util.Log.d("StepsDrawerGL", "Created shader $shader of type $type")
+
         GLES20.glShaderSource(shader, shaderCode)
         GLES20.glCompileShader(shader)
+
+        // Check compilation status
+        val compileStatus = IntArray(1)
+        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0)
+        if (compileStatus[0] != GLES20.GL_TRUE) {
+            val error = GLES20.glGetShaderInfoLog(shader)
+            android.util.Log.e("StepsDrawerGL", "Shader compilation failed: $error")
+            GLES20.glDeleteShader(shader)
+            return 0
+        }
+
+        android.util.Log.d("StepsDrawerGL", "Shader compiled successfully")
         return shader
     }
 
     // Helper method to create a default white texture for sprites without GL support
     private fun createDefaultTexture(): Int {
+        if (defaultTextureId != 0) {
+            return defaultTextureId
+        }
+
         val textureIds = IntArray(1)
         GLES20.glGenTextures(1, textureIds, 0)
         val textureId = textureIds[0]
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
 
-        // Create a simple white 1x1 texture
-        val whitePixel = byteArrayOf(255.toByte(), 255.toByte(), 255.toByte(), 255.toByte())
-        val buffer = java.nio.ByteBuffer.allocateDirect(whitePixel.size)
-        buffer.put(whitePixel)
+        // Create a bright yellow 1x1 texture to make it visible
+        val redPixel = byteArrayOf(255.toByte(), 255.toByte(), 0.toByte(), 255.toByte())
+        val buffer = java.nio.ByteBuffer.allocateDirect(redPixel.size)
+        buffer.put(redPixel)
         buffer.position(0)
 
         GLES20.glTexImage2D(
@@ -508,10 +629,25 @@ class StepsDrawerGL(
             buffer
         )
 
+        // Set WRAP mode to CLAMP_TO_EDGE (instead of default REPEAT) for both axes
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(
+            GLES20.GL_TEXTURE_2D,
+            GLES20.GL_TEXTURE_WRAP_S,
+            GLES20.GL_CLAMP_TO_EDGE
+        )
+        GLES20.glTexParameteri(
+            GLES20.GL_TEXTURE_2D,
+            GLES20.GL_TEXTURE_WRAP_T,
+            GLES20.GL_CLAMP_TO_EDGE
+        )
+
+        android.util.Log.d("StepsDrawerGL", "Created default texture with ID: $textureId")
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+
+        defaultTextureId = textureId
 
         return textureId
     }
