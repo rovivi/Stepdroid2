@@ -31,6 +31,18 @@ class GamePlayGLActivity : Activity() {
 
         // Create renderer with UIRenderer integration
         renderer = GamePlayGLRenderer(this, stepData, videoView, screenSize)
+
+        // Set up game completion callback
+        renderer.setGameCompletionCallback(object : GamePlayGLRenderer.GameCompletionCallback {
+            override fun onGameCompleted() {
+                android.util.Log.d("GamePlayGLActivity", "Game completed, finishing activity...")
+                runOnUiThread {
+                    // Handle game completion - you can add evaluation logic here
+                    finish()
+                }
+            }
+        })
+
         glSurfaceView.setRenderer(renderer)
 
         // Set the content view

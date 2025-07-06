@@ -154,6 +154,21 @@ class TestGLPlayerActivity : FullScreenActivity() {
                 Point(metrics.widthPixels, metrics.heightPixels),
                 inputs
             )
+
+            // Set up game completion callback
+            renderer?.setGameCompletionCallback(object : GamePlayGLRenderer.GameCompletionCallback {
+                override fun onGameCompleted() {
+                    android.util.Log.d(
+                        "TestGLPlayerActivity",
+                        "Game completed, starting evaluation..."
+                    )
+                    runOnUiThread {
+                        startEvaluation()
+                        finish()
+                    }
+                }
+            })
+
             binding.openGLView.setRenderer(renderer as ISpriteRenderer)
             binding.openGLView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
             android.util.Log.d("TestGLPlayerActivity", "Renderer set up complete")

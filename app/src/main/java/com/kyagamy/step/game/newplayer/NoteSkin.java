@@ -41,6 +41,7 @@ public class NoteSkin {
 
         try {
             String pathNS = "NoteSkins/pump/" + name + "/";
+            //String pathNS = "NoteSkins/pump/prime/";
             byte numberSteps;
             boolean assetPath = true;
 

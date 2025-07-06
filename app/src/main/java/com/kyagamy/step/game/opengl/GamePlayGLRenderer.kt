@@ -65,6 +65,13 @@ class GamePlayGLRenderer(
 
     // Batching state
     private var batchActive = false
+    private var evaluationStarted = false
+
+    interface GameCompletionCallback {
+        fun onGameCompleted()
+    }
+
+    private var gameCompletionCallback: GameCompletionCallback? = null
 
     init {
         initializeSoundPool()
@@ -161,7 +168,7 @@ class GamePlayGLRenderer(
         try {
             musicPlayer = MediaPlayer().apply {
                 setDataSource(stepData.getMusicPath())
-                setOnCompletionListener { stop() }
+                setOnCompletionListener { startEvaluation() }
                 setOnPreparedListener {
                 android.util.Log.d("GamePlayGLRenderer", "MediaPlayer prepared, starting game")
                     // Set volume to maximum to ensure we can hear it
@@ -190,6 +197,7 @@ class GamePlayGLRenderer(
 
     private fun startGameInternal() {
         android.util.Log.d("GamePlayGLRenderer", "Starting game internally")
+        evaluationStarted = false
         gameState?.start()
 
         try {
@@ -281,8 +289,65 @@ class GamePlayGLRenderer(
         // Clear the area below the game area (replicating GameRenderer's behavior)
         clearBottomArea()
 
-        if (gameState != null && gameState!!.currentElement + 1 >= gameState!!.steps.size) {
-            stop()
+        // Check game completion with detailed logging
+        if (gameState != null) {
+            val currentElement = gameState!!.currentElement
+            val totalSteps = gameState!!.steps.size
+
+            // Log game progress every 60 frames (1 second at 60fps)
+            if (frameCount % 60 == 0) {
+                android.util.Log.d(
+                    "GamePlayGLRenderer",
+                    "Game progress: ${currentElement + 1}/$totalSteps (${((currentElement + 1) * 100.0 / totalSteps).toInt()}%)"
+                )
+            }
+
+            // Multiple conditions to trigger evaluation
+            val shouldTriggerEvaluation = when {
+                // Original condition from GamePlayNew
+                currentElement + 1 == totalSteps -> {
+                    android.util.Log.d(
+                        "GamePlayGLRenderer",
+                        " GAME COMPLETED (steps)! Starting evaluation..."
+                    )
+                    true
+                }
+                // Backup condition: if we've passed all steps
+                currentElement >= totalSteps -> {
+                    android.util.Log.d(
+                        "GamePlayGLRenderer",
+                        " GAME COMPLETED (overflow)! Starting evaluation..."
+                    )
+                    true
+                }
+                // Additional condition: if music is about to finish and we're near the end
+                musicPlayer?.let { mp ->
+                    val musicDuration = try {
+                        mp.duration
+                    } catch (e: Exception) {
+                        0
+                    }
+                    val currentPosition = try {
+                        mp.currentPosition
+                    } catch (e: Exception) {
+                        0
+                    }
+                    val remaining = musicDuration - currentPosition
+                    remaining < 1000 && currentElement > totalSteps * 0.8 // Less than 1 second left and >80% complete
+                } ?: false -> {
+                    android.util.Log.d(
+                        "GamePlayGLRenderer",
+                        " GAME COMPLETED (music ending)! Starting evaluation..."
+                    )
+                    true
+                }
+
+                else -> false
+            }
+
+            if (shouldTriggerEvaluation) {
+                startEvaluation()
+            }
         }
     }
 
@@ -427,6 +492,25 @@ class GamePlayGLRenderer(
     fun getUILife(): Float = uiRenderer?.getLife() ?: 50f
     fun getUICombo(): Int = uiRenderer?.getCombo() ?: 0
 
+    fun setGameCompletionCallback(callback: GameCompletionCallback) {
+        this.gameCompletionCallback = callback
+    }
+
+    /**
+     * Start evaluation when game is completed, replicating GamePlayNew's behavior
+     */
+    private fun startEvaluation() {
+        if (evaluationStarted) {
+            android.util.Log.d("GamePlayGLRenderer", "Evaluation already started, ignoring...")
+            return
+        }
+
+        evaluationStarted = true
+        android.util.Log.d("GamePlayGLRenderer", "Starting evaluation - game completed")
+        stop()
+        gameCompletionCallback?.onGameCompleted()
+    }
+
     private fun syncAudioVideo() {
         val diff = (gameState!!.currentSecond / 100.0) - gameState!!.offset -
                 (musicPlayer?.currentPosition ?: 0) / 1000.0
@@ -481,7 +565,7 @@ class GamePlayGLRenderer(
                 currentElement.setPosY(lastPosition.toInt())
                 drawList.add(currentElement)
             }
-            if (lastPosition >= stepsDrawer!!.sizeY*3 + stepsDrawer!!.sizeNote) break
+            if (lastPosition >= stepsDrawer!!.sizeY*10 + stepsDrawer!!.sizeNote) break
             currentElement.modifiers?.get("SCROLLS")?.let { scrolls ->
                 if (x >= 0) {
                     lastScrollAux = scrolls[1]
