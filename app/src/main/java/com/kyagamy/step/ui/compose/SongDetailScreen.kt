@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -26,6 +28,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -361,12 +364,14 @@ fun SharedTransitionScope.SongDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .padding(horizontal = 8.dp) // Add horizontal padding
             ) {
                 // Left: Menu de opciones (Level list)
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
+                        .padding(end = 4.dp) // Add small gap between columns
                 ) {
                     Text(
                         "MENU DE OPCIONES",
@@ -402,6 +407,7 @@ fun SharedTransitionScope.SongDetailScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
+                        .padding(start = 4.dp) // Add small gap between columns
                 ) {
                     val settingsGameGetter = remember { SettingsGameGetter(context) }
 
@@ -653,13 +659,157 @@ fun SharedTransitionScope.SongDetailScreen(
                 }
             }
 
-            // Start button at bottom center
+            // COMPACT Start button at bottom - MUCH SMALLER
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                    .height(100.dp),
                 contentAlignment = Alignment.Center
             ) {
+                // Enhanced Gaming Start Button - COMPACT VERSION
+                val infiniteTransition =
+                    rememberInfiniteTransition(label = "start_button_animation")
+
+                // Pulsing glow effect
+                val glowIntensity by infiniteTransition.animateFloat(
+                    initialValue = 0.4f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1500, easing = EaseInOutCubic),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "glow_intensity"
+                )
+
+                // Gradient color animation
+                val gradientOffset by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(3000, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "gradient_offset"
+                )
+
+                // Particle animation
+                val particleAnimation by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2000, easing = LinearEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "particle_animation"
+                )
+
+                // Button press animation
+                var isPressed by remember { mutableStateOf(false) }
+                val buttonScale by animateFloatAsState(
+                    targetValue = if (isPressed) 0.95f else 1f,
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+                    label = "button_scale"
+                )
+
+                // MUCH SMALLER outer glow ring
+                Box(
+                    modifier = Modifier
+                        .size(100.dp) // Reduced from 160dp to 10
+                        .graphicsLayer {
+                            alpha = glowIntensity * 0.8f
+                            scaleX = 1f + glowIntensity * 0.05f
+                            scaleY = 1f + glowIntensity * 0.05f
+                        }
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0xFF00BFFF).copy(alpha = 0.15f), // More transparent
+                                    Color(0xFF0080FF).copy(alpha = 0.1f),
+                                    Color(0xFF0040FF).copy(alpha = 0.05f),
+                                    Color.Transparent
+                                ),
+                                radius = 200f
+                            ),
+                            shape = RoundedCornerShape(30.dp)
+                        )
+                )
+
+                // SMALLER middle glow layer
+                Box(
+                    modifier = Modifier
+                        .size(60.dp) // Reduced from 120dp to 6
+                        .graphicsLayer {
+                            alpha = glowIntensity * 0.6f
+                            rotationZ = gradientOffset * 360f
+                        }
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0xFF00FFFF).copy(alpha = 0.4f), // Reduced opacity
+                                    Color(0xFF0080FF).copy(alpha = 0.3f),
+                                    Color.Transparent
+                                ),
+                                radius = 150f
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                )
+
+                // COMPACT particles around button
+                Canvas(
+                    modifier = Modifier
+                        .size(200.dp) // Reduced from 300dp to 200dp
+                        .graphicsLayer { alpha = glowIntensity * 0.8f }
+                ) {
+                    // Fewer main orbital particles
+                    repeat(12) { i -> // Reduced from 18 to 12
+                        val angle = (i * 30f) + (particleAnimation * 360f)
+                        val radius =
+                            80f + (kotlin.math.sin(particleAnimation * 6f + i).toFloat() * 15f)
+                        val x = center.x + kotlin.math.cos(Math.toRadians(angle.toDouble()))
+                            .toFloat() * radius
+                        val y = center.y + kotlin.math.sin(Math.toRadians(angle.toDouble()))
+                            .toFloat() * radius
+
+                        val particleColor = when (i % 4) {
+                            0 -> Color(0xFF00FFFF)
+                            1 -> Color(0xFF0080FF)
+                            2 -> Color(0xFFFFFFFF)
+                            else -> Color(0xFF00BFFF)
+                        }
+
+                        drawCircle(
+                            color = particleColor.copy(alpha = 0.6f + 0.2f * glowIntensity),
+                            radius = 3f + kotlin.math.sin(particleAnimation * 8f + i).toFloat(),
+                            center = androidx.compose.ui.geometry.Offset(x, y)
+                        )
+                    }
+
+                    // Fewer inner particles
+                    repeat(8) { i -> // Reduced from 12 to 8
+                        val angle = (i * 45f) - (particleAnimation * 180f)
+                        val radius =
+                            50f + (kotlin.math.sin(particleAnimation * 4f + i).toFloat() * 10f)
+                        val x = center.x + kotlin.math.cos(Math.toRadians(angle.toDouble()))
+                            .toFloat() * radius
+                        val y = center.y + kotlin.math.sin(Math.toRadians(angle.toDouble()))
+                            .toFloat() * radius
+
+                        val particleColor = when (i % 3) {
+                            0 -> Color(0xFFFFD700)
+                            1 -> Color(0xFF00FFFF)
+                            else -> Color(0xFFFF69B4)
+                        }
+
+                        drawCircle(
+                            color = particleColor.copy(alpha = 0.4f + 0.3f * glowIntensity),
+                            radius = 2f + kotlin.math.sin(particleAnimation * 10f + i).toFloat(),
+                            center = androidx.compose.ui.geometry.Offset(x, y)
+                        )
+                    }
+                }
+
+                // COMPACT main button
                 Button(
                     onClick = {
                         if (selectedLevelIndex != -1) {
@@ -667,18 +817,106 @@ fun SharedTransitionScope.SongDetailScreen(
                         }
                     },
                     modifier = Modifier
-                        .width(200.dp)
-                        .height(60.dp),
+                        .width(160.dp) // Reduced from 200dp to 160dp
+                        .height(50.dp) // Reduced from 70dp to 50dp
+                        .graphicsLayer {
+                            scaleX = buttonScale
+                            scaleY = buttonScale
+                            shadowElevation = 15.dp.toPx()
+                        }
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    isPressed = true
+                                    tryAwaitRelease()
+                                    isPressed = false
+                                }
+                            )
+                        },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Blue.copy(alpha = 0.8f)
+                        containerColor = Color.Transparent
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(25.dp),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text(
-                        "Start",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            ,
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Fewer sparkles inside button
+                        Canvas(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            repeat(6) { i -> // Reduced from 12 to 6
+                                val sparkleX = size.width * 0.2f + (i * size.width * 0.12f)
+                                val sparkleY =
+                                    size.height * 0.3f + kotlin.math.sin(particleAnimation * 4f + i)
+                                        .toFloat() * size.height * 0.4f
+                                val sparkleAlpha =
+                                    0.5f + 0.5f * kotlin.math.sin(particleAnimation * 6f + i)
+                                        .toFloat()
+
+                                drawCircle(
+                                    color = Color.White.copy(alpha = sparkleAlpha * glowIntensity),
+                                    radius = 2f,
+                                    center = androidx.compose.ui.geometry.Offset(sparkleX, sparkleY)
+                                )
+                            }
+                        }
+
+                        // COMPACT button text
+                        Text(
+                            "START",
+                            fontSize = 30.sp, // Reduced from 26sp to 20sp
+                            fontWeight = FontWeight.Black,
+                            color = Color.Black.copy(alpha = 0.8f),
+                            letterSpacing = 1.5.sp,
+                            modifier = Modifier.offset(x = 1.5.dp, y = 1.5.dp)
+                        )
+
+                        Text(
+                            "START",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            letterSpacing = 1.5.sp,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                shadow = androidx.compose.ui.graphics.Shadow(
+                                    color = Color.Black,
+                                    offset = androidx.compose.ui.geometry.Offset(2f, 2f),
+                                    blurRadius = 8f
+                                )
+                            )
+                        )
+
+                        Text(
+                            "START",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF00FFFF).copy(alpha = 0.3f * glowIntensity),
+                            letterSpacing = 1.5.sp,
+                            modifier = Modifier.offset(x = 0.5.dp, y = 0.5.dp)
+                        )
+                    }
+                }
+
+                // COMPACT pulse ring effect
+                Canvas(
+                    modifier = Modifier
+                        .size(160.dp) // Reduced from 200dp to 160dp
+                        .graphicsLayer {
+                            alpha = (1f - glowIntensity) * 0.4f
+                            scaleX = 1f + glowIntensity * 0.15f
+                            scaleY = 1f + glowIntensity * 0.15f
+                        }
+                ) {
+                    drawRoundRect(
+                        color = Color(0xFF00BFFF).copy(alpha = 0.3f),
+                        size = size,
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(25.dp.toPx()),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f)
                     )
                 }
             }
@@ -746,6 +984,7 @@ fun LevelTrapezoidItem(
     ) {
         // Enhanced glow effect background with contour
         if (isSelected) {
+            // Outer contour glow
             Canvas(
                 modifier = Modifier
                     .fillMaxSize()
@@ -763,7 +1002,7 @@ fun LevelTrapezoidItem(
                     close()
                 }
 
-                // Outer contour glow
+                // Outer bright glow
                 drawPath(
                     path = path,
                     color = particleColor.copy(alpha = 0.8f),
