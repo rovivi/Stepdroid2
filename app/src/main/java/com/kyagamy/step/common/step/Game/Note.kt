@@ -4,7 +4,13 @@ import com.kyagamy.step.common.step.Game.GameRow
 
 
 class Note {
-    var type: Short = 0
+    var noteType: NoteType = NoteType.EMPTY
+    @Deprecated("Use noteType", ReplaceWith("noteType.code"))
+    var type: Short
+        get() = noteType.code
+        set(value) {
+            noteType = NoteType.fromCode(value)
+        }
     var player: Byte = 0
     var skin: Byte = 0
     var sudden: Boolean = false
@@ -19,8 +25,8 @@ class Note {
     companion object {
         fun CloneNote(baseNote: Note): Note {
             val newNote = Note()
-            newNote.rowOrigin=baseNote.rowOrigin
-            newNote.rowEnd=baseNote.rowEnd
+            newNote.rowOrigin = baseNote.rowOrigin
+            newNote.rowEnd = baseNote.rowEnd
 
             newNote.fake = baseNote.fake
             newNote.vanish = baseNote.vanish
@@ -28,7 +34,7 @@ class Note {
             newNote.skin = baseNote.skin
             newNote.player = baseNote.player
             newNote.sudden = baseNote.sudden
-            newNote.type = baseNote.type
+            newNote.noteType = baseNote.noteType
             return newNote
         }
     }

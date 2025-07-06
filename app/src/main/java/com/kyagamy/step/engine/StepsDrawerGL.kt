@@ -8,6 +8,8 @@ import com.kyagamy.step.common.step.Game.GameRow
 import com.kyagamy.step.common.step.Game.NOT_DRAWABLE
 import com.kyagamy.step.game.newplayer.NoteSkin
 import game.Note
+import game.NoteType
+import com.kyagamy.step.engine.NoteLayoutCalculator
 import kotlin.math.abs
 
 class StepsDrawerGL(
@@ -86,44 +88,17 @@ class StepsDrawerGL(
     }
 
     private fun calculateDimensions(aspectRatio: String, landScape: Boolean, screenSize: Point) {
-        posInitialX = (screenSize.x * SCREEN_WIDTH_FACTOR).toInt()
-
-        if (landScape) {
-            calculateLandscapeDimensions(screenSize)
-        } else {
-            calculatePortraitDimensions(screenSize)
-        }
-
-        sizeNote = (sizeY / STEPS_Y_COUNT).toInt()
-        scaledNoteSize = (sizeNote * NOTE_SCALE_FACTOR).toInt()
-        posInitialX = (((sizeX) - (sizeNote * gameMode.steps))) / 2 + offsetX / 2
+        val layout = NoteLayoutCalculator.calculate(gameMode, aspectRatio, landScape, screenSize)
+        sizeX = layout.sizeX
+        sizeY = layout.sizeY
+        sizeNote = layout.sizeNote
+        scaledNoteSize = layout.scaledNoteSize
+        offsetX = layout.offsetX
+        offsetY = layout.offsetY
+        posInitialX = layout.posInitialX
+        startValueY = layout.startValueY
     }
 
-    private fun calculateLandscapeDimensions(screenSize: Point) {
-        sizeY = screenSize.y
-        sizeX = (screenSize.y * ASPECT_RATIO_16_9_CALC).toInt()
-        offsetX = ((screenSize.x - sizeX) / 2f).toInt()
-
-        if (sizeX > screenSize.x) {
-            sizeY = (screenSize.x / ASPECT_RATIO_16_9_CALC).toInt()
-            sizeX = (sizeY * ASPECT_RATIO_16_9_CALC).toInt()
-            offsetX = abs(((screenSize.x - sizeX) / 2f).toInt())
-            offsetY = ((screenSize.y - sizeY) / 2f).toInt()
-        }
-
-        sizeX += offsetX / 2
-        sizeY += offsetY
-    }
-
-    private fun calculatePortraitDimensions(screenSize: Point) {
-        sizeY = screenSize.y / 2
-        sizeX = screenSize.x
-
-        if ((sizeY / STEPS_Y_COUNT).toInt() * gameMode.steps > sizeX) {
-            sizeY = (sizeX / (gameMode.steps + 0.2) * STEPS_Y_COUNT).toInt()
-            offsetY = screenSize.y - sizeY
-        }
-    }
 
     private fun initializeNoteSkins(context: Context?) {
         when (gameMode) {
@@ -143,7 +118,6 @@ class StepsDrawerGL(
     }
 
     private fun initializeDrawingValues() {
-        startValueY = (sizeNote * RECEPTOR_Y_FACTOR).toInt()
         resetLastPositionDraw()
     }
 
@@ -205,7 +179,7 @@ class StepsDrawerGL(
             if (notes != null) {
                 for (count in notes.indices) {
                     val note = notes[count]
-                    if (note.type != CommonSteps.NOTE_EMPTY) {
+                    if (note.noteType != NoteType.EMPTY) {
                         drawSingleNote(note, gameRow, count, skinType)
                     }
                 }
@@ -223,8 +197,8 @@ class StepsDrawerGL(
         val startNoteX = posInitialX + sizeNote * columnIndex
         val endNoteX = startNoteX + scaledNoteSize
 
-        when (note.type) {
-            CommonSteps.NOTE_TAP, CommonSteps.NOTE_FAKE -> {
+        when (note.noteType) {
+            NoteType.TAP, NoteType.FAKE -> {
                 drawRect.set(
                     startNoteX,
                     gameRow.getPosY(),
@@ -239,15 +213,11 @@ class StepsDrawerGL(
                 )
             }
 
-            CommonSteps.NOTE_LONG_START -> {
+            NoteType.LONG_START -> {
                 drawLongNote(note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin)
             }
 
-            CommonSteps.NOTE_LONG_BODY -> {
-                drawLongNoteBody(note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin)
-            }
-
-            CommonSteps.NOTE_MINE -> {
+            NoteType.MINE -> {
                 drawRect.set(
                     startNoteX,
                     gameRow.getPosY(),
@@ -284,28 +254,19 @@ class StepsDrawerGL(
         val bodyBottom = endY + tailDiv
         val headBottom = startY + scaledNoteSize
         val tailBottom = endY + scaledNoteSize
+        drawLongNoteBody(startNoteX, endNoteX, bodyTop, bodyBottom, columnIndex, skin)
+        drawLongNoteTail(endYRaw, startNoteX, endNoteX, endY, tailBottom, columnIndex, skin)
+        drawLongNoteHead(startNoteX, endNoteX, startY, headBottom, columnIndex, skin)
+    }
 
-        // Draw body
-        drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        drawSprite(
-            drawRect,
-            skin.longs[columnIndex],
-            columnIndex,
-            ArrowSpriteRenderer.NoteType.LONG_BODY
-        )
-
-        // Draw tail (if end exists)
-        if (endYRaw != NOT_DRAWABLE) {
-            drawRect.set(startNoteX, endY, endNoteX, tailBottom)
-            drawSprite(
-                drawRect,
-                skin.tails[columnIndex],
-                columnIndex,
-                ArrowSpriteRenderer.NoteType.LONG_TAIL
-            )
-        }
-
-        // Draw head
+    private fun drawLongNoteHead(
+        startNoteX: Int,
+        endNoteX: Int,
+        startY: Int,
+        headBottom: Int,
+        columnIndex: Int,
+        skin: NoteSkin
+    ) {
         drawRect.set(startNoteX, startY, endNoteX, headBottom)
         drawSprite(
             drawRect,
@@ -315,44 +276,15 @@ class StepsDrawerGL(
         )
     }
 
-    private fun drawLongNoteBody(
-        note: Note,
-        gameRow: GameRow,
+    private fun drawLongNoteTail(
+        endYRaw: Int,
         startNoteX: Int,
         endNoteX: Int,
+        endY: Int,
+        tailBottom: Int,
         columnIndex: Int,
         skin: NoteSkin
     ) {
-        val currentPosY = gameRow.getPosY()
-        if (currentPosY <= lastPositionDraw[columnIndex]) return
-
-        var startY = currentPosY
-        if (currentPosY > startValueY && currentPosY < sizeY) {
-            startY = startValueY
-        }
-
-        val rowEnd = note.rowEnd
-        val endYRaw = rowEnd?.getPosY() ?: NOT_DRAWABLE
-        val endY = if (endYRaw == NOT_DRAWABLE) sizeY else endYRaw
-        lastPositionDraw[columnIndex] = endY
-
-        val bodyOffsetPx = (scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()
-        val tailDiv = scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
-        val bodyTop = startY + bodyOffsetPx
-        val bodyBottom = endY + tailDiv
-        val headBottom = startY + scaledNoteSize
-        val tailBottom = endY + scaledNoteSize
-
-        // Draw body
-        drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        drawSprite(
-            drawRect,
-            skin.longs[columnIndex],
-            columnIndex,
-            ArrowSpriteRenderer.NoteType.LONG_BODY
-        )
-
-        // Draw tail (if end exists)
         if (endYRaw != NOT_DRAWABLE) {
             drawRect.set(startNoteX, endY, endNoteX, tailBottom)
             drawSprite(
@@ -362,14 +294,22 @@ class StepsDrawerGL(
                 ArrowSpriteRenderer.NoteType.LONG_TAIL
             )
         }
+    }
 
-        // Draw head
-        drawRect.set(startNoteX, startY, endNoteX, headBottom)
+    private fun drawLongNoteBody(
+        startNoteX: Int,
+        endNoteX: Int,
+        bodyTop: Int,
+        bodyBottom: Int,
+        columnIndex: Int,
+        skin: NoteSkin
+    ) {
+        drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
         drawSprite(
             drawRect,
-            skin.arrows[columnIndex],
+            skin.longs[columnIndex],
             columnIndex,
-            ArrowSpriteRenderer.NoteType.LONG_HEAD
+            ArrowSpriteRenderer.NoteType.LONG_BODY
         )
     }
 
@@ -380,6 +320,9 @@ class StepsDrawerGL(
         noteType: ArrowSpriteRenderer.NoteType = ArrowSpriteRenderer.NoteType.NORMAL
     ) {
         if (sprite != null && arrowRenderer != null) {
+            if (rect.bottom < 0 || rect.top > sizeY) {
+                return
+            }
             // Convert sprite drawing call to arrow instruction using actual calculated sizes
             val gameArrow = ArrowSpriteRenderer.GameArrowData(
                 x = rect.left.toFloat(),

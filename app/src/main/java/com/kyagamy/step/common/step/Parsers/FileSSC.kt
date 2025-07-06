@@ -6,6 +6,7 @@ import com.kyagamy.step.common.step.CommonSteps.Companion.getModifiersSM
 import com.kyagamy.step.room.entities.Level
 import com.kyagamy.step.common.step.Game.GameRow
 import game.Note
+import game.NoteType
 import game.StepObject
 import parsers.StepFile
 import java.lang.Exception
@@ -151,12 +152,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
             CommonSteps.orderByBeat(steps)
         }
 
-        //se ordernan
-        CommonSteps.applyLongNotes(
-            steps,
-            CommonSteps.lengthByStepType(stepObject.stepType)
-        )//Se aplican los longs
-        CommonSteps.orderByBeat(steps)
+        // Long notes are linked during parsing
 
         CommonSteps.stopsToScroll(steps)//Se aplican los stops
         CommonSteps.orderByBeat(steps)
@@ -176,7 +172,7 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
         val listGameRow = ArrayList<GameRow>()
         val blocks = data.split(",")
         var currentBeat = 0.0
-        val auxLongRow = arrayOfNulls<GameRow>(18) //aux to set row into
+        val longHeadMap: MutableMap<Int, Note> = mutableMapOf()
         blocks.forEach { block ->
             val rowsStep = block.split("\n").filter { x -> x != "" }
             val blockSize = rowsStep.size
@@ -187,15 +183,17 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
 
                     //scan form game row
                     gameRow.notes?.forEachIndexed { index, note ->
-                        run {
-                            if (note.type == CommonSteps.NOTE_LONG_START) {
-                                auxLongRow[index] = gameRow
-                            } else if (note.type == CommonSteps.NOTE_LONG_END) {
-                                //set first start note end
-                                auxLongRow[index]?.notes?.get(index)?.rowEnd = gameRow
-                                note.rowOrigin = auxLongRow[index]
-                                auxLongRow[index] = null
+                        when (note.noteType) {
+                            NoteType.LONG_START -> {
+                                note.rowOrigin = gameRow
+                                longHeadMap[index] = note
                             }
+                            NoteType.LONG_END -> {
+                                val head = longHeadMap.remove(index)
+                                head?.rowEnd = gameRow
+                                note.rowOrigin = head?.rowOrigin
+                            }
+                            else -> {}
                         }
                     }
                     listGameRow.add(gameRow)
@@ -240,43 +238,43 @@ class FileSSC(override var pathFile: String, override var indexStep: Int) : Step
 
     private fun charToNote(caracter: Char): Note {
         val note = Note()
-        var charCode: Short = CommonSteps.NOTE_EMPTY
+        var charCode: Short = NoteType.EMPTY.code
         when (caracter) {
-            '1' -> charCode = CommonSteps.NOTE_TAP
-            '2', '6' -> charCode = CommonSteps.NOTE_LONG_START
-            '3' -> charCode = CommonSteps.NOTE_LONG_END
-            'M' -> charCode = CommonSteps.NOTE_MINE
-            'F', 'f' -> charCode = CommonSteps.NOTE_FAKE
+            '1' -> charCode = NoteType.TAP.code
+            '2', '6' -> charCode = NoteType.LONG_START.code
+            '3' -> charCode = NoteType.LONG_END.code
+            'M' -> charCode = NoteType.MINE.code
+            'F', 'f' -> charCode = NoteType.FAKE.code
             'V' -> {
-                charCode = CommonSteps.NOTE_TAP
+                charCode = NoteType.TAP.code
                 note.vanish = true
             }
             'h' -> {
-                charCode = CommonSteps.NOTE_TAP
+                charCode = NoteType.TAP.code
                 note.hidden = true
             }
             'x' -> {
-                charCode = CommonSteps.NOTE_LONG_START
+                charCode = NoteType.LONG_START.code
                 note.player = CommonSteps.PLAYER_1
             }
             'X' -> {
-                charCode = CommonSteps.NOTE_TAP
+                charCode = NoteType.TAP.code
                 note.player = CommonSteps.PLAYER_1
             }
             'y' -> {
-                charCode = CommonSteps.NOTE_LONG_START
+                charCode = NoteType.LONG_START.code
                 note.player = CommonSteps.PLAYER_2
             }
             'Y' -> {
-                charCode = CommonSteps.NOTE_TAP
+                charCode = NoteType.TAP.code
                 note.player = CommonSteps.PLAYER_2
             }
             'z' -> {
-                charCode = CommonSteps.NOTE_LONG_START
+                charCode = NoteType.LONG_START.code
                 note.player = CommonSteps.PLAYER_3
             }
             'Z' -> {
-                charCode = CommonSteps.NOTE_TAP
+                charCode = NoteType.TAP.code
                 note.player = CommonSteps.PLAYER_3
             }
         }
