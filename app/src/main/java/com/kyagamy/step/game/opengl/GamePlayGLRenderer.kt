@@ -259,7 +259,8 @@ class GamePlayGLRenderer(
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+        clearScreen()
+
         if (!isGameStarted) return
 
         updateFPS()
@@ -277,8 +278,54 @@ class GamePlayGLRenderer(
         // Draw UI elements using UIRenderer
         uiRenderer?.onDrawFrame(gl)
 
+        // Clear the area below the game area (replicating GameRenderer's behavior)
+        clearBottomArea()
+
         if (gameState != null && gameState!!.currentElement + 1 >= gameState!!.steps.size) {
             stop()
+        }
+    }
+
+    /**
+     * Clear the screen with transparent color, replicating the clearing behavior from GamePlayNew
+     * This ensures that areas below the visible screen are properly cleared
+     */
+    private fun clearScreen() {
+        GLES20.glClearColor(0f, 0f, 0f, 0f)
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
+    }
+
+    /**
+     * Clear the bottom area below the game when not in landscape mode
+     * Replicates GameRenderer's: canvas.drawRect(new Rect(0, stepsDrawer.sizeY, stepsDrawer.offsetX + stepsDrawer.sizeX, stepsDrawer.sizeY * 2), clearPaint)
+     */
+    private fun clearBottomArea() {
+        stepsDrawer?.let { drawer ->
+            // Check if we're in portrait mode (not landscape)
+            val isLandscape = screenSize.x > screenSize.y
+
+            if (!isLandscape) {
+                // Enable scissor test to clear only the specific area
+                GLES20.glEnable(GLES20.GL_SCISSOR_TEST)
+
+                // Set scissor box to the area below the game
+                // Rectangle: (0, sizeY, offsetX + sizeX, sizeY * 2)
+                val x = 0
+                val y = drawer.sizeY
+                val width = drawer.offsetX + drawer.sizeX
+                val height = drawer.sizeY
+
+                // OpenGL scissor coordinates are from bottom-left, so we need to convert
+                val glY = screenSize.y - y - height
+                GLES20.glScissor(x, glY, width, height)
+
+                // Clear only the scissored area
+                GLES20.glClearColor(0f, 0f, 0f, 0f)
+                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+
+                // Disable scissor test
+                GLES20.glDisable(GLES20.GL_SCISSOR_TEST)
+            }
         }
     }
 
