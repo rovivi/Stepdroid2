@@ -700,15 +700,37 @@ fun LevelTrapezoidItem(
     }
 
     val glowAlpha by animateFloatAsState(
-        targetValue = if (isSelected) 1f else 0.6f,
+        targetValue = if (isSelected) 1f else 0.8f,
         animationSpec = tween(300),
         label = "glow_alpha"
     )
 
     val scaleAnimation by animateFloatAsState(
-        targetValue = if (isSelected) 1.05f else 1f,
-        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+        targetValue = if (isSelected) 1.08f else 1f,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 400f),
         label = "scale_animation"
+    )
+
+    // Animated gradient colors for selected items
+    val animatedTime by rememberInfiniteTransition(label = "gradient_animation").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "gradient_time"
+    )
+
+    // Animated particle fall effect
+    val particleFall by rememberInfiniteTransition(label = "particle_fall").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "particle_fall_time"
     )
 
     Box(
@@ -722,12 +744,12 @@ fun LevelTrapezoidItem(
             }
             .clickable { onSelect() }
     ) {
-        // Glow effect background
+        // Enhanced glow effect background with contour
         if (isSelected) {
             Canvas(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(4.dp)
+                    .padding(1.dp)
             ) {
                 val path = Path().apply {
                     val width = size.width
@@ -741,10 +763,26 @@ fun LevelTrapezoidItem(
                     close()
                 }
 
-                // Outer glow
+                // Outer contour glow
                 drawPath(
                     path = path,
-                    color = particleColor.copy(alpha = 0.4f)
+                    color = particleColor.copy(alpha = 0.8f),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6f)
+                )
+                drawPath(
+                    path = path,
+                    color = Color.White.copy(alpha = 0.5f * animatedTime),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 4f)
+                )
+
+                // Inner glow fill
+                drawPath(
+                    path = path,
+                    color = particleColor.copy(alpha = 0.3f)
+                )
+                drawPath(
+                    path = path,
+                    color = Color.White.copy(alpha = 0.2f * animatedTime)
                 )
             }
         }
@@ -753,7 +791,7 @@ fun LevelTrapezoidItem(
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (isSelected) 6.dp else 2.dp)
+                .padding(if (isSelected) 8.dp else 4.dp)
                 .graphicsLayer { alpha = glowAlpha }
         ) {
             val path = Path().apply {
@@ -769,16 +807,19 @@ fun LevelTrapezoidItem(
                 close()
             }
 
-            // Background gradient
+            // Enhanced background gradient
             val colors = if (isSelected) {
-                listOf(
-                    particleColor.copy(alpha = 0.9f),
-                    particleColor.copy(alpha = 0.7f)
-                )
+                // Animated gradient colors for selected items
+                val primaryColor = particleColor.copy(alpha = 0.9f)
+                val secondaryColor = particleColor.copy(alpha = 0.6f)
+                val accentColor = Color.White.copy(alpha = 0.4f * animatedTime)
+
+                listOf(primaryColor, secondaryColor, accentColor)
             } else {
+                // Orange/Green tint for unselected items
                 listOf(
-                    Color.Gray.copy(alpha = 0.5f),
-                    Color.Gray.copy(alpha = 0.3f)
+                    particleColor.copy(alpha = 0.6f),
+                    particleColor.copy(alpha = 0.4f)
                 )
             }
 
@@ -791,36 +832,82 @@ fun LevelTrapezoidItem(
                 )
             )
 
-            // Border effect
+            // Enhanced border effect
             if (isSelected) {
                 drawPath(
                     path = path,
-                    color = particleColor,
+                    color = Color.White.copy(alpha = 0.8f),
                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f)
                 )
             }
 
-            // Enhanced particles
+            // Animated falling particles - RAIN EFFECT
             if (isSelected) {
-                repeat(12) { i ->
+                repeat(20) { i -> // More particles for rain effect
                     val width = size.width
                     val height = size.height
-                    val x = (width * 0.15f) + (i * width * 0.07f)
-                    val y = height * 0.15f + (i % 3) * height * 0.35f
-                    val radius = if (i % 3 == 0) 4f else 2.5f
+                    val x = (width * 0.1f) + (i * width * 0.045f)
+
+                    // Falling animation - particles start at top and fall down
+                    val baseY = height * 0.1f + (i % 5) * height * 0.2f
+                    val fallOffset = particleFall * height * 0.8f
+                    val y = (baseY + fallOffset) % (height * 0.9f)
+
+                    val radius = if (i % 4 == 0) 5f else if (i % 2 == 0) 3.5f else 2.5f
+                    val alpha =
+                        (0.8f + (0.4f * animatedTime)) * (1f - (fallOffset / height)) // Fade as they fall
+
+                    // Colorful particles with variety
+                    val particleColorVariant = when (i % 4) {
+                        0 -> particleColor // Original color
+                        1 -> particleColor.copy(
+                            red = particleColor.red * 1.2f,
+                            alpha = alpha.coerceIn(0.3f, 1f)
+                        )
+
+                        2 -> Color.White.copy(alpha = alpha.coerceIn(0.4f, 1f))
+                        else -> if (level.STEPSTYPE.contains("single", ignoreCase = true)) {
+                            Color(0xFFFFD700).copy(
+                                alpha = alpha.coerceIn(
+                                    0.3f,
+                                    1f
+                                )
+                            ) // Gold for single
+                        } else {
+                            Color(0xFF00FFFF).copy(
+                                alpha = alpha.coerceIn(
+                                    0.3f,
+                                    1f
+                                )
+                            ) // Cyan for double
+                        }
+                    }
 
                     drawCircle(
-                        color = particleColor.copy(alpha = 0.8f),
+                        color = particleColorVariant,
                         radius = radius,
                         center = androidx.compose.ui.geometry.Offset(x, y)
                     )
 
-                    // Add sparkle effect
-                    if (i % 4 == 0) {
+                    // Enhanced sparkle trail with multiple colors
+                    if (i % 3 == 0) {
+                        val sparkleColor = when (i % 3) {
+                            0 -> Color.White.copy(alpha = (0.9f * animatedTime) * (1f - (fallOffset / height)))
+                            1 -> Color(0xFFFFD700).copy(alpha = (0.7f * animatedTime) * (1f - (fallOffset / height))) // Gold
+                            else -> Color(0xFF00FFFF).copy(alpha = (0.8f * animatedTime) * (1f - (fallOffset / height))) // Cyan
+                        }
+
                         drawCircle(
-                            color = Color.White.copy(alpha = 0.6f),
-                            radius = 1.5f,
-                            center = androidx.compose.ui.geometry.Offset(x + 1f, y - 1f)
+                            color = sparkleColor,
+                            radius = 2f,
+                            center = androidx.compose.ui.geometry.Offset(x + 1f, y - 3f)
+                        )
+
+                        // Additional tiny sparkles
+                        drawCircle(
+                            color = Color.White.copy(alpha = (0.6f * animatedTime) * (1f - (fallOffset / height))),
+                            radius = 1f,
+                            center = androidx.compose.ui.geometry.Offset(x - 1f, y - 1f)
                         )
                     }
                 }
@@ -834,74 +921,106 @@ fun LevelTrapezoidItem(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Main level number with enhanced styling
+            // Main level number - smaller but bold
             Box(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 contentAlignment = Alignment.Center
             ) {
-                // Small shadow box when selected
+                // Enhanced circular glow when selected (instead of black box)
                 if (isSelected) {
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .offset(x = 3.dp, y = 3.dp)
-                            .background(
-                                Color.Black.copy(alpha = 0.4f),
-                                RoundedCornerShape(8.dp)
-                            )
-                    )
-
-                    // Main highlight box
+                    // Outer bright glow ring
                     Box(
                         modifier = Modifier
                             .size(60.dp)
                             .background(
                                 brush = Brush.radialGradient(
                                     colors = listOf(
-                                        particleColor.copy(alpha = 0.3f),
+                                        particleColor.copy(alpha = 0.6f + 0.4f * animatedTime),
+                                        particleColor.copy(alpha = 0.3f + 0.3f * animatedTime),
                                         Color.Transparent
-                                    )
+                                    ),
+                                    radius = 80f
                                 ),
-                                RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(30.dp)
+                            )
+                    )
+
+                    // Inner bright core
+                    Box(
+                        modifier = Modifier
+                            .size(45.dp)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.4f * animatedTime),
+                                        particleColor.copy(alpha = 0.5f),
+                                        Color.Transparent
+                                    ),
+                                    radius = 60f
+                                ),
+                                shape = RoundedCornerShape(22.dp)
                             )
                     )
                 }
 
-                // Shadow text
+                // Bright outline text effect when selected
                 if (isSelected) {
+                    // White outline for contrast
                     Text(
                         text = level.METER.toString(),
-                        fontSize = 28.sp, // Reduced to prevent overflow
+                        fontSize = 26.sp,
                         fontWeight = FontWeight.Black,
-                        color = Color.Black.copy(alpha = 0.3f),
-                        modifier = Modifier.offset(x = 2.dp, y = 2.dp),
-                        maxLines = 1
+                        color = Color.White,
+                        modifier = Modifier.offset(x = 1.dp, y = 1.dp),
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            shadow = androidx.compose.ui.graphics.Shadow(
+                                color = particleColor,
+                                offset = androidx.compose.ui.geometry.Offset(2f, 2f),
+                                blurRadius = 8f
+                            )
+                        )
                     )
                 }
-                // Main text
+
+                // Main number text with enhanced styling
                 Text(
                     text = level.METER.toString(),
-                    fontSize = 28.sp, // Reduced to prevent overflow
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Black,
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineLarge,
-                    maxLines = 1
+                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.9f),
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    style = if (isSelected) {
+                        MaterialTheme.typography.headlineLarge.copy(
+                            shadow = androidx.compose.ui.graphics.Shadow(
+                                color = Color.Black,
+                                offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                                blurRadius = 4f
+                            )
+                        )
+                    } else {
+                        MaterialTheme.typography.headlineLarge
+                    }
                 )
             }
 
-            // Enhanced metadata column
+            // Enhanced metadata column with stepmaker info
             Column(
                 modifier = Modifier.weight(2.2f),
                 verticalArrangement = Arrangement.Center
             ) {
-                // Type badge
+                // Type badge with semi-transparent gray background
                 Box(
                     modifier = Modifier
                         .background(
-                            particleColor,
-                            RoundedCornerShape(8.dp)
+                            Color.Gray.copy(alpha = 0.3f), // Semi-transparent gray
+                            shape = RoundedCornerShape(8.dp)
                         )
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = if (level.STEPSTYPE.contains(
@@ -909,52 +1028,45 @@ fun LevelTrapezoidItem(
                                 ignoreCase = true
                             )
                         ) "Single" else "Double",
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color.White, // Colored text on gray background
                     )
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = level.DESCRIPTION,
-                    fontSize = 11.sp,
-                    color = Color.White.copy(alpha = 0.95f),
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1
-                )
-
+                // Stepmaker/UCS info
                 if (level.CREDIT.isNotEmpty()) {
                     Text(
-                        text = "By: ${level.CREDIT}",
-                        fontSize = 8.sp,
-                        color = Color.White.copy(alpha = 0.8f),
+                        text = level.CREDIT,
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                } else if (level.DESCRIPTION.isNotEmpty()) {
+                    Text(
+                        text = level.DESCRIPTION,
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontWeight = FontWeight.Medium,
                         maxLines = 1
                     )
                 }
-            }
 
-            // Enhanced step type indicator
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                particleColor,
-                                particleColor.copy(alpha = 0.7f)
-                            )
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
+                // Additional metadata
                 Text(
-                    text = if (level.STEPSTYPE.contains("single", ignoreCase = true)) "S" else "D",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color.White
+                    text = "Lv.${level.METER} • ${
+                        if (level.STEPSTYPE.contains(
+                                "single",
+                                ignoreCase = true
+                            )
+                        ) "SP" else "DP"
+                    }",
+                    fontSize = 8.sp,
+                    color = Color.White.copy(alpha = 0.7f),
+                    maxLines = 1
                 )
             }
         }
