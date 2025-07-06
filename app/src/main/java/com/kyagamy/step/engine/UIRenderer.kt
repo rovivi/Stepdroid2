@@ -21,7 +21,7 @@ class UIRenderer(
     // UI components state
     private var life = 50f
     private var combo = 0
-    private var positionJudge: Short = 0
+    private var positionJudge: Short = Combo.VALUE_NONE
     private var timeMark: Long = System.currentTimeMillis()
     private var aumentTip = -220
     private var aumentLife = 0f
@@ -383,23 +383,25 @@ class UIRenderer(
 
         var posIntYCombo = (y / 2 - (numberSizeY + labelSizeY + comboSizeY) / 2)
 
-        // Judge label - use correct frame based on positionJudge
-        val judgeBaseIndex = textureIds["combo_judge_base"] ?: 0
-        val judgeFrameIndex = positionJudge.toInt().coerceIn(0, 4) // 0-4 for judge types
-        val judgeTextureIndex = judgeBaseIndex + judgeFrameIndex
+        // Judge label - draw only if we have a valid judge
+        if (positionJudge != Combo.VALUE_NONE) {
+            val judgeBaseIndex = textureIds["combo_judge_base"] ?: 0
+            val judgeFrameIndex = positionJudge.toInt().coerceIn(0, 4) // 0-4 for judge types
+            val judgeTextureIndex = judgeBaseIndex + judgeFrameIndex
 
-        uiElements.add(
-            UIElement(
-                posLabelIntX.toFloat(),
-                posIntYCombo.toFloat(),
-                labelSizeX.toFloat(),
-                labelSizeY.toFloat(),
-                batchRenderer.getTextureId(judgeTextureIndex),
-                currentAlpha
+            uiElements.add(
+                UIElement(
+                    posLabelIntX.toFloat(),
+                    posIntYCombo.toFloat(),
+                    labelSizeX.toFloat(),
+                    labelSizeY.toFloat(),
+                    batchRenderer.getTextureId(judgeTextureIndex),
+                    currentAlpha
+                )
             )
-        )
 
-        posIntYCombo = (posIntYCombo + labelSizeY * 1.08).toInt()
+            posIntYCombo = (posIntYCombo + labelSizeY * 1.08).toInt()
+        }
 
         // Show combo text and numbers if combo > 3 or < -3
         if (combo > 3 || combo < -3) {
