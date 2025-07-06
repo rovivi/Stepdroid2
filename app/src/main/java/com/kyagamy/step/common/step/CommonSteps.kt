@@ -3,6 +3,7 @@ package com.kyagamy.step.common.step
 import android.util.Log
 import com.kyagamy.step.common.step.Game.GameRow
 import game.Note
+import game.NoteType
 import java.lang.Exception
 import java.util.*
 import kotlin.collections.ArrayList
@@ -16,18 +17,18 @@ public class CommonSteps {
         const val ARROW_HOLD_PRESSED: Byte = 2
 
         /**NOTE FIELDS*/
-        const val NOTE_EMPTY: Short = 0
-        const val NOTE_TAP: Short = 1
-        const val NOTE_LONG_START: Short = 2
-        const val NOTE_LONG_END: Short = 3
-        const val NOTE_FAKE: Short = 4
-        const val NOTE_MINE: Short = 5
-        const val NOTE_MINE_DEATH: Short = 6
-        const val NOTE_POSION: Short = 7
-        const val NOTE_LONG_BODY: Short = 50
-        const val NOTE_LONG_TOUCHABLE: Short = 10
-        const val NOTE_PRESSED: Short = 128
-        const val NOTE_LONG_PRESSED: Short = 51
+        val NOTE_EMPTY = NoteType.EMPTY
+        val NOTE_TAP = NoteType.TAP
+        val NOTE_LONG_START = NoteType.LONG_START
+        val NOTE_LONG_END = NoteType.LONG_END
+        val NOTE_FAKE = NoteType.FAKE
+        val NOTE_MINE = NoteType.MINE
+        val NOTE_MINE_DEATH = NoteType.MINE_DEATH
+        val NOTE_POSION = NoteType.POSION
+        val NOTE_LONG_BODY = NoteType.LONG_BODY
+        val NOTE_LONG_TOUCHABLE = NoteType.LONG_TOUCHABLE
+        val NOTE_PRESSED = NoteType.PRESSED
+        val NOTE_LONG_PRESSED = NoteType.LONG_PRESSED
 
         /**PERFORMANCE*/
         const val PLAYER_0: Byte = 1
@@ -99,82 +100,6 @@ public class CommonSteps {
         }
 
 
-        fun applyLongNotes(steps: ArrayList<GameRow>, len: Int) {
-            try {
-                var currentTickCount = 2.0
-                var intialTickCount = 2.0
-                var i = 0
-                while (i < steps.size) {
-                    val row = steps[i]
-                    if (row.modifiers?.get("TICKCOUNTS") != null)
-                        intialTickCount = row.modifiers!!["TICKCOUNTS"]!![1]
-                    if (row.notes != null) {
-                        for (j in 0 until row.notes!!.size) {
-                            currentTickCount = intialTickCount + 0.00000001
-                            if (row.notes!![j].type == NOTE_LONG_START) {
-                                val beatLimit = row.notes!![j].rowEnd?.currentBeat
-                                var beatLong = row.currentBeat
-
-                                try {
-                                    while (beatLong <= beatLimit ?: 0.0) {//prevent infinite loop
-                                        beatLong += (1.0 / currentTickCount)//currentTickCount
-                                        val newRowAux =
-                                            steps.firstOrNull { findRow ->//find row correspondent
-                                                almostEqual(
-                                                    beatLong,
-                                                    findRow.currentBeat
-                                                )
-                                            }
-                                        if (newRowAux == null) {//case does't exist row
-                                            val newNote =
-                                                Note.CloneNote(row.notes!![j])//Se crea una nueva nota que tiene los mismos parametros que la de entrada
-                                            newNote.type = NOTE_LONG_BODY
-                                            newNote.rowOrigin = row
-                                            val newRow = GameRow()
-                                            newRow.currentBeat = beatLong
-                                            newRow.notes = arrayListOf(Note())
-                                            for (cc in 0..len - 2)
-                                                newRow.notes!!.add(Note())
-                                            newRow.notes!![j] = newNote
-                                            newRow.notes!![j].type = NOTE_LONG_BODY
-                                            newRow.notes!![j].rowOrigin = row
-                                            newRow.notes!![j].rowEnd = row.notes!![j].rowEnd
-
-                                            steps.add(newRow)
-                                        } else {//exist row
-                                            if (newRowAux.modifiers?.get("TICKCOUNTS") != null) {
-                                                currentTickCount =
-                                                    newRowAux.modifiers!!["TICKCOUNTS"]!![1]
-                                            }
-                                            if (newRowAux.notes != null && newRowAux.notes?.get(j)!!.type == NOTE_LONG_END) {
-                                                newRowAux.notes!![j].rowOrigin = row
-                                                break
-                                            }
-                                            if (newRowAux.notes == null) {
-                                                newRowAux.notes = arrayListOf(Note())
-                                                for (cc in 0..len - 2)
-                                                    newRowAux.notes!!.add(Note())
-                                            }
-                                            if (newRowAux.notes!![j].type != NOTE_LONG_END) {
-                                                newRowAux.notes!![j].type = NOTE_LONG_BODY
-                                            }
-                                            newRowAux.notes!![j].rowOrigin = row
-                                            newRowAux.notes!![j].rowEnd = row.notes!![j].rowEnd
-                                        }
-                                    }
-                                } catch (ex: Exception) {
-                                    ex.stackTrace
-                                }
-                            }
-                        }
-                    }
-                    i++
-                }
-            } catch (ex: Exception) {
-                ex.stackTrace
-                Log.d("Parse error ", "Failed proces long notes")
-            }
-        }
 
         fun stopsToScroll(steps: ArrayList<GameRow>) {
             var rowaux = GameRow();
