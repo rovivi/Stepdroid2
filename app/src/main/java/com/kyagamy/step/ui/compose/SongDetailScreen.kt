@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -43,11 +42,16 @@ import coil.request.ImageRequest
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.room.entities.Level
 import com.kyagamy.step.viewmodels.LevelViewModel
+import com.kyagamy.step.common.SettingsGameGetter
+import com.kyagamy.step.common.step.CommonGame.ParamsSong
 import kotlinx.coroutines.delay
 import java.io.File
 import android.media.MediaPlayer
 import android.widget.VideoView
-import com.kyagamy.step.ui.compose.components.SongDetailItem
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.graphics.Path
 import com.kyagamy.step.ui.compose.components.SplitImageWithVideo
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
@@ -68,10 +72,11 @@ fun SharedTransitionScope.SongDetailScreen(
     var isVideoPlaying by remember { mutableStateOf(false) }
     var isMusicPlaying by remember { mutableStateOf(false) }
     var shouldShowContent by remember { mutableStateOf(false) }
+    var selectedLevelIndex by remember { mutableStateOf(-1) }
 
     // Media player states
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
-    var videoView by remember { mutableStateOf<VideoView?>(null) }
+    //var videoView by remember { mutableStateOf<VideoView?>(null) }
 
     // Extract dominant color from image for background
     var dominantColor by remember { mutableStateOf(Color.Black) }
@@ -204,11 +209,12 @@ fun SharedTransitionScope.SongDetailScreen(
         label = "image_split"
     )
 
-    val contentAlpha by animateFloatAsState(
-        targetValue = if (shouldShowContent) 1f else 0f,
-        animationSpec = tween(600, easing = EaseInOutCubic),
-        label = "content_alpha"
-    )
+    // Set default selection when levels are loaded
+    LaunchedEffect(levels) {
+        if (levels.isNotEmpty() && selectedLevelIndex == -1) {
+            selectedLevelIndex = 0
+        }
+    }
 
     // Dynamic background based on image
     Box(
@@ -259,25 +265,23 @@ fun SharedTransitionScope.SongDetailScreen(
                 )
 
                 // Music indicator - Z-index 2
-                if (isMusicPlaying) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(16.dp)
-                            .zIndex(2f)
-                            .background(
-                                Color.Black.copy(alpha = 0.7f),
-                                shape = RoundedCornerShape(20.dp)
-                            )
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "♪ Playing",
-                            fontSize = 12.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .zIndex(2f)
+                        .background(
+                            Color.Black.copy(alpha = 0.7f),
+                            shape = RoundedCornerShape(20.dp)
                         )
-                    }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = song.GENRE,
+                        fontSize = 12.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 // Back button - immediate response - Z-index 2
@@ -322,6 +326,12 @@ fun SharedTransitionScope.SongDetailScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
+                            text = "BPM: ${song.DISPLAYBPM}",
+                            fontSize = 12.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
                             text = song.TITLE,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
@@ -346,85 +356,718 @@ fun SharedTransitionScope.SongDetailScreen(
                 }
             }
 
-            // Content section
-            LazyColumn(
+            // Content section with new horizontal layout
+            Row(
                 modifier = Modifier
-                    .weight(1f)
                     .fillMaxWidth()
-                    .graphicsLayer { alpha = contentAlpha }
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .weight(1f)
             ) {
-                item {
-                    // Song info card
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.Black.copy(alpha = 0.7f)
-                        )
+                // Left: Menu de opciones (Level list)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+                    Text(
+                        "MENU DE OPCIONES",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                RoundedCornerShape(16.dp)
+                            )
+                            .padding(8.dp)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            SongDetailItem("BPM", song.DISPLAYBPM, Color.Cyan)
-                            SongDetailItem("Genre", song.GENRE, Color.Magenta)
-                            SongDetailItem("Levels", "${levels.size}", Color.Yellow)
+                        itemsIndexed(levels) { index, level ->
+                            LevelTrapezoidItem(
+                                level = level,
+                                isSelected = index == selectedLevelIndex,
+                                onSelect = {
+                                    selectedLevelIndex = index
+                                }
+                            )
                         }
                     }
                 }
 
-                item {
-                    // Levels section
+                // Right: Auto Velocity and Speed Controls (A/V)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+                    val settingsGameGetter = remember { SettingsGameGetter(context) }
+
+                    // Read initial values from settings
+                    var autoVelocity by remember {
+                        mutableIntStateOf(
+                            settingsGameGetter.getValueInt(SettingsGameGetter.AV)
+                        )
+                    }
+                    var speedValue by remember {
+                        mutableFloatStateOf(
+                            settingsGameGetter.getValueFloat(SettingsGameGetter.SPEED)
+                        )
+                    }
+
                     Text(
-                        text = "Select Difficulty",
-                        fontSize = 20.sp,
+                        "CONTROLES A/V",
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    if (levels.isNotEmpty()) {
-                        LevelGrid(
-                            levels = levels,
-                            columns = 4,
-                            bigMode = false,
-                            onItemClick = { level ->
-                                isVideoPlaying = false
-                                isMusicPlaying = false
-                                releaseMediaPlayer()
-                                onLevelSelect(level)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(300.dp)
-                        )
-                    } else {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.Gray.copy(alpha = 0.3f)
+                    Card(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                RoundedCornerShape(16.dp)
                             ),
-                            shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Transparent
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
+                            // Auto Velocity Section
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF4CAF50).copy(alpha = 0.2f)
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(
-                                    text = "No levels available",
-                                    color = Color.White.copy(alpha = 0.7f),
-                                    fontSize = 16.sp
-                                )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Auto Velocity",
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = autoVelocity.toString(),
+                                            color = Color(0xFF4CAF50),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    // Increment buttons
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        listOf(1, 10, 100).forEach { increment ->
+                                            Button(
+                                                onClick = {
+                                                    autoVelocity += increment
+                                                    if (autoVelocity > 1200) autoVelocity =
+                                                        1200
+                                                    settingsGameGetter.saveSetting(
+                                                        SettingsGameGetter.AV,
+                                                        autoVelocity
+                                                    )
+                                                    ParamsSong.av = autoVelocity
+                                                },
+                                                modifier = Modifier
+                                                    .width(60.dp)
+                                                    .height(32.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFF4CAF50)
+                                                ),
+                                                contentPadding = PaddingValues(0.dp)
+                                            ) {
+                                                Text(
+                                                    text = "+$increment",
+                                                    fontSize = 10.sp,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Decrement buttons
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        listOf(-1, -10, -100).forEach { decrement ->
+                                            Button(
+                                                onClick = {
+                                                    autoVelocity += decrement
+                                                    if (autoVelocity < 200) autoVelocity =
+                                                        200
+                                                    settingsGameGetter.saveSetting(
+                                                        SettingsGameGetter.AV,
+                                                        autoVelocity
+                                                    )
+                                                    ParamsSong.av = autoVelocity
+                                                },
+                                                modifier = Modifier
+                                                    .width(60.dp)
+                                                    .height(32.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFF4CAF50).copy(
+                                                        alpha = 0.7f
+                                                    )
+                                                ),
+                                                contentPadding = PaddingValues(0.dp)
+                                            ) {
+                                                Text(
+                                                    text = "$decrement",
+                                                    fontSize = 10.sp,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Speed Section
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF2196F3).copy(alpha = 0.2f)
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Speed",
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = String.format("%.2f", speedValue),
+                                            color = Color(0xFF2196F3),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    // Increment buttons
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        listOf(0.25f, 0.5f, 1f).forEach { increment ->
+                                            Button(
+                                                onClick = {
+                                                    speedValue += increment
+                                                    if (speedValue > 10f) speedValue = 10f
+                                                    settingsGameGetter.saveSetting(
+                                                        SettingsGameGetter.SPEED,
+                                                        speedValue
+                                                    )
+                                                    ParamsSong.speed = speedValue
+                                                },
+                                                modifier = Modifier
+                                                    .width(60.dp)
+                                                    .height(32.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFF2196F3)
+                                                ),
+                                                contentPadding = PaddingValues(0.dp)
+                                            ) {
+                                                Text(
+                                                    text = "+$increment",
+                                                    fontSize = 10.sp,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Decrement buttons
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        listOf(-0.25f, -0.5f, -1f).forEach { decrement ->
+                                            Button(
+                                                onClick = {
+                                                    speedValue += decrement
+                                                    if (speedValue < 0.25f) speedValue = 0.25f
+                                                    settingsGameGetter.saveSetting(
+                                                        SettingsGameGetter.SPEED,
+                                                        speedValue
+                                                    )
+                                                    ParamsSong.speed = speedValue
+                                                },
+                                                modifier = Modifier
+                                                    .width(60.dp)
+                                                    .height(32.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFF2196F3).copy(
+                                                        alpha = 0.7f
+                                                    )
+                                                ),
+                                                contentPadding = PaddingValues(0.dp)
+                                            ) {
+                                                Text(
+                                                    text = "$decrement",
+                                                    fontSize = 10.sp,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
+            }
+
+            // Start button at bottom center
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(
+                    onClick = {
+                        if (selectedLevelIndex != -1) {
+                            onLevelSelect(levels[selectedLevelIndex])
+                        }
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .height(60.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Blue.copy(alpha = 0.8f)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        "Start",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LevelTrapezoidItem(
+    level: Level,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val particleColor = if (level.STEPSTYPE.contains("single", ignoreCase = true)) {
+        Color(0xFFFF9800) // Orange for single
+    } else {
+        Color(0xFF4CAF50) // Green for double
+    }
+
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0.8f,
+        animationSpec = tween(300),
+        label = "glow_alpha"
+    )
+
+    val scaleAnimation by animateFloatAsState(
+        targetValue = if (isSelected) 1.08f else 1f,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 400f),
+        label = "scale_animation"
+    )
+
+    // Animated gradient colors for selected items
+    val animatedTime by rememberInfiniteTransition(label = "gradient_animation").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "gradient_time"
+    )
+
+    // Animated particle fall effect
+    val particleFall by rememberInfiniteTransition(label = "particle_fall").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "particle_fall_time"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(90.dp)
+            .padding(vertical = 6.dp)
+            .graphicsLayer {
+                scaleX = scaleAnimation
+                scaleY = scaleAnimation
+            }
+            .clickable { onSelect() }
+    ) {
+        // Enhanced glow effect background with contour
+        if (isSelected) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(1.dp)
+            ) {
+                val path = Path().apply {
+                    val width = size.width
+                    val height = size.height
+                    val skew = 25f
+
+                    moveTo(skew, 0f)
+                    lineTo(width, 0f)
+                    lineTo(width - skew, height)
+                    lineTo(0f, height)
+                    close()
+                }
+
+                // Outer contour glow
+                drawPath(
+                    path = path,
+                    color = particleColor.copy(alpha = 0.8f),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6f)
+                )
+                drawPath(
+                    path = path,
+                    color = Color.White.copy(alpha = 0.5f * animatedTime),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 4f)
+                )
+
+                // Inner glow fill
+                drawPath(
+                    path = path,
+                    color = particleColor.copy(alpha = 0.3f)
+                )
+                drawPath(
+                    path = path,
+                    color = Color.White.copy(alpha = 0.2f * animatedTime)
+                )
+            }
+        }
+
+        // Main trapezoid background with Canvas
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(if (isSelected) 8.dp else 4.dp)
+                .graphicsLayer { alpha = glowAlpha }
+        ) {
+            val path = Path().apply {
+                val width = size.width
+                val height = size.height
+                val skew = 22f
+
+                // Create trapezoid shape
+                moveTo(skew, 0f)
+                lineTo(width, 0f)
+                lineTo(width - skew, height)
+                lineTo(0f, height)
+                close()
+            }
+
+            // Enhanced background gradient
+            val colors = if (isSelected) {
+                // Animated gradient colors for selected items
+                val primaryColor = particleColor.copy(alpha = 0.9f)
+                val secondaryColor = particleColor.copy(alpha = 0.6f)
+                val accentColor = Color.White.copy(alpha = 0.4f * animatedTime)
+
+                listOf(primaryColor, secondaryColor, accentColor)
+            } else {
+                // Orange/Green tint for unselected items
+                listOf(
+                    particleColor.copy(alpha = 0.6f),
+                    particleColor.copy(alpha = 0.4f)
+                )
+            }
+
+            drawPath(
+                path = path,
+                brush = Brush.linearGradient(
+                    colors = colors,
+                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                    end = androidx.compose.ui.geometry.Offset(size.width, size.height)
+                )
+            )
+
+            // Enhanced border effect
+            if (isSelected) {
+                drawPath(
+                    path = path,
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f)
+                )
+            }
+
+            // Animated falling particles - RAIN EFFECT
+            if (isSelected) {
+                repeat(20) { i -> // More particles for rain effect
+                    val width = size.width
+                    val height = size.height
+                    val x = (width * 0.1f) + (i * width * 0.045f)
+
+                    // Falling animation - particles start at top and fall down
+                    val baseY = height * 0.1f + (i % 5) * height * 0.2f
+                    val fallOffset = particleFall * height * 0.8f
+                    val y = (baseY + fallOffset) % (height * 0.9f)
+
+                    val radius = if (i % 4 == 0) 5f else if (i % 2 == 0) 3.5f else 2.5f
+                    val alpha =
+                        (0.8f + (0.4f * animatedTime)) * (1f - (fallOffset / height)) // Fade as they fall
+
+                    // Colorful particles with variety
+                    val particleColorVariant = when (i % 4) {
+                        0 -> particleColor // Original color
+                        1 -> particleColor.copy(
+                            red = particleColor.red * 1.2f,
+                            alpha = alpha.coerceIn(0.3f, 1f)
+                        )
+
+                        2 -> Color.White.copy(alpha = alpha.coerceIn(0.4f, 1f))
+                        else -> if (level.STEPSTYPE.contains("single", ignoreCase = true)) {
+                            Color(0xFFFFD700).copy(
+                                alpha = alpha.coerceIn(
+                                    0.3f,
+                                    1f
+                                )
+                            ) // Gold for single
+                        } else {
+                            Color(0xFF00FFFF).copy(
+                                alpha = alpha.coerceIn(
+                                    0.3f,
+                                    1f
+                                )
+                            ) // Cyan for double
+                        }
+                    }
+
+                    drawCircle(
+                        color = particleColorVariant,
+                        radius = radius,
+                        center = androidx.compose.ui.geometry.Offset(x, y)
+                    )
+
+                    // Enhanced sparkle trail with multiple colors
+                    if (i % 3 == 0) {
+                        val sparkleColor = when (i % 3) {
+                            0 -> Color.White.copy(alpha = (0.9f * animatedTime) * (1f - (fallOffset / height)))
+                            1 -> Color(0xFFFFD700).copy(alpha = (0.7f * animatedTime) * (1f - (fallOffset / height))) // Gold
+                            else -> Color(0xFF00FFFF).copy(alpha = (0.8f * animatedTime) * (1f - (fallOffset / height))) // Cyan
+                        }
+
+                        drawCircle(
+                            color = sparkleColor,
+                            radius = 2f,
+                            center = androidx.compose.ui.geometry.Offset(x + 1f, y - 3f)
+                        )
+
+                        // Additional tiny sparkles
+                        drawCircle(
+                            color = Color.White.copy(alpha = (0.6f * animatedTime) * (1f - (fallOffset / height))),
+                            radius = 1f,
+                            center = androidx.compose.ui.geometry.Offset(x - 1f, y - 1f)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Content overlay with enhanced styling
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Main level number - smaller but bold
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Enhanced circular glow when selected (instead of black box)
+                if (isSelected) {
+                    // Outer bright glow ring
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        particleColor.copy(alpha = 0.6f + 0.4f * animatedTime),
+                                        particleColor.copy(alpha = 0.3f + 0.3f * animatedTime),
+                                        Color.Transparent
+                                    ),
+                                    radius = 80f
+                                ),
+                                shape = RoundedCornerShape(30.dp)
+                            )
+                    )
+
+                    // Inner bright core
+                    Box(
+                        modifier = Modifier
+                            .size(45.dp)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.4f * animatedTime),
+                                        particleColor.copy(alpha = 0.5f),
+                                        Color.Transparent
+                                    ),
+                                    radius = 60f
+                                ),
+                                shape = RoundedCornerShape(22.dp)
+                            )
+                    )
+                }
+
+                // Bright outline text effect when selected
+                if (isSelected) {
+                    // White outline for contrast
+                    Text(
+                        text = level.METER.toString(),
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White,
+                        modifier = Modifier.offset(x = 1.dp, y = 1.dp),
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            shadow = androidx.compose.ui.graphics.Shadow(
+                                color = particleColor,
+                                offset = androidx.compose.ui.geometry.Offset(2f, 2f),
+                                blurRadius = 8f
+                            )
+                        )
+                    )
+                }
+
+                // Main number text with enhanced styling
+                Text(
+                    text = level.METER.toString(),
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.9f),
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    style = if (isSelected) {
+                        MaterialTheme.typography.headlineLarge.copy(
+                            shadow = androidx.compose.ui.graphics.Shadow(
+                                color = Color.Black,
+                                offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                                blurRadius = 4f
+                            )
+                        )
+                    } else {
+                        MaterialTheme.typography.headlineLarge
+                    }
+                )
+            }
+
+            // Enhanced metadata column with stepmaker info
+            Column(
+                modifier = Modifier.weight(2.2f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Type badge with semi-transparent gray background
+                Box(
+                    modifier = Modifier
+                        .background(
+                            Color.Gray.copy(alpha = 0.3f), // Semi-transparent gray
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = if (level.STEPSTYPE.contains(
+                                "single",
+                                ignoreCase = true
+                            )
+                        ) "Single" else "Double",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White, // Colored text on gray background
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Stepmaker/UCS info
+                if (level.CREDIT.isNotEmpty()) {
+                    Text(
+                        text = level.CREDIT,
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                } else if (level.DESCRIPTION.isNotEmpty()) {
+                    Text(
+                        text = level.DESCRIPTION,
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                }
+
+                // Additional metadata
+                Text(
+                    text = "Lv.${level.METER} • ${
+                        if (level.STEPSTYPE.contains(
+                                "single",
+                                ignoreCase = true
+                            )
+                        ) "SP" else "DP"
+                    }",
+                    fontSize = 8.sp,
+                    color = Color.White.copy(alpha = 0.7f),
+                    maxLines = 1
+                )
             }
         }
     }
