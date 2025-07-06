@@ -28,7 +28,7 @@ class Combo(c: Context, stepsDrawer: StepsDrawer) {
     private var lifeBar: LifeBar? = null
 
 
-    var positionJudge: Short = 0
+    var positionJudge: Short = VALUE_NONE
 
     init {
         timeMark = System.currentTimeMillis()
@@ -189,6 +189,7 @@ class Combo(c: Context, stepsDrawer: StepsDrawer) {
     }
 
     companion object {
+        const val VALUE_NONE: Short = -1
         const val VALUE_PERFECT: Short = 0
         const val VALUE_GREAT: Short = 1
         const val VALUE_GOOD: Short = 2

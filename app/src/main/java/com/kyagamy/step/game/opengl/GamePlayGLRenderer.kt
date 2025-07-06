@@ -329,7 +329,7 @@ class GamePlayGLRenderer(
             // Sync combo state - this is the key part for combo display
             combo?.let { c ->
                 // If there's a combo update from the game (when a note is actually hit)
-                if (c.positionJudge != 0.toShort()) {
+                if (c.positionJudge != Combo.VALUE_NONE) {
                     val judgeText = when (c.positionJudge) {
                         Combo.VALUE_PERFECT -> "PERFECT"
                         Combo.VALUE_GREAT -> "GREAT"
@@ -346,7 +346,7 @@ class GamePlayGLRenderer(
 
                     ui.setComboUpdate(c.positionJudge)
                     // Reset the judge position to avoid repeated updates
-                    c.positionJudge = 0
+                    c.positionJudge = Combo.VALUE_NONE
                 } else {
                     // Log inputs periodically to see if they're being detected
                     if (frameCount % 60 == 0 && gameState?.inputs?.any { it.toInt() != 0 } == true) {
