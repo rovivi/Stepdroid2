@@ -219,6 +219,11 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
             val rGood = rGreat + currentJudge[2]
             val rBad = rGood + currentJudge[1]
 
+            // Log timing windows (only once every few seconds to avoid spam)
+            if (currentElement % 100 == 0) {
+                println("⏱️ Timing windows - PERFECT: <${rGreat}ms, GREAT: ${rGreat}-${rGood}ms, GOOD: ${rGood}-${rBad}ms, BAD: >${rBad}ms")
+            }
+
             val addBeats = secondToBeat(rBad / 1000.0, BPM)
             posBack = 0
             //Search outBeatRange gameRow
@@ -286,16 +291,21 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
                                 BPM
                             )
                         ) * 1000
-                        println(auxRetro.toString() + "NOTE" + posEvaluate)
+                        println("🎯 Timing evaluation: auxRetro=${auxRetro}ms, rGreat=${rGreat}ms, rGood=${rGood}ms, rBad=${rBad}ms")
                         if (Evaluator.Companion.containsNoteLongPressed(steps.get(posEvaluate)!!)) {
+                            println("🎵 LONG NOTE -> PERFECT")
                             combo!!.setComboUpdate(Combo.VALUE_PERFECT.toShort())
                         } else if (auxRetro < rGreat) { //perfetc
+                            println("🎵 PERFECT (${auxRetro} < ${rGreat})")
                             combo!!.setComboUpdate(Combo.VALUE_PERFECT.toShort())
                         } else if (auxRetro < rGood) { //great
+                            println("🎵 GREAT (${auxRetro} < ${rGood})")
                             combo!!.setComboUpdate(Combo.VALUE_GREAT.toShort())
                         } else if (auxRetro < rBad) { //good
+                            println("🎵 GOOD (${auxRetro} < ${rBad})")
                             combo!!.setComboUpdate(Combo.VALUE_GOOD.toShort())
                         } else { //bad
+                            println("🎵 BAD (${auxRetro} >= ${rBad})")
                             combo!!.setComboUpdate(Combo.VALUE_BAD.toShort())
                         }
                         eventAux =

@@ -33,7 +33,8 @@ class GamePlayGLRenderer(
     private val context: Context,
     private val stepData: StepObject,
     private val videoView: VideoView?,
-    private val screenSize: Point
+    private val screenSize: Point,
+    private val inputs: ByteArray? = null
 ) : GLSurfaceView.Renderer, ISpriteRenderer {
 
     private var gameState: GameState? = null
@@ -50,7 +51,7 @@ class GamePlayGLRenderer(
 
     private val drawList = ArrayList<GameRow>()
     private var speed = 0
-    private val autoVelocity = 2//ParamsSong.av
+    private val autoVelocity = ParamsSong.av
 
     // FPS tracking
     private var frameCount = 0
@@ -117,7 +118,7 @@ class GamePlayGLRenderer(
         if (gameState != null) {
             return
         }
-        gameState = GameState(stepData, ByteArray(10))
+        gameState = GameState(stepData, inputs ?: ByteArray(10))
         gameState?.reset()
         stepsDrawer = StepsDrawerGL(context, stepData.stepType, "16:9", false, screenSize)
         arrowRenderer = ArrowSpriteRenderer(context)
@@ -294,14 +295,29 @@ class GamePlayGLRenderer(
     private fun updateGame() {
         gameState?.update()
 
-        // Update UI renderer instead of individual components
+        // Log current game state for debugging
+        if (frameCount % 300 == 0) { // Log every 5 seconds at 60fps
+            android.util.Log.d(
+                "GamePlayGLRenderer",
+                "Game State - Beat: ${gameState?.currentBeat}, Element: ${gameState?.currentElement}, Running: ${gameState?.isRunning}"
+            )
+        }
+
+        // Update UI renderer with game state
         uiRenderer?.let { ui ->
-            // Sync UI state with game state
+            // Sync life state
             bar?.let { b ->
-                // Transfer life state to UI renderer
-                if (ui.getLife() != b.life) {
-                    // Update UI life to match game life
-                    val lifeDiff = b.life - ui.getLife()
+                val currentUILife = ui.getLife()
+                val gameLife = b.life
+
+                // If there's a difference, we need to update the UI
+                if (kotlin.math.abs(currentUILife - gameLife) > 0.1f) {
+                    android.util.Log.d(
+                        "GamePlayGLRenderer",
+                        "Life updated: UI=$currentUILife → Game=$gameLife"
+                    )
+                    // Calculate the difference and apply it
+                    val lifeDiff = gameLife - currentUILife
                     if (lifeDiff > 0) {
                         ui.updateLife(Combo.VALUE_PERFECT, 1)
                     } else if (lifeDiff < 0) {
@@ -310,12 +326,37 @@ class GamePlayGLRenderer(
                 }
             }
 
+            // Sync combo state - this is the key part for combo display
             combo?.let { c ->
-                // Transfer combo state to UI renderer if needed
+                // If there's a combo update from the game (when a note is actually hit)
                 if (c.positionJudge != 0.toShort()) {
+                    val judgeText = when (c.positionJudge) {
+                        Combo.VALUE_PERFECT -> "PERFECT"
+                        Combo.VALUE_GREAT -> "GREAT"
+                        Combo.VALUE_GOOD -> "GOOD"
+                        Combo.VALUE_BAD -> "BAD"
+                        Combo.VALUE_MISS -> "MISS"
+                        else -> "UNKNOWN(${c.positionJudge})"
+                    }
+                    android.util.Log.d("GamePlayGLRenderer", "🎵 NOTE EVALUATED! Judge: $judgeText")
+                    android.util.Log.d(
+                        "GamePlayGLRenderer",
+                        "📊 Evaluator stats - P:${Evaluator.PERFECT} G:${Evaluator.GREAT} O:${Evaluator.GOOD} B:${Evaluator.BAD} M:${Evaluator.MISS}"
+                    )
+
                     ui.setComboUpdate(c.positionJudge)
                     // Reset the judge position to avoid repeated updates
                     c.positionJudge = 0
+                } else {
+                    // Log inputs periodically to see if they're being detected
+                    if (frameCount % 60 == 0 && gameState?.inputs?.any { it.toInt() != 0 } == true) {
+                        val inputsStr =
+                            gameState?.inputs?.mapIndexed { i, v -> if (v.toInt() != 0) "[$i]=$v" else "" }
+                                ?.filter { it.isNotEmpty() }?.joinToString(" ")
+                        if (!inputsStr.isNullOrEmpty()) {
+                            android.util.Log.d("GamePlayGLRenderer", "🎮 Active inputs: $inputsStr")
+                        }
+                    }
                 }
             }
         }
