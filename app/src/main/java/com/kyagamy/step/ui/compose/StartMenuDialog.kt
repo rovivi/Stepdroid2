@@ -29,7 +29,30 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.viewmodels.LevelViewModel
-import com.kyagamy.step.ui.compose.SongImage
+import com.kyagamy.step.ui.compose.components.SongImage
+import com.kyagamy.step.ui.compose.components.InfoItem
+import com.kyagamy.step.ui.compose.components.LevelRangeItem
+import com.kyagamy.step.viewmodels.SongViewModel
+
+@Composable
+fun StartMenuDialog(
+    songId: Int,
+    onDismiss: () -> Unit
+) {
+    val songViewModel: SongViewModel = viewModel()
+    val songs by songViewModel.songById(songId).observeAsState(emptyList())
+
+    if (songs.isNotEmpty()) {
+        StartMenuDialog(
+            song = songs[0],
+            onDismiss = onDismiss,
+            onSelect = {
+                // Aquí se puede manejar la selección
+                onDismiss()
+            }
+        )
+    }
+}
 
 @Composable
 fun StartMenuDialog(
@@ -111,7 +134,7 @@ fun StartMenuDialog(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.3f))
+                                .background(Color.Black.copy(alpha = 0.1f)) // Reduced opacity
                                 .graphicsLayer {
                                     alpha = videoAlpha
                                 },
@@ -121,7 +144,7 @@ fun StartMenuDialog(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "🎬",
+                                    text = "▶️",
                                     fontSize = 48.sp,
                                     color = Color.White
                                 )
@@ -360,50 +383,4 @@ fun StartMenuDialog(
     }
 }
 
-@Composable
-fun InfoItem(
-    label: String,
-    value: String,
-    color: Color
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = Color.White.copy(alpha = 0.7f)
-        )
-        Text(
-            text = value,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-    }
-}
-
-@Composable
-fun LevelRangeItem(
-    type: String,
-    range: String,
-    color: Color
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = type,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = range,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
-    }
-}
 
