@@ -93,7 +93,8 @@
             android:exported="false" />
         <activity
             android:name=".views.DragStepActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".views.LoadingSongActivity"
             android:exported="false"
