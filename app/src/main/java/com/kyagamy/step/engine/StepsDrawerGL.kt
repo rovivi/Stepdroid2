@@ -247,6 +247,29 @@ class StepsDrawerGL(
                 drawLongNoteBody(note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin)
             }
 
+            CommonSteps.NOTE_LONG_PRESSED -> {
+                if (note.rowOrigin == null) {
+                    drawLongNote(note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin)
+                } else {
+                    drawLongNoteBody(note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin)
+                }
+            }
+
+            CommonSteps.NOTE_PRESSED -> {
+                drawRect.set(
+                    startNoteX,
+                    gameRow.getPosY(),
+                    endNoteX,
+                    gameRow.getPosY() + scaledNoteSize
+                )
+                drawSprite(
+                    drawRect,
+                    selectedSkin.arrows[columnIndex],
+                    columnIndex,
+                    ArrowSpriteRenderer.NoteType.NORMAL
+                )
+            }
+
             CommonSteps.NOTE_MINE -> {
                 drawRect.set(
                     startNoteX,
@@ -278,12 +301,34 @@ class StepsDrawerGL(
         val endY = if (endYRaw == NOT_DRAWABLE) sizeY else endYRaw
         lastPositionDraw[columnIndex] = endY + scaledNoteSize
 
+        val noteLength = endY - startY
+
         val bodyOffsetPx = (scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()
         val tailDiv = scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
         val bodyTop = startY + bodyOffsetPx
         val bodyBottom = endY + tailDiv
         val headBottom = startY + scaledNoteSize
         val tailBottom = endY + scaledNoteSize
+
+        if (noteLength < scaledNoteSize / 2) {
+            if (endYRaw != NOT_DRAWABLE) {
+                drawRect.set(startNoteX, endY, endNoteX, tailBottom)
+                drawSprite(
+                    drawRect,
+                    skin.tails[columnIndex],
+                    columnIndex,
+                    ArrowSpriteRenderer.NoteType.LONG_TAIL
+                )
+            }
+            drawRect.set(startNoteX, startY, endNoteX, headBottom)
+            drawSprite(
+                drawRect,
+                skin.arrows[columnIndex],
+                columnIndex,
+                ArrowSpriteRenderer.NoteType.LONG_HEAD
+            )
+            return
+        }
 
         // Draw body
         drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
@@ -336,12 +381,34 @@ class StepsDrawerGL(
         val endY = if (endYRaw == NOT_DRAWABLE) sizeY else endYRaw
         lastPositionDraw[columnIndex] = endY
 
+        val noteLength = endY - startY
+
         val bodyOffsetPx = (scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()
         val tailDiv = scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
         val bodyTop = startY + bodyOffsetPx
         val bodyBottom = endY + tailDiv
         val headBottom = startY + scaledNoteSize
         val tailBottom = endY + scaledNoteSize
+
+        if (noteLength < scaledNoteSize / 2) {
+            if (endYRaw != NOT_DRAWABLE) {
+                drawRect.set(startNoteX, endY, endNoteX, tailBottom)
+                drawSprite(
+                    drawRect,
+                    skin.tails[columnIndex],
+                    columnIndex,
+                    ArrowSpriteRenderer.NoteType.LONG_TAIL
+                )
+            }
+            drawRect.set(startNoteX, startY, endNoteX, headBottom)
+            drawSprite(
+                drawRect,
+                skin.arrows[columnIndex],
+                columnIndex,
+                ArrowSpriteRenderer.NoteType.LONG_HEAD
+            )
+            return
+        }
 
         // Draw body
         drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
