@@ -2,14 +2,8 @@ package com.kyagamy.step.game.newplayer
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_BODY
-import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_END
-import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_PRESSED
-import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_START
-import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_MINE
-import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_PRESSED
-import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_TAP
 import com.kyagamy.step.common.step.Game.GameRow
+import game.NoteType
 import java.util.*
 
 /***
@@ -52,7 +46,7 @@ class Evaluator {
         fun containNoteType(row: GameRow, typeNote: Short): Boolean {
             if (row.notes != null) {
                 for (x in row.notes!!) {
-                    if (x.type == typeNote && !x.fake)
+                    if (x.type.code == typeNote && !x.fake)
                         return true
                 }
             }
@@ -63,10 +57,10 @@ class Evaluator {
 //
             if (row.notes != null) {
                 for (x in row.notes!!) {
-                    if ((x.type == NOTE_LONG_BODY ||
-                                x.type == NOTE_LONG_START ||
-                                x.type == NOTE_LONG_END ||
-                                x.type == NOTE_TAP)
+                    if ((x.type == NoteType.LONG_BODY ||
+                                x.type == NoteType.LONG_START ||
+                                x.type == NoteType.LONG_END ||
+                                x.type == NoteType.TAP)
                         && !x.fake
                     )
                         return true
@@ -96,28 +90,27 @@ class Evaluator {
         }
 
         fun containsNoteTap(row: GameRow): Boolean {
-            return containNoteType(row, NOTE_TAP)
+            return containNoteType(row, NoteType.TAP.code)
         }
 
 
         fun containsNotePressed(row: GameRow): Boolean {
-            return containNoteType(row, NOTE_PRESSED)
+            return containNoteType(row, NoteType.PRESSED.code)
         }
 
         fun containsNoteLongPressed(row: GameRow): Boolean {
-            return containNoteType(row, NOTE_LONG_PRESSED)
+            return containNoteType(row, NoteType.LONG_PRESSED.code)
         }
 
 
         fun containsNoteMine(row: GameRow): Boolean {
-            return containNoteType(row, NOTE_MINE)
+            return containNoteType(row, NoteType.MINE.code)
         }
 
         fun containNoteLong(row: GameRow): Boolean {
-//
             if (row.notes != null) {
                 for (x in row.notes!!) {
-                    if ((x.type == NOTE_LONG_END || x.type == NOTE_LONG_START || x.type == NOTE_LONG_BODY) && !x.fake)
+                    if ((x.type == NoteType.LONG_END || x.type == NoteType.LONG_START || x.type == NoteType.LONG_BODY) && !x.fake)
                         return true
                 }
             }

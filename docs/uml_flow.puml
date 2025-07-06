@@ -1,0 +1,9 @@
+@startuml
+class FileSSC
+class Note
+class GameRow
+class StepsDrawerGL
+FileSSC --> GameRow
+GameRow "1" o-- "*" Note
+StepsDrawerGL --> GameRow : render
+@enduml

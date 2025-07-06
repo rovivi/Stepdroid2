@@ -1,10 +1,11 @@
 package game
 
 import com.kyagamy.step.common.step.Game.GameRow
+import game.NoteType
 
 
 class Note {
-    var type: Short = 0
+    var type: NoteType = NoteType.EMPTY
     var player: Byte = 0
     var skin: Byte = 0
     var sudden: Boolean = false

@@ -11,6 +11,7 @@ import com.kyagamy.step.common.step.Game.GameRow
 import com.kyagamy.step.common.step.Game.NOT_DRAWABLE
 import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
 import game.Note
+import game.NoteType
 import java.util.*
 import kotlin.math.abs
 
@@ -188,7 +189,7 @@ class StepsDrawer internal constructor(
             if (notes != null) {
                 for (count in notes.indices) {
                     val note = notes[count]
-                    if (note.type != CommonSteps.NOTE_EMPTY) {
+                    if (note.type != NoteType.EMPTY) {
                         drawSingleNote(canvas, note, gameRow, count)
                     }
                 }
@@ -209,18 +210,21 @@ class StepsDrawer internal constructor(
         var currentArrow: SpriteReader? = null
 
         when (note.type) {
-            CommonSteps.NOTE_TAP, CommonSteps.NOTE_FAKE ->
+            NoteType.TAP, NoteType.FAKE ->
                 currentArrow = arrows[columnIndex]
 
-            CommonSteps.NOTE_LONG_START -> drawLongNote(
+            NoteType.LONG_START -> drawLongNote(
                 canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin
             )
 
-            CommonSteps.NOTE_LONG_BODY -> drawLongNoteBody(
+            NoteType.LONG_BODY -> drawLongNoteBody(
+                canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin
+            )
+            NoteType.LONG_END -> drawLongNote(
                 canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin
             )
 
-            CommonSteps.NOTE_MINE -> currentArrow = selectedSkin.mine
+            NoteType.MINE -> currentArrow = selectedSkin.mine
         }
 
         if (currentArrow != null) {

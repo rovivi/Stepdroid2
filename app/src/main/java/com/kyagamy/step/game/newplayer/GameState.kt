@@ -7,6 +7,7 @@ import com.kyagamy.step.common.step.CommonSteps.Companion.beatToSecond
 import com.kyagamy.step.common.step.CommonSteps.Companion.secondToBeat
 import com.kyagamy.step.common.step.Game.GameRow
 import game.StepObject
+import game.NoteType
 import java.util.*
 import kotlin.math.abs
 
@@ -137,7 +138,7 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
             checkEffects()
             currentElement++
             if (Evaluator.Companion.containsNoteTap(steps.get(currentElement)!!) || Evaluator.Companion.containNoteType(
-                    steps.get(currentElement)!!, CommonSteps.Companion.NOTE_LONG_START
+                    steps.get(currentElement)!!, NoteType.LONG_START.code
                 )
             ) {
                 //  combo.setComboUpdate(Combo.VALUE_PERFECT);
@@ -250,19 +251,19 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
                     for (arrowIndex in steps.get(currentElement + posBack)!!.notes!!.indices) {
                         val currentChar =
                             steps.get(currentElement + posBack)!!.notes!!.get(arrowIndex)
-                        if (inputs[arrowIndex] == CommonSteps.Companion.ARROW_PRESSED && currentChar.type == CommonSteps.Companion.NOTE_TAP) { //NORMALTAP
+                        if (inputs[arrowIndex] == CommonSteps.Companion.ARROW_PRESSED && currentChar.type == NoteType.TAP) { //NORMALTAP
                             stepsDrawer?.selectedSkin?.explotions?.get(arrowIndex)?.play()
                             steps.get(currentElement + posBack)!!.notes!!.get(arrowIndex).type =
-                                CommonSteps.Companion.NOTE_PRESSED
+                                NoteType.PRESSED
                             inputs[arrowIndex] = CommonSteps.Companion.ARROW_HOLD_PRESSED
                             posEvaluate = currentElement + posBack
                             // continue;
                         }
-                        if (inputs[arrowIndex] != CommonSteps.Companion.ARROW_UNPRESSED && (currentChar.type == CommonSteps.Companion.NOTE_LONG_START || currentChar.type == CommonSteps.Companion.NOTE_LONG_BODY || currentChar.type == CommonSteps.Companion.NOTE_LONG_END)
+                        if (inputs[arrowIndex] != CommonSteps.Companion.ARROW_UNPRESSED && (currentChar.type == NoteType.LONG_START || currentChar.type == NoteType.LONG_BODY || currentChar.type == NoteType.LONG_END)
                             && posBack < 0
                         ) { // tap1
                             steps.get(currentElement + posBack)!!.notes!!.get(arrowIndex).type =
-                                CommonSteps.Companion.NOTE_LONG_PRESSED
+                                NoteType.LONG_PRESSED
                             //                            steps.get(currentElement + posBack).getNotes().get(arrowIndex).setType(currentChar.getType() == NOTE_LONG_END ? NOTE_PRESSED : NOTE_LONG_PRESSED);
                             if (!Evaluator.Companion.containNoteToEvaluate(steps.get(currentElement + posBack)!!)) {
                                 steps.get(currentElement + posBack)!!.hasPressed = true
