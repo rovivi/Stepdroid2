@@ -17,7 +17,7 @@ class GameRow {
     override fun toString(): String {
         var noteStr = ""
         var modStr = ""
-        notes?.forEach { x -> noteStr += x.type }
+        notes?.forEach { x -> noteStr += x.noteType }
         modifiers?.forEach { mod ->
             modStr = "type: " + mod.key + " val: " + mod.value.toString()
         }

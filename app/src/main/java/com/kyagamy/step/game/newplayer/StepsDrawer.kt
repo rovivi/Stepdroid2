@@ -188,7 +188,7 @@ class StepsDrawer internal constructor(
             if (notes != null) {
                 for (count in notes.indices) {
                     val note = notes[count]
-                    if (note.type != CommonSteps.NOTE_EMPTY) {
+                    if (note.noteType != CommonSteps.NOTE_EMPTY) {
                         drawSingleNote(canvas, note, gameRow, count)
                     }
                 }
@@ -208,16 +208,12 @@ class StepsDrawer internal constructor(
         val arrows = selectedSkin.arrows
         var currentArrow: SpriteReader? = null
 
-        when (note.type) {
+        when (note.noteType) {
             CommonSteps.NOTE_TAP, CommonSteps.NOTE_FAKE ->
                 currentArrow = arrows[columnIndex]
 
             CommonSteps.NOTE_LONG_START -> drawLongNote(
-                canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin
-            )
-
-            CommonSteps.NOTE_LONG_BODY -> drawLongNoteBody(
-                canvas, note, gameRow, startNoteX, endNoteX, columnIndex, selectedSkin
+                canvas, note, startNoteX, endNoteX, columnIndex, selectedSkin
             )
 
             CommonSteps.NOTE_MINE -> currentArrow = selectedSkin.mine
@@ -235,14 +231,14 @@ class StepsDrawer internal constructor(
     }
 
     private fun drawLongNote(
-        canvas: Canvas, note: Note, gameRow: GameRow, startNoteX: Int, endNoteX: Int,
+        canvas: Canvas, note: Note, startNoteX: Int, endNoteX: Int,
         columnIndex: Int, skin: NoteSkin
     ) {
-        // Pre-calculate all values outside canvas operations
-        val startY = gameRow.getPosY()
+        val startY = note.rowOrigin?.getPosY() ?: return
         val rowEnd = note.rowEnd
         val endYRaw = rowEnd?.getPosY() ?: NOT_DRAWABLE
         val endY = if (endYRaw == NOT_DRAWABLE) sizeY else endYRaw
+        if (startY > sizeY || endY < 0) return
         lastPositionDraw[columnIndex] = endY + scaledNoteSize
 
         // Pre-calculate offsets and positions
@@ -275,53 +271,6 @@ class StepsDrawer internal constructor(
         arrows.draw(canvas, drawRect)
     }
 
-    private fun drawLongNoteBody(
-        canvas: Canvas, note: Note, gameRow: GameRow, startNoteX: Int, endNoteX: Int,
-        columnIndex: Int, skin: NoteSkin
-    ) {
-        // Pre-calculate all values
-        val currentPosY = gameRow.getPosY()
-        if (currentPosY <= lastPositionDraw[columnIndex]) return
-
-        var startY = currentPosY
-        if (currentPosY > startValueY && currentPosY < sizeY) {
-            startY = startValueY
-        }
-
-        val rowEnd = note.rowEnd
-        val endYRaw = rowEnd?.getPosY() ?: NOT_DRAWABLE
-        val endY = if (endYRaw == NOT_DRAWABLE) sizeY else endYRaw
-        lastPositionDraw[columnIndex] = endY
-
-        // Pre-calculate offsets and positions
-        val bodyOffsetPx = (scaledNoteSize * LONG_NOTE_BODY_OFFSET).toInt()
-        val tailDiv = scaledNoteSize / LONG_NOTE_TAIL_OFFSET_DIVISOR
-        val bodyTop = startY + bodyOffsetPx
-        val bodyBottom = endY + tailDiv
-        val headBottom = startY + scaledNoteSize
-        val tailBottom = endY + scaledNoteSize
-
-        // Cache sprite references
-        val arrows = skin.arrows[columnIndex]
-        val longs = skin.longs[columnIndex]
-        val tails = skin.tails[columnIndex]
-
-        // Draw order: body → tail → head (head always on top)
-
-        // 1) Draw long note body
-        drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        longs.draw(canvas, drawRect)
-
-        // 2) Draw tail (only if end exists)
-        if (endYRaw != NOT_DRAWABLE) {
-            drawRect.set(startNoteX, endY, endNoteX, tailBottom)
-            tails.draw(canvas, drawRect)
-        }
-
-        // 3) Draw head arrow (always on top)
-        drawRect.set(startNoteX, startY, endNoteX, headBottom)
-        arrows.draw(canvas, drawRect)
-    }
 
     fun update() {
         // Optimized update with flat loops

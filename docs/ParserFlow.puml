@@ -1,0 +1,7 @@
+@startuml
+FileSSC -> StepObject : parseData()
+FileSSC --> GameRow : processNotes()
+GameRow --> Note : holds
+Note --> NoteType : uses
+StepsDrawerGL -> NoteLayoutCalculator : calculate()
+@enduml
