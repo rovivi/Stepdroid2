@@ -9,6 +9,7 @@ import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_LONG_START
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_MINE
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_PRESSED
 import com.kyagamy.step.common.step.CommonSteps.Companion.NOTE_TAP
+import game.NoteType
 import com.kyagamy.step.common.step.Game.GameRow
 import java.util.*
 
@@ -49,10 +50,10 @@ class Evaluator {
             return (100.0 * sum / total).toFloat()
         }
 
-        fun containNoteType(row: GameRow, typeNote: Short): Boolean {
+        fun containNoteType(row: GameRow, typeNote: NoteType): Boolean {
             if (row.notes != null) {
                 for (x in row.notes!!) {
-                    if (x.type == typeNote && !x.fake)
+                    if (x.noteType == typeNote && !x.fake)
                         return true
                 }
             }
@@ -63,10 +64,10 @@ class Evaluator {
 //
             if (row.notes != null) {
                 for (x in row.notes!!) {
-                    if ((x.type == NOTE_LONG_BODY ||
-                                x.type == NOTE_LONG_START ||
-                                x.type == NOTE_LONG_END ||
-                                x.type == NOTE_TAP)
+                    if ((x.noteType == NOTE_LONG_BODY ||
+                                x.noteType == NOTE_LONG_START ||
+                                x.noteType == NOTE_LONG_END ||
+                                x.noteType == NOTE_TAP)
                         && !x.fake
                     )
                         return true
@@ -117,7 +118,7 @@ class Evaluator {
 //
             if (row.notes != null) {
                 for (x in row.notes!!) {
-                    if ((x.type == NOTE_LONG_END || x.type == NOTE_LONG_START || x.type == NOTE_LONG_BODY) && !x.fake)
+                    if ((x.noteType == NOTE_LONG_END || x.noteType == NOTE_LONG_START || x.noteType == NOTE_LONG_BODY) && !x.fake)
                         return true
                 }
             }
