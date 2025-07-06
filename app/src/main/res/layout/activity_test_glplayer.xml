@@ -16,6 +16,16 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Contenedor para las flechas receptoras -->
+    <RelativeLayout
+        android:id="@+id/arrowsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Las flechas receptoras se agregarán aquí dinámicamente -->
+
+    </RelativeLayout>
+
     <!-- Contador FPS encima de todo -->
     <TextView
         android:id="@+id/fpsCounter"

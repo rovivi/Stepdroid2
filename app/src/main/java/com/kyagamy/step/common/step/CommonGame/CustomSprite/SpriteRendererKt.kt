@@ -18,7 +18,7 @@ import com.kyagamy.step.common.step.CommonGame.TransformBitmap
  * Created by Rodrigo Vidal February 2018
  * Updated with OpenGL integration
  */
-class SpriteRendererKt : ISpriteRenderer {
+class SpriteRendererKt  {
     var frames: Array<Bitmap>
     private var frameIndex = 0
     private var frameTime: Float = 0f
@@ -188,8 +188,11 @@ class SpriteRendererKt : ISpriteRenderer {
         }
     }
 
+
+
+
     // ISpriteRenderer implementation
-    override fun draw(rect: Rect) {
+     fun draw(rect: Rect) {
         if (useCanvas) {
             currentCanvas?.let { canvas ->
                 draw(canvas, rect)
@@ -199,7 +202,7 @@ class SpriteRendererKt : ISpriteRenderer {
         }
     }
 
-    override fun update() {
+     fun update() {
         updateFrame()
         if (!useCanvas) {
             glRenderer?.update()

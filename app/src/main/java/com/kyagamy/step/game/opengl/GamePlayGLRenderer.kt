@@ -11,8 +11,11 @@ import com.kyagamy.step.R
 import com.kyagamy.step.common.Common.Companion.second2Beat
 import com.kyagamy.step.common.step.CommonGame.ParamsSong
 import com.kyagamy.step.common.step.Game.GameRow
+import com.kyagamy.step.engine.ArrowSpriteRenderer
 import com.kyagamy.step.engine.ISpriteRenderer
 import com.kyagamy.step.engine.StepsDrawerGL
+import com.kyagamy.step.engine.UIRenderer
+import com.kyagamy.step.engine.UVCoords
 import com.kyagamy.step.game.newplayer.*
 import game.StepObject
 import javax.microedition.khronos.egl.EGLConfig
@@ -21,7 +24,7 @@ import kotlin.math.abs
 
 /**
  * Simplified OpenGL renderer replicating [GamePlayNew] but without touch pad.
- * It reuses [GameState] logic and draws using [StepsDrawerGL].
+ * It reuses [GameState] logic and draws using [StepsDrawerGL] with [ArrowSpriteRenderer].
  *
  * Note: When this renderer is used in an Activity, ensure edge-to-edge is properly configured
  * by extending FullScreenActivity or using EdgeToEdgeHelper.setupGameEdgeToEdge()
@@ -30,11 +33,14 @@ class GamePlayGLRenderer(
     private val context: Context,
     private val stepData: StepObject,
     private val videoView: VideoView?,
-    private val screenSize: Point
+    private val screenSize: Point,
+    private val inputs: ByteArray? = null
 ) : GLSurfaceView.Renderer, ISpriteRenderer {
 
     private var gameState: GameState? = null
     private var stepsDrawer: StepsDrawerGL? = null
+    private var arrowRenderer: ArrowSpriteRenderer? = null
+    private var uiRenderer: UIRenderer? = null
     private var bar: LifeBar? = null
     private var combo: Combo? = null
     private var bgPlayer: BgPlayer? = null
@@ -56,6 +62,9 @@ class GamePlayGLRenderer(
     private var soundPool: SoundPool? = null
     private var soundPullBeat: Int = 0
     private var soundPullMine: Int = 0
+
+    // Batching state
+    private var batchActive = false
 
     init {
         initializeSoundPool()
@@ -109,13 +118,22 @@ class GamePlayGLRenderer(
         if (gameState != null) {
             return
         }
-        gameState = GameState(stepData, ByteArray(10))
+        gameState = GameState(stepData, inputs ?: ByteArray(10))
         gameState?.reset()
         stepsDrawer = StepsDrawerGL(context, stepData.stepType, "16:9", false, screenSize)
-        // Regular StepsDrawer is required only for lifebar/combo compatibility
+        arrowRenderer = ArrowSpriteRenderer(context)
+        stepsDrawer?.setArrowRenderer(arrowRenderer!!)
+
+        // Regular StepsDrawer is required for lifebar/combo compatibility
         val regularStepsDrawer = StepsDrawer(context, stepData.stepType, "16:9", false, screenSize)
+
+        // Initialize UIRenderer instead of individual components
+        uiRenderer = UIRenderer(context, regularStepsDrawer)
+
+        // Keep these for backward compatibility (some parts of GameState might need them)
         bar = LifeBar(context, regularStepsDrawer)
         combo = Combo(context, regularStepsDrawer)
+
         bgPlayer = BgPlayer(stepData.path, stepData.getBgChanges(), videoView, context, gameState!!.BPM)
 
         // Set up audio exactly like GamePlayNew
@@ -227,12 +245,17 @@ class GamePlayGLRenderer(
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         setupGame()
-        stepsDrawer?.initializeGLProgram()
+        // Initialize renderers
+        arrowRenderer?.onSurfaceCreated(gl, config)
+        uiRenderer?.onSurfaceCreated(gl, config)
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
         stepsDrawer?.setViewport(width, height)
+        // Initialize renderers viewport
+        arrowRenderer?.onSurfaceChanged(gl, width, height)
+        uiRenderer?.onSurfaceChanged(gl, width, height)
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -243,8 +266,17 @@ class GamePlayGLRenderer(
         updateGame()
         drawList.clear()
         calculateVisibleNotes()
+
+        // Draw game notes using StepsDrawerGL
         stepsDrawer?.drawGame(drawList)
         stepsDrawer?.update()
+
+        // Draw arrow sprites using ArrowSpriteRenderer
+        arrowRenderer?.onDrawFrame(gl)
+
+        // Draw UI elements using UIRenderer
+        uiRenderer?.onDrawFrame(gl)
+
         if (gameState != null && gameState!!.currentElement + 1 >= gameState!!.steps.size) {
             stop()
         }
@@ -262,11 +294,91 @@ class GamePlayGLRenderer(
 
     private fun updateGame() {
         gameState?.update()
+
+        // Log current game state for debugging
+        if (frameCount % 300 == 0) { // Log every 5 seconds at 60fps
+            android.util.Log.d(
+                "GamePlayGLRenderer",
+                "Game State - Beat: ${gameState?.currentBeat}, Element: ${gameState?.currentElement}, Running: ${gameState?.isRunning}"
+            )
+        }
+
+        // Update UI renderer with game state
+        uiRenderer?.let { ui ->
+            // Sync life state
+            bar?.let { b ->
+                val currentUILife = ui.getLife()
+                val gameLife = b.life
+
+                // If there's a difference, we need to update the UI
+                if (kotlin.math.abs(currentUILife - gameLife) > 0.1f) {
+                    android.util.Log.d(
+                        "GamePlayGLRenderer",
+                        "Life updated: UI=$currentUILife → Game=$gameLife"
+                    )
+                    // Calculate the difference and apply it
+                    val lifeDiff = gameLife - currentUILife
+                    if (lifeDiff > 0) {
+                        ui.updateLife(Combo.VALUE_PERFECT, 1)
+                    } else if (lifeDiff < 0) {
+                        ui.updateLife(Combo.VALUE_MISS, 1)
+                    }
+                }
+            }
+
+            // Sync combo state - this is the key part for combo display
+            combo?.let { c ->
+                // If there's a combo update from the game (when a note is actually hit)
+                if (c.positionJudge != 0.toShort()) {
+                    val judgeText = when (c.positionJudge) {
+                        Combo.VALUE_PERFECT -> "PERFECT"
+                        Combo.VALUE_GREAT -> "GREAT"
+                        Combo.VALUE_GOOD -> "GOOD"
+                        Combo.VALUE_BAD -> "BAD"
+                        Combo.VALUE_MISS -> "MISS"
+                        else -> "UNKNOWN(${c.positionJudge})"
+                    }
+                    android.util.Log.d("GamePlayGLRenderer", "🎵 NOTE EVALUATED! Judge: $judgeText")
+                    android.util.Log.d(
+                        "GamePlayGLRenderer",
+                        "📊 Evaluator stats - P:${Evaluator.PERFECT} G:${Evaluator.GREAT} O:${Evaluator.GOOD} B:${Evaluator.BAD} M:${Evaluator.MISS}"
+                    )
+
+                    ui.setComboUpdate(c.positionJudge)
+                    // Reset the judge position to avoid repeated updates
+                    c.positionJudge = 0
+                } else {
+                    // Log inputs periodically to see if they're being detected
+                    if (frameCount % 60 == 0 && gameState?.inputs?.any { it.toInt() != 0 } == true) {
+                        val inputsStr =
+                            gameState?.inputs?.mapIndexed { i, v -> if (v.toInt() != 0) "[$i]=$v" else "" }
+                                ?.filter { it.isNotEmpty() }?.joinToString(" ")
+                        if (!inputsStr.isNullOrEmpty()) {
+                            android.util.Log.d("GamePlayGLRenderer", "🎮 Active inputs: $inputsStr")
+                        }
+                    }
+                }
+            }
+        }
+
+        // Keep original components for compatibility
         combo?.update()
         bgPlayer?.update(gameState!!.currentBeat)
         bar?.update()
         syncAudioVideo()
     }
+
+    // Method to manually trigger UI updates from external game logic
+    fun updateUIFromGameState(typeTap: Short, comboValue: Int) {
+        uiRenderer?.let { ui ->
+            ui.updateLife(typeTap, comboValue)
+            ui.setComboUpdate(typeTap)
+        }
+    }
+
+    // Getters for UI state
+    fun getUILife(): Float = uiRenderer?.getLife() ?: 50f
+    fun getUICombo(): Int = uiRenderer?.getCombo() ?: 0
 
     private fun syncAudioVideo() {
         val diff = (gameState!!.currentSecond / 100.0) - gameState!!.offset -
@@ -333,11 +445,63 @@ class GamePlayGLRenderer(
         }
     }
 
+    override fun begin() {
+        if (batchActive) {
+            android.util.Log.w("GamePlayGLRenderer", "begin() called while batch is already active")
+            return
+        }
+        batchActive = true
+        stepsDrawer?.begin()
+    }
+
+    override fun drawCommand(
+        textureId: Int,
+        model: FloatArray,
+        uvCoords: UVCoords
+    ) {
+        if (!batchActive) {
+            android.util.Log.w(
+                "GamePlayGLRenderer",
+                "drawCommand() called outside of begin()/end()"
+            )
+            return
+        }
+        stepsDrawer?.drawCommand(textureId, model, uvCoords)
+    }
+
+    override fun end() {
+        if (!batchActive) {
+            android.util.Log.w("GamePlayGLRenderer", "end() called without begin()")
+            return
+        }
+        batchActive = false
+        stepsDrawer?.end()
+    }
+
+    override fun update(deltaMs: Long) {
+        if (isGameStarted) {
+            updateGame()
+        }
+    }
+
+    // Backward compatibility methods
+    @Deprecated("Use begin()/end() pattern instead")
+    override fun flushBatch() {
+        stepsDrawer?.flushBatch()
+    }
+
+    @Deprecated("Use begin()/end() pattern instead")
+    override fun clearCommands() {
+        stepsDrawer?.clearCommands()
+    }
+
     // ISpriteRenderer implementation (no-op wrappers)
+    @Deprecated("Use drawCommand instead")
     override fun draw(rect: android.graphics.Rect) {
         // Rendering is handled in onDrawFrame
     }
 
+    @Deprecated("Use update(deltaMs) instead")
     override fun update() {
         // No operation needed; game and UI update is handled in updateGame().
     }

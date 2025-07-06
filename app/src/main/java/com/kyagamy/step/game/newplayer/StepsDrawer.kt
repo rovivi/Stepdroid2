@@ -6,10 +6,10 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Point
 import android.graphics.Rect
-import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader
 import com.kyagamy.step.common.step.CommonSteps
 import com.kyagamy.step.common.step.Game.GameRow
 import com.kyagamy.step.common.step.Game.NOT_DRAWABLE
+import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
 import game.Note
 import java.util.*
 import kotlin.math.abs

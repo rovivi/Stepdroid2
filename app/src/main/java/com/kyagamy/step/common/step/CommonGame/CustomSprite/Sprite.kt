@@ -7,6 +7,7 @@ import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
 
 /**
  * Author Rodrigo Vidal

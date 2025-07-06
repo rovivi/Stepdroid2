@@ -3,16 +3,11 @@ package com.kyagamy.step.engine
 import android.content.Context
 import android.graphics.Point
 import android.graphics.Rect
-import android.opengl.GLES20
-import android.opengl.Matrix
 import com.kyagamy.step.common.step.CommonSteps
 import com.kyagamy.step.common.step.Game.GameRow
 import com.kyagamy.step.common.step.Game.NOT_DRAWABLE
 import com.kyagamy.step.game.newplayer.NoteSkin
 import game.Note
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.nio.FloatBuffer
 import kotlin.math.abs
 
 class StepsDrawerGL(
@@ -49,20 +44,6 @@ class StepsDrawerGL(
         SELECTED, ROUTINE0, ROUTINE1, ROUTINE2, ROUTINE3
     }
 
-    // OpenGL rendering variables
-    var program = 0
-    var positionHandle = 0
-    var texHandle = 0
-    var mvpMatrixHandle = 0
-    var textureHandle = 0
-    private lateinit var vertexBuffer: FloatBuffer
-    private lateinit var texBuffer: FloatBuffer
-    private val mvpMatrix = FloatArray(16)
-    private val projectionMatrix = FloatArray(16)
-    private val viewMatrix = FloatArray(16)
-    private val modelMatrix = FloatArray(16)
-    private val tempMatrix = FloatArray(16)
-
     // Game fields
     var sizeX: Int = 0
     var sizeY: Int = 0
@@ -74,7 +55,6 @@ class StepsDrawerGL(
     private var startValueY: Int = 0
     private var viewWidth = 0
     private var viewHeight = 0
-    private var defaultTextureId = 0
 
     private val gameMode: GameMode
     private val steps: Int
@@ -84,82 +64,26 @@ class StepsDrawerGL(
     // Reusable objects
     private val drawRect: Rect = Rect()
 
+    // Renderer delegation
+    private var arrowRenderer: ArrowSpriteRenderer? = null
+    private val gameArrows = mutableListOf<ArrowSpriteRenderer.GameArrowData>()
+
     init {
         this.gameMode = GameMode.fromString(gameModeStr)
         this.steps = gameMode.steps
         calculateDimensions(aspectRatio, landScape, screenSize)
         initializeNoteSkins(context)
         initializeDrawingValues()
-        initializeGL()
     }
 
-    private fun initializeGL() {
-        // Initialize vertex buffer for quad
-        val vertices = floatArrayOf(
-            -1f, 1f,   // Top left
-            -1f, -1f,  // Bottom left
-            1f, 1f,    // Top right
-            1f, -1f    // Bottom right
-        )
-
-        val texCoords = floatArrayOf(
-            0f, 0f,    // Top left
-            0f, 1f,    // Bottom left
-            1f, 0f,    // Top right
-            1f, 1f     // Bottom right
-        )
-
-        vertexBuffer = ByteBuffer.allocateDirect(vertices.size * 4)
-            .order(ByteOrder.nativeOrder())
-            .asFloatBuffer()
-        vertexBuffer.put(vertices).position(0)
-
-        texBuffer = ByteBuffer.allocateDirect(texCoords.size * 4)
-            .order(ByteOrder.nativeOrder())
-            .asFloatBuffer()
-        texBuffer.put(texCoords).position(0)
-    }
-
-    fun initializeGLProgram() {
-        android.util.Log.d("StepsDrawerGL", "initializeGLProgram called")
-        // Initialize shader program
-        program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
-        android.util.Log.d("StepsDrawerGL", "Created shader program: $program")
-        positionHandle = GLES20.glGetAttribLocation(program, "aPosition")
-        texHandle = GLES20.glGetAttribLocation(program, "aTexCoord")
-        mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
-        textureHandle = GLES20.glGetUniformLocation(program, "uTexture")
-        android.util.Log.d(
-            "StepsDrawerGL",
-            "Shader handles: pos=$positionHandle tex=$texHandle mvp=$mvpMatrixHandle texture=$textureHandle"
-        )
-
-        // Validate shader handles for debugging
-        if (positionHandle < 0) {
-            android.util.Log.e("StepsDrawerGL", "Shader attribute 'aPosition' handle is invalid!")
-        }
-        if (texHandle < 0) {
-            android.util.Log.e("StepsDrawerGL", "Shader attribute 'aTexCoord' handle is invalid!")
-        }
-        if (mvpMatrixHandle < 0) {
-            android.util.Log.e("StepsDrawerGL", "Shader uniform 'uMVPMatrix' handle is invalid!")
-        }
-        if (textureHandle < 0) {
-            android.util.Log.e("StepsDrawerGL", "Shader uniform 'uTexture' handle is invalid!")
-        }
+    fun setArrowRenderer(renderer: ArrowSpriteRenderer) {
+        this.arrowRenderer = renderer
     }
 
     fun setViewport(width: Int, height: Int) {
         viewWidth = width
         viewHeight = height
-
-        // Set up projection matrix
-        val ratio = width.toFloat() / height.toFloat()
-        Matrix.orthoM(projectionMatrix, 0, 0f, width.toFloat(), height.toFloat(), 0f, -1f, 1f)
-        Matrix.setIdentityM(viewMatrix, 0)
-        Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
     }
-
 
     private fun calculateDimensions(aspectRatio: String, landScape: Boolean, screenSize: Point) {
         posInitialX = (screenSize.x * SCREEN_WIDTH_FACTOR).toInt()
@@ -229,32 +153,16 @@ class StepsDrawerGL(
         }
     }
 
-    fun drawGame(listRow: ArrayList<GameRow>) {
-        android.util.Log.v("StepsDrawerGL", "drawGame called with ${listRow.size} rows")
-        if (program == 0) {
-            android.util.Log.e("StepsDrawerGL", "drawGame: OpenGL program is 0, cannot draw")
-            return
-        }
-
-        GLES20.glUseProgram(program)
-        GLES20.glEnable(GLES20.GL_BLEND)
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
-
+    fun drawGame(listRow: ArrayList<GameRow>, skinType: SkinType = SkinType.SELECTED) {
         resetLastPositionDraw()
-        android.util.Log.v("StepsDrawerGL", "drawGame: Drawing receptors and effects")
-        drawReceptorsAndEffects()
-        android.util.Log.v("StepsDrawerGL", "drawGame: Drawing notes")
-        drawNotes(listRow)
-        android.util.Log.v("StepsDrawerGL", "drawGame: Complete")
+        gameArrows.clear()
+        drawReceptorsAndEffects(skinType)
+        drawNotes(listRow, skinType)
+        arrowRenderer?.populateArrows(gameArrows.toList())
     }
 
-    private fun drawReceptorsAndEffects() {
-        val selectedSkin = noteSkins[SkinType.SELECTED.ordinal] ?: return
-        android.util.Log.v(
-            "StepsDrawerGL",
-            "drawReceptorsAndEffects: selectedSkin is ${if (selectedSkin != null) "available" else "null"}"
-        )
-        android.util.Log.v("StepsDrawerGL", "drawReceptorsAndEffects: Drawing ${steps} receptors")
+    private fun drawReceptorsAndEffects(skinType: SkinType = SkinType.SELECTED) {
+        val selectedSkin = noteSkins[skinType.ordinal] ?: return
 
         for (j in 0 until steps) {
             val startNoteX = posInitialX + sizeNote * j
@@ -262,32 +170,56 @@ class StepsDrawerGL(
 
             // Draw receptors
             drawRect.set(startNoteX, startValueY, endNoteX, startValueY + scaledNoteSize)
-            android.util.Log.v("StepsDrawerGL", "Drawing receptor $j at rect: $drawRect")
-            drawSprite(drawRect, selectedSkin.receptors[j])
+            drawSprite(
+                drawRect,
+                selectedSkin.receptors[j],
+                j,
+                ArrowSpriteRenderer.NoteType.RECEPTOR
+            )
 
             // Draw effects
-            drawSprite(drawRect, selectedSkin.explotions[j])
-            drawSprite(drawRect, selectedSkin.explotionTails[j])
-            drawSprite(drawRect, selectedSkin.tapsEffect[j])
+            drawSprite(
+                drawRect,
+                selectedSkin.explotions[j],
+                j,
+                ArrowSpriteRenderer.NoteType.EXPLOSION
+            )
+            drawSprite(
+                drawRect,
+                selectedSkin.explotionTails[j],
+                j,
+                ArrowSpriteRenderer.NoteType.EXPLOSION_TAIL
+            )
+            drawSprite(
+                drawRect,
+                selectedSkin.tapsEffect[j],
+                j,
+                ArrowSpriteRenderer.NoteType.TAP_EFFECT
+            )
         }
     }
 
-    private fun drawNotes(listRow: ArrayList<GameRow>) {
+    private fun drawNotes(listRow: ArrayList<GameRow>, skinType: SkinType = SkinType.SELECTED) {
         for (gameRow in listRow) {
             val notes = gameRow.notes
             if (notes != null) {
                 for (count in notes.indices) {
                     val note = notes[count]
                     if (note.type != CommonSteps.NOTE_EMPTY) {
-                        drawSingleNote(note, gameRow, count)
+                        drawSingleNote(note, gameRow, count, skinType)
                     }
                 }
             }
         }
     }
 
-    private fun drawSingleNote(note: Note, gameRow: GameRow, columnIndex: Int) {
-        val selectedSkin = noteSkins[SkinType.SELECTED.ordinal] ?: return
+    private fun drawSingleNote(
+        note: Note,
+        gameRow: GameRow,
+        columnIndex: Int,
+        skinType: SkinType = SkinType.SELECTED
+    ) {
+        val selectedSkin = noteSkins[skinType.ordinal] ?: return
         val startNoteX = posInitialX + sizeNote * columnIndex
         val endNoteX = startNoteX + scaledNoteSize
 
@@ -299,7 +231,12 @@ class StepsDrawerGL(
                     endNoteX,
                     gameRow.getPosY() + scaledNoteSize
                 )
-                drawSprite(drawRect, selectedSkin.arrows[columnIndex])
+                drawSprite(
+                    drawRect,
+                    selectedSkin.arrows[columnIndex],
+                    columnIndex,
+                    ArrowSpriteRenderer.NoteType.NORMAL
+                )
             }
 
             CommonSteps.NOTE_LONG_START -> {
@@ -317,7 +254,12 @@ class StepsDrawerGL(
                     endNoteX,
                     gameRow.getPosY() + scaledNoteSize
                 )
-                drawSprite(drawRect, selectedSkin.mine)
+                drawSprite(
+                    drawRect,
+                    selectedSkin.mine,
+                    columnIndex,
+                    ArrowSpriteRenderer.NoteType.MINE
+                )
             }
         }
     }
@@ -345,17 +287,32 @@ class StepsDrawerGL(
 
         // Draw body
         drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        drawSprite(drawRect, skin.longs[columnIndex])
+        drawSprite(
+            drawRect,
+            skin.longs[columnIndex],
+            columnIndex,
+            ArrowSpriteRenderer.NoteType.LONG_BODY
+        )
 
         // Draw tail (if end exists)
         if (endYRaw != NOT_DRAWABLE) {
             drawRect.set(startNoteX, endY, endNoteX, tailBottom)
-            drawSprite(drawRect, skin.tails[columnIndex])
+            drawSprite(
+                drawRect,
+                skin.tails[columnIndex],
+                columnIndex,
+                ArrowSpriteRenderer.NoteType.LONG_TAIL
+            )
         }
 
         // Draw head
         drawRect.set(startNoteX, startY, endNoteX, headBottom)
-        drawSprite(drawRect, skin.arrows[columnIndex])
+        drawSprite(
+            drawRect,
+            skin.arrows[columnIndex],
+            columnIndex,
+            ArrowSpriteRenderer.NoteType.LONG_HEAD
+        )
     }
 
     private fun drawLongNoteBody(
@@ -388,126 +345,67 @@ class StepsDrawerGL(
 
         // Draw body
         drawRect.set(startNoteX, bodyTop, endNoteX, bodyBottom)
-        drawSprite(drawRect, skin.longs[columnIndex])
+        drawSprite(
+            drawRect,
+            skin.longs[columnIndex],
+            columnIndex,
+            ArrowSpriteRenderer.NoteType.LONG_BODY
+        )
 
         // Draw tail (if end exists)
         if (endYRaw != NOT_DRAWABLE) {
             drawRect.set(startNoteX, endY, endNoteX, tailBottom)
-            drawSprite(drawRect, skin.tails[columnIndex])
+            drawSprite(
+                drawRect,
+                skin.tails[columnIndex],
+                columnIndex,
+                ArrowSpriteRenderer.NoteType.LONG_TAIL
+            )
         }
 
         // Draw head
         drawRect.set(startNoteX, startY, endNoteX, headBottom)
-        drawSprite(drawRect, skin.arrows[columnIndex])
-    }
-
-    private fun drawSprite(rect: Rect, sprite: Any?) {
-        if (sprite == null) {
-            android.util.Log.v("StepsDrawerGL", "drawSprite: sprite is null, skipping")
-            return
-        }
-
-        // Convert screen coordinates to OpenGL coordinates (-1 to 1)
-        val left = rect.left.toFloat() / viewWidth * 2f - 1f
-        val right = rect.right.toFloat() / viewWidth * 2f - 1f
-        val top = 1f - rect.top.toFloat() / viewHeight * 2f
-        val bottom = 1f - rect.bottom.toFloat() / viewHeight * 2f
-
-        val vertices = floatArrayOf(
-            left, top,
-            left, bottom,
-            right, top,
-            right, bottom
+        drawSprite(
+            drawRect,
+            skin.arrows[columnIndex],
+            columnIndex,
+            ArrowSpriteRenderer.NoteType.LONG_HEAD
         )
-
-        val texCoords = floatArrayOf(
-            0f, 0f,
-            0f, 1f,
-            1f, 0f,
-            1f, 1f
-        )
-
-        // Create buffers for this sprite
-        val vertexBuffer = java.nio.ByteBuffer.allocateDirect(vertices.size * 4)
-            .order(java.nio.ByteOrder.nativeOrder())
-            .asFloatBuffer()
-        vertexBuffer.put(vertices).position(0)
-
-        val texBuffer = java.nio.ByteBuffer.allocateDirect(texCoords.size * 4)
-            .order(java.nio.ByteOrder.nativeOrder())
-            .asFloatBuffer()
-        texBuffer.put(texCoords).position(0)
-
-        // Set vertex attributes
-        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
-        GLES20.glEnableVertexAttribArray(positionHandle)
-
-        GLES20.glVertexAttribPointer(texHandle, 2, GLES20.GL_FLOAT, false, 0, texBuffer)
-        GLES20.glEnableVertexAttribArray(texHandle)
-
-        // Set identity matrix (no transformations)
-        val identityMatrix = FloatArray(16)
-        android.opengl.Matrix.setIdentityM(identityMatrix, 0)
-        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, identityMatrix, 0)
-
-        // Handle sprite texture binding
-        when (sprite) {
-            is SpriteGLAdapter -> {
-                sprite.loadTexture()
-                sprite.bindTexture()
-                GLES20.glUniform1i(textureHandle, 0)
-            }
-            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
-                // Convert SpriteReader to SpriteGLAdapter and use its texture
-                val adapter = SpriteGLAdapter(sprite)
-                adapter.loadTexture()
-                if (adapter.getTextureId() != 0) {
-                    adapter.bindTexture()
-                    GLES20.glUniform1i(textureHandle, 0)
-                } else {
-                    // Fallback to default texture if loading fails
-                    val defaultTexture = createDefaultTexture()
-                    GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
-                    GLES20.glUniform1i(textureHandle, 0)
-                }
-            }
-            else -> {
-                // For sprites that don't have GL texture support yet,
-                // create and bind a default colored texture
-                val defaultTexture = createDefaultTexture()
-                GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, defaultTexture)
-                GLES20.glUniform1i(textureHandle, 0)
-            }
-        }
-
-        // Draw
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
-
-        // Cleanup
-        when (sprite) {
-            is SpriteGLAdapter -> {
-                sprite.unbindTexture()
-            }
-            is com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader -> {
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
-            }
-            else -> {
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
-            }
-        }
-
-        GLES20.glDisableVertexAttribArray(positionHandle)
-        GLES20.glDisableVertexAttribArray(texHandle)
     }
 
-    override fun draw(rect: Rect) {
-        // Implementation for ISpriteRenderer interface
-        drawSprite(rect, null)
+    private fun drawSprite(
+        rect: Rect,
+        sprite: Any?,
+        arrowType: Int = 0,
+        noteType: ArrowSpriteRenderer.NoteType = ArrowSpriteRenderer.NoteType.NORMAL
+    ) {
+        if (sprite != null && arrowRenderer != null) {
+            // Convert sprite drawing call to arrow instruction using actual calculated sizes
+            val gameArrow = ArrowSpriteRenderer.GameArrowData(
+                x = rect.left.toFloat(),
+                y = rect.top.toFloat(),
+                width = rect.width().toFloat(),  // Use actual width from StepsDrawerGL calculations
+                height = rect.height()
+                    .toFloat(), // Use actual height from StepsDrawerGL calculations
+                arrowType = arrowType % 5, // Ensure it's 0-4
+                noteType = noteType,
+                rotation = 0f
+            )
+            gameArrows.add(gameArrow)
+        }
     }
 
-    override fun update() {
+    // ISpriteRenderer implementation
+    override fun begin() {
+    }
+
+    override fun drawCommand(textureId: Int, model: FloatArray, uvCoords: UVCoords) {
+    }
+
+    override fun end() {
+    }
+
+    override fun update(deltaMs: Long) {
         // Update sprites
         for (skinIndex in noteSkins.indices) {
             val currentSkin = noteSkins[skinIndex] ?: continue
@@ -532,6 +430,27 @@ class StepsDrawerGL(
         }
     }
 
+    // Backward compatibility methods
+    @Deprecated("Use begin()/end() pattern instead")
+    override fun flushBatch() {
+        // No longer needed
+    }
+
+    @Deprecated("Use begin()/end() pattern instead")
+    override fun clearCommands() {
+        // No longer needed
+    }
+
+    @Deprecated("Use drawCommand instead")
+    override fun draw(rect: Rect) {
+        drawSprite(rect, null, 0, ArrowSpriteRenderer.NoteType.NORMAL)
+    }
+
+    @Deprecated("Use update(deltaMs) instead")
+    override fun update() {
+        update(16L)
+    }
+
     val stepsByGameMode: Int
         get() = steps
 
@@ -542,150 +461,13 @@ class StepsDrawerGL(
     val selectedSkin: NoteSkin?
         get() = noteSkins[SkinType.SELECTED.ordinal]
 
-    private fun createProgram(vertexSource: String, fragmentSource: String): Int {
-        android.util.Log.d("StepsDrawerGL", "Creating shader program...")
-        val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource)
-        val fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource)
-
-        android.util.Log.d(
-            "StepsDrawerGL",
-            "Vertex shader: $vertexShader, Fragment shader: $fragmentShader"
-        )
-
-        if (vertexShader == 0 || fragmentShader == 0) {
-            android.util.Log.e("StepsDrawerGL", "Failed to create shaders")
-            return 0
-        }
-
-        val program = GLES20.glCreateProgram()
-        android.util.Log.d("StepsDrawerGL", "Created program: $program")
-
-        GLES20.glAttachShader(program, vertexShader)
-        GLES20.glAttachShader(program, fragmentShader)
-        GLES20.glLinkProgram(program)
-
-        // Check link status
-        val linkStatus = IntArray(1)
-        GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0)
-        if (linkStatus[0] != GLES20.GL_TRUE) {
-            val error = GLES20.glGetProgramInfoLog(program)
-            android.util.Log.e("StepsDrawerGL", "Program link failed: $error")
-            GLES20.glDeleteProgram(program)
-            return 0
-        }
-
-        android.util.Log.d("StepsDrawerGL", "Program linked successfully")
-        return program
-    }
-
-    private fun loadShader(type: Int, shaderCode: String): Int {
-        val shader = GLES20.glCreateShader(type)
-        android.util.Log.d("StepsDrawerGL", "Created shader $shader of type $type")
-
-        GLES20.glShaderSource(shader, shaderCode)
-        GLES20.glCompileShader(shader)
-
-        // Check compilation status
-        val compileStatus = IntArray(1)
-        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0)
-        if (compileStatus[0] != GLES20.GL_TRUE) {
-            val error = GLES20.glGetShaderInfoLog(shader)
-            android.util.Log.e("StepsDrawerGL", "Shader compilation failed: $error")
-            GLES20.glDeleteShader(shader)
-            return 0
-        }
-
-        android.util.Log.d("StepsDrawerGL", "Shader compiled successfully")
-        return shader
-    }
-
-    // Helper method to create a default white texture for sprites without GL support
-    private fun createDefaultTexture(): Int {
-        if (defaultTextureId != 0) {
-            return defaultTextureId
-        }
-
-        val textureIds = IntArray(1)
-        GLES20.glGenTextures(1, textureIds, 0)
-        val textureId = textureIds[0]
-
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
-
-        // Create a bright yellow 1x1 texture to make it visible
-        val redPixel = byteArrayOf(255.toByte(), 255.toByte(), 0.toByte(), 255.toByte())
-        val buffer = java.nio.ByteBuffer.allocateDirect(redPixel.size)
-        buffer.put(redPixel)
-        buffer.position(0)
-
-        GLES20.glTexImage2D(
-            GLES20.GL_TEXTURE_2D,
-            0,
-            GLES20.GL_RGBA,
-            1,
-            1,
-            0,
-            GLES20.GL_RGBA,
-            GLES20.GL_UNSIGNED_BYTE,
-            buffer
-        )
-
-        // Set WRAP mode to CLAMP_TO_EDGE (instead of default REPEAT) for both axes
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(
-            GLES20.GL_TEXTURE_2D,
-            GLES20.GL_TEXTURE_WRAP_S,
-            GLES20.GL_CLAMP_TO_EDGE
-        )
-        GLES20.glTexParameteri(
-            GLES20.GL_TEXTURE_2D,
-            GLES20.GL_TEXTURE_WRAP_T,
-            GLES20.GL_CLAMP_TO_EDGE
-        )
-
-        android.util.Log.d("StepsDrawerGL", "Created default texture with ID: $textureId")
-
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
-
-        defaultTextureId = textureId
-
-        return textureId
-    }
-
-    // Method to convert existing sprites to GL-compatible sprites
-    fun convertSpritesToGL() {
-        for (skinIndex in noteSkins.indices) {
-            val currentSkin = noteSkins[skinIndex] ?: continue
-
-            // Convert arrows to GL sprites
-            for (i in currentSkin.arrows.indices) {
-                val originalSprite = currentSkin.arrows[i]
-                // In a complete implementation, you would wrap the original sprite
-                // with a SpriteGLAdapter here
-            }
-
-            // Convert other sprite types similarly
-            // tails, longs, explosions, etc.
-        }
-    }
-
-    // --- BEGIN: SKIN TESTING METHODS ---
-
-    // Paints all variants for all available skins for testing purposes
+    // Testing methods for skin variants
     fun prueba() {
-        if (program == 0) return
-
-        GLES20.glUseProgram(program)
-        GLES20.glEnable(GLES20.GL_BLEND)
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
-
-        // Scale for smaller viewport
-        var currentY = 10 // Starting Y position
-        val spriteSize = 30 // Smaller size for viewport section
-        val spacing = 5 // Smaller spacing
+        var currentY = 10
+        val spriteSize = 30
+        val spacing = 5
         val rowHeight = spriteSize + spacing
 
-        // Test all available skins
         for (skinType in SkinType.values()) {
             val skin = noteSkins[skinType.ordinal]
             if (skin != null) {
@@ -695,7 +477,6 @@ class StepsDrawerGL(
         }
     }
 
-    // Helper method: draws all the variants of this skin in a single horizontal row
     private fun drawSkinVariants(
         skin: NoteSkin,
         skinName: String,
@@ -703,132 +484,97 @@ class StepsDrawerGL(
         spriteSize: Int,
         spacing: Int
     ) {
-        var currentX = 10 // Starting X position, smaller margin
+        var currentX = 10
         val columnWidth = spriteSize + spacing
 
         // Draw arrows for each step
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.arrows[i])
+            drawSprite(drawRect, skin.arrows[i], i, ArrowSpriteRenderer.NoteType.NORMAL)
             currentX += columnWidth
         }
 
-        // Draw other sprite types in the same row
-        currentX += spacing // Smaller extra spacing between sprite types
-
-        // Draw receptors
+        // Draw other sprite types
+        currentX += spacing
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.receptors[i])
+            drawSprite(drawRect, skin.receptors[i], i, ArrowSpriteRenderer.NoteType.RECEPTOR)
             currentX += columnWidth
         }
 
         currentX += spacing
-
-        // Draw long note components
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.longs[i])
+            drawSprite(drawRect, skin.longs[i], i, ArrowSpriteRenderer.NoteType.LONG_BODY)
             currentX += columnWidth
         }
 
         currentX += spacing
-
-        // Draw tails
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.tails[i])
+            drawSprite(drawRect, skin.tails[i], i, ArrowSpriteRenderer.NoteType.LONG_TAIL)
             currentX += columnWidth
         }
 
         currentX += spacing
-
-        // Draw explosions
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.explotions[i])
+            drawSprite(drawRect, skin.explotions[i], i, ArrowSpriteRenderer.NoteType.EXPLOSION)
             currentX += columnWidth
         }
 
         currentX += spacing
-
-        // Draw explosion tails
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.explotionTails[i])
+            drawSprite(
+                drawRect,
+                skin.explotionTails[i],
+                i,
+                ArrowSpriteRenderer.NoteType.EXPLOSION_TAIL
+            )
             currentX += columnWidth
         }
 
         currentX += spacing
-
-        // Draw tap effects
         for (i in 0 until steps) {
             drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-            drawSprite(drawRect, skin.tapsEffect[i])
+            drawSprite(drawRect, skin.tapsEffect[i], i, ArrowSpriteRenderer.NoteType.TAP_EFFECT)
             currentX += columnWidth
         }
 
         currentX += spacing
-
-        // Draw mine
         drawRect.set(currentX, startY, currentX + spriteSize, startY + spriteSize)
-        drawSprite(drawRect, skin.mine)
+        drawSprite(drawRect, skin.mine, 0, ArrowSpriteRenderer.NoteType.MINE)
     }
 
-    // Method to draw all skin variants in a grid layout
     fun pruebaGrid() {
-        if (program == 0) return
-
-        GLES20.glUseProgram(program)
-        GLES20.glEnable(GLES20.GL_BLEND)
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
-
-        // Scale for smaller viewport
-        val spriteSize = 25 // Smaller sprites
-        val spacing = 3 // Smaller spacing
+        val spriteSize = 25
+        val spacing = 3
         val startX = 10
         val startY = 10
-        val columnsPerRow = 12 // More columns for smaller sprites
+        val columnsPerRow = 12
 
         var currentX = startX
         var currentY = startY
         var itemCount = 0
 
-        // Test all available skins
         for (skinType in SkinType.values()) {
             val skin = noteSkins[skinType.ordinal]
             if (skin != null) {
-                // Draw all sprite types for this skin
-                val allSprites = mutableListOf<Any>()
+                val allSprites = mutableListOf<Pair<Any, ArrowSpriteRenderer.NoteType>>()
 
-                // Add arrows
-                skin.arrows.forEach { allSprites.add(it) }
+                skin.arrows.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.NORMAL) }
+                skin.receptors.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.RECEPTOR) }
+                skin.longs.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.LONG_BODY) }
+                skin.tails.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.LONG_TAIL) }
+                skin.explotions.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.EXPLOSION) }
+                skin.explotionTails.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.EXPLOSION_TAIL) }
+                skin.tapsEffect.forEach { allSprites.add(it to ArrowSpriteRenderer.NoteType.TAP_EFFECT) }
+                allSprites.add(skin.mine to ArrowSpriteRenderer.NoteType.MINE)
 
-                // Add receptors
-                skin.receptors.forEach { allSprites.add(it) }
-
-                // Add longs
-                skin.longs.forEach { allSprites.add(it) }
-
-                // Add tails
-                skin.tails.forEach { allSprites.add(it) }
-
-                // Add explosions
-                skin.explotions.forEach { allSprites.add(it) }
-
-                // Add explosion tails
-                skin.explotionTails.forEach { allSprites.add(it) }
-
-                // Add tap effects
-                skin.tapsEffect.forEach { allSprites.add(it) }
-
-                // Add mine
-                allSprites.add(skin.mine)
-
-                // Draw all sprites in grid
-                for (sprite in allSprites) {
+                for ((sprite, noteType) in allSprites) {
                     drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-                    drawSprite(drawRect, sprite)
+                    drawSprite(drawRect, sprite, 0, noteType)
 
                     itemCount++
                     if (itemCount % columnsPerRow == 0) {
@@ -842,18 +588,9 @@ class StepsDrawerGL(
         }
     }
 
-    // Method to draw specific skin type components
     fun pruebaSpecificSkin(skinType: SkinType) {
-        if (program == 0) return
-
         val skin = noteSkins[skinType.ordinal] ?: return
-
-        GLES20.glUseProgram(program)
-        GLES20.glEnable(GLES20.GL_BLEND)
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
-
-        // Scale for smaller viewport
-        val spriteSize = 40 // Medium size
+        val spriteSize = 40
         val spacing = 8
         val startX = 20
         val startY = 20
@@ -864,7 +601,7 @@ class StepsDrawerGL(
         // Draw arrows
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.arrows[i])
+            drawSprite(drawRect, skin.arrows[i], i, ArrowSpriteRenderer.NoteType.NORMAL)
             currentX += spriteSize + spacing
         }
 
@@ -875,7 +612,7 @@ class StepsDrawerGL(
         // Draw receptors
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.receptors[i])
+            drawSprite(drawRect, skin.receptors[i], i, ArrowSpriteRenderer.NoteType.RECEPTOR)
             currentX += spriteSize + spacing
         }
 
@@ -886,12 +623,10 @@ class StepsDrawerGL(
         // Draw effects
         for (i in 0 until steps) {
             drawRect.set(currentX, currentY, currentX + spriteSize, currentY + spriteSize)
-            drawSprite(drawRect, skin.explotions[i])
+            drawSprite(drawRect, skin.explotions[i], i, ArrowSpriteRenderer.NoteType.EXPLOSION)
             currentX += spriteSize + spacing
         }
     }
-
-    // --- END: SKIN TESTING METHODS ---
 
     companion object {
         // Constants
@@ -905,25 +640,5 @@ class StepsDrawerGL(
         private const val ASPECT_RATIO_16_9_CALC = 1.77777778f
         private const val LONG_NOTE_BODY_OFFSET = 0.35f
         private const val LONG_NOTE_TAIL_OFFSET_DIVISOR = 3
-
-        private const val VERTEX_SHADER = """
-            attribute vec2 aPosition;
-            attribute vec2 aTexCoord;
-            varying vec2 vTexCoord;
-            uniform mat4 uMVPMatrix;
-            void main() {
-                vTexCoord = aTexCoord;
-                gl_Position = uMVPMatrix * vec4(aPosition, 0.0, 1.0);
-            }
-        """
-
-        private const val FRAGMENT_SHADER = """
-            precision mediump float;
-            varying vec2 vTexCoord;
-            uniform sampler2D uTexture;
-            void main() {
-                gl_FragColor = texture2D(uTexture, vTexCoord);
-            }
-        """
     }
 }

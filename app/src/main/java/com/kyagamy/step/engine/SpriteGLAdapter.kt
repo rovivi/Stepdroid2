@@ -4,7 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.Rect
 import android.opengl.GLES20
 import android.opengl.GLUtils
-import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader
+import android.opengl.Matrix
+import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
 
 class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer {
 
@@ -13,6 +14,10 @@ class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer 
     private var currentFrameIndex = 0
     private var lastUpdateTime = 0L
     private val frameTime = 100L // 100ms per frame
+
+    // Batching system
+    private val drawCommands = mutableListOf<DrawCommand>()
+    private var batchActive = false
 
     fun loadTexture() {
         if (isTextureLoaded) return
@@ -89,23 +94,73 @@ class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
     }
 
-    override fun draw(rect: Rect) {
-        // The actual drawing would be handled by the StepsDrawerGL
-        // This adapter just manages the texture binding
-        bindTexture()
+    // New batching interface implementation
+    override fun begin() {
+        if (batchActive) {
+            android.util.Log.w("SpriteGLAdapter", "begin() called while batch is already active")
+            return
+        }
+        batchActive = true
+        drawCommands.clear()
     }
 
-    override fun update() {
+    override fun drawCommand(textureId: Int, model: FloatArray, uvCoords: UVCoords) {
+        if (!batchActive) {
+            android.util.Log.w("SpriteGLAdapter", "drawCommand() called outside of begin()/end()")
+            return
+        }
+        drawCommands.add(DrawCommand(textureId, model.clone(), uvCoords))
+    }
+
+    override fun end() {
+        if (!batchActive) {
+            android.util.Log.w("SpriteGLAdapter", "end() called without begin()")
+            return
+        }
+        batchActive = false
+        // Commands are stored for external processing
+    }
+
+    override fun update(deltaMs: Long) {
         // Update frame animation
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastUpdateTime > frameTime) {
             spriteReader.update()
             lastUpdateTime = currentTime
 
-            // Update texture if needed (this would require reloading the texture
-            // with the new frame data in a real implementation)
+            // Update texture if needed
             updateTextureFrame()
         }
+    }
+
+    override fun flushBatch() {
+        // This adapter doesn't handle rendering directly
+        // The actual batching would be handled by a master renderer
+        // For now, just clear the commands
+        drawCommands.clear()
+    }
+
+    override fun clearCommands() {
+        drawCommands.clear()
+    }
+
+    @Deprecated("Use drawCommand instead")
+    override fun draw(rect: Rect) {
+        // Convert rect to model matrix for compatibility
+        val model = FloatArray(16)
+        Matrix.setIdentityM(model, 0)
+        Matrix.translateM(model, 0, rect.left.toFloat(), rect.top.toFloat(), 0f)
+        Matrix.scaleM(model, 0, rect.width().toFloat(), rect.height().toFloat(), 1f)
+
+        // Use current texture ID
+        val currentTextureId = if (isTextureLoaded) textureId else 0
+        val uvCoords = UVCoords(0f, 0f, 1f, 1f)
+        drawCommand(currentTextureId, model, uvCoords)
+    }
+
+    @Deprecated("Use update(deltaMs) instead")
+    override fun update() {
+        update(16L) // ~60 FPS
     }
 
     private fun updateTextureFrame() {
@@ -130,5 +185,9 @@ class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer 
 
     fun getTextureId(): Int {
         return if (isTextureLoaded) textureId else 0
+    }
+
+    fun getDrawCommands(): List<DrawCommand> {
+        return drawCommands.toList()
     }
 }

@@ -8,7 +8,7 @@ import android.graphics.BitmapFactory;
 
 import com.kyagamy.step.R;
 import com.kyagamy.step.common.Common;
-import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader;
+import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader;
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap;
 
 import java.io.IOException;

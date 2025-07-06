@@ -7,13 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import com.kyagamy.step.R
-import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader
-import com.kyagamy.step.game.newplayer.Evaluator.Companion.BAD
-import com.kyagamy.step.game.newplayer.Evaluator.Companion.GOOD
-import com.kyagamy.step.game.newplayer.Evaluator.Companion.GREAT
-import com.kyagamy.step.game.newplayer.Evaluator.Companion.MAX_COMBO
-import com.kyagamy.step.game.newplayer.Evaluator.Companion.MISS
-import com.kyagamy.step.game.newplayer.Evaluator.Companion.PERFECT
+import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
 import kotlin.math.abs
 
 class Combo(c: Context, stepsDrawer: StepsDrawer) {
