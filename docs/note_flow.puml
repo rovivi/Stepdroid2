@@ -1,0 +1,7 @@
+@startuml
+class FileSSC
+class NoteLayoutCalculator
+class StepsDrawerGL
+FileSSC --> StepsDrawerGL : produces GameRows
+StepsDrawerGL --> NoteLayoutCalculator : uses layout
+@enduml
