@@ -25,6 +25,7 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
     }
 
     private var testMode = TestMode.SKIN_VARIANTS
+    private var batchActive = false
 
     private val notes = mutableListOf<Note>()
     private var program = 0
@@ -108,8 +109,8 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         colorHandle = GLES20.glGetUniformLocation(program, "uColor")
         mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
 
-        // Initialize StepsDrawerGL program
-        stepsDrawer?.initializeGLProgram()
+        // Note: StepsDrawerGL no longer needs GL program initialization
+        // as it delegates rendering to ArrowSpriteRenderer
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -378,12 +379,59 @@ class TestSongRenderer(private val context: Context) : GLSurfaceView.Renderer, I
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
     }
 
+    override fun begin() {
+        if (batchActive) {
+            android.util.Log.w("TestSongRenderer", "begin() called while batch is already active")
+            return
+        }
+        batchActive = true
+        stepsDrawer?.begin()
+    }
+
+    override fun drawCommand(
+        textureId: Int,
+        model: FloatArray,
+        uvCoords: UVCoords
+    ) {
+        if (!batchActive) {
+            android.util.Log.w("TestSongRenderer", "drawCommand() called outside of begin()/end()")
+            return
+        }
+        stepsDrawer?.drawCommand(textureId, model, uvCoords)
+    }
+
+    override fun end() {
+        if (!batchActive) {
+            android.util.Log.w("TestSongRenderer", "end() called without begin()")
+            return
+        }
+        batchActive = false
+        stepsDrawer?.end()
+    }
+
+    override fun update(deltaMs: Long) {
+        stepsDrawer?.update(deltaMs)
+    }
+
+    // Backward compatibility methods
+    @Deprecated("Use begin()/end() pattern instead")
+    override fun flushBatch() {
+        stepsDrawer?.flushBatch()
+    }
+
+    @Deprecated("Use begin()/end() pattern instead")
+    override fun clearCommands() {
+        stepsDrawer?.clearCommands()
+    }
+
     // ISpriteRenderer interface methods
+    @Deprecated("Use drawCommand instead")
     override fun draw(rect: android.graphics.Rect) {
         // This method is required by ISpriteRenderer but our rendering is handled in onDrawFrame
         // We can use this for any additional drawing if needed
     }
 
+    @Deprecated("Use update(deltaMs) instead")
     override fun update() {
         // Update sprites - this is called by the OpenGLSpriteView
         stepsDrawer?.update()
