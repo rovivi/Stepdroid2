@@ -434,7 +434,7 @@ class GamePlayGLRenderer(
                 currentElement.setPosY(lastPosition.toInt())
                 drawList.add(currentElement)
             }
-            if (lastPosition >= stepsDrawer!!.sizeY + stepsDrawer!!.sizeNote) break
+            if (lastPosition >= stepsDrawer!!.sizeY*3 + stepsDrawer!!.sizeNote) break
             currentElement.modifiers?.get("SCROLLS")?.let { scrolls ->
                 if (x >= 0) {
                     lastScrollAux = scrolls[1]

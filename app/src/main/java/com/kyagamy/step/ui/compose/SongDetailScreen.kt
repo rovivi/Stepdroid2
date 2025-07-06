@@ -663,7 +663,23 @@ fun SharedTransitionScope.SongDetailScreen(
                 Button(
                     onClick = {
                         if (selectedLevelIndex != -1) {
-                            onLevelSelect(levels[selectedLevelIndex])
+                            val selectedLevel = levels[selectedLevelIndex]
+                            // Stop media playback
+                            isVideoPlaying = false
+                            isMusicPlaying = false
+                            releaseMediaPlayer()
+
+                            // Use the same logic as FragmentStartMenu to start the game
+                            val intent = android.content.Intent(
+                                context,
+                                com.kyagamy.step.views.TestGLPlayerActivity::class.java
+                            )
+                            intent.putExtra("ssc", song.PATH_File)
+                            intent.putExtra("nchar", selectedLevel.index)
+                            intent.putExtra("path", song.PATH_SONG)
+                            intent.putExtra("pathDisc", song.PATH_SONG + song.BANNER_SONG)
+
+                            context.startActivity(intent)
                         }
                     },
                     modifier = Modifier

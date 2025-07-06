@@ -177,25 +177,25 @@ class StepsDrawerGL(
                 ArrowSpriteRenderer.NoteType.RECEPTOR
             )
 
-            // Draw effects
-            drawSprite(
-                drawRect,
-                selectedSkin.explotions[j],
-                j,
-                ArrowSpriteRenderer.NoteType.EXPLOSION
-            )
-            drawSprite(
-                drawRect,
-                selectedSkin.explotionTails[j],
-                j,
-                ArrowSpriteRenderer.NoteType.EXPLOSION_TAIL
-            )
-            drawSprite(
-                drawRect,
-                selectedSkin.tapsEffect[j],
-                j,
-                ArrowSpriteRenderer.NoteType.TAP_EFFECT
-            )
+//            // Draw effects
+//            drawSprite(
+//                drawRect,
+//                selectedSkin.explotions[j],
+//                j,
+//                ArrowSpriteRenderer.NoteType.EXPLOSION
+//            )
+//            drawSprite(
+//                drawRect,
+//                selectedSkin.explotionTails[j],
+//                j,
+//                ArrowSpriteRenderer.NoteType.EXPLOSION_TAIL
+//            )
+//            drawSprite(
+//                drawRect,
+//                selectedSkin.tapsEffect[j],
+//                j,
+//                ArrowSpriteRenderer.NoteType.TAP_EFFECT
+//            )
         }
     }
 
