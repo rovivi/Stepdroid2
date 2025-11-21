@@ -164,6 +164,14 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
     implementation 'io.coil-kt:coil-compose:2.6.0'
 
+    // LibGDX
+    implementation "com.badlogicgames.gdx:gdx:1.12.1"
+    implementation "com.badlogicgames.gdx:gdx-backend-android:1.12.1"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-armeabi-v7a"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-arm64-v8a"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-x86"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-x86_64"
+
     // Testing
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:5.14.2'
