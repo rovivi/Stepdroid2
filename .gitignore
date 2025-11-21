@@ -38,6 +38,7 @@ captures/
 # IntelliJ / Android Studio
 *.iml
 .idea/
+.idea/**
 !/app/src/*/res/values/strings.xml
 
 # Keystore files
