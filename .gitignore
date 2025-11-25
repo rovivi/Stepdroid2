@@ -60,4 +60,5 @@ Thumbs.db
 *.patch
 *.diff
 Uncommitted_changes*.xml
+.idea/shelf/
 shelf/
