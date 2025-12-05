@@ -11,6 +11,9 @@ interface LevelDao {
     @Query("SELECT * FROM Level where song_fkid = :songId order by STEPSTYPE desc, `index` asc")
     fun getLevelBySongId(songId: Int ): LiveData<List<Level>>
 
+    @Query("SELECT * FROM Level where song_fkid = :songId AND STEPSTYPE LIKE '%single%'")
+    suspend fun getSingleLevelsBySongIdSync(songId: Int): List<Level>
+
     @Query("delete from Level")
     fun deleteAll()
 

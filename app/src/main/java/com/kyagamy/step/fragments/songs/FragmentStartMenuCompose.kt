@@ -40,7 +40,7 @@ import com.kyagamy.step.common.step.CommonGame.TransformBitmap
 import com.kyagamy.step.room.entities.Song
 import com.kyagamy.step.viewmodels.LevelViewModel
 import com.kyagamy.step.viewmodels.SongViewModel
-import com.kyagamy.step.views.gameplayactivity.GamePlayActivity
+import com.kyagamy.step.views.gameplayactivity.GamePlayLibGDXActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -259,7 +259,10 @@ fun FragmentStartMenuCompose(
                                         scope.launch {
                                             try {
                                                 val intent =
-                                                    Intent(context, GamePlayActivity::class.java)
+                                                    Intent(
+                                                        context,
+                                                        GamePlayLibGDXActivity::class.java
+                                                    )
                                                 releaseMediaPlayer(mediaPlayer) {
                                                     mediaPlayer = null
                                                 }

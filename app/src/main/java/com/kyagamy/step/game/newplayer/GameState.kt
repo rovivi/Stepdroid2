@@ -65,10 +65,10 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
      * Validate Effects  call the method effects if found someone, its a method because its called by multiples sites
      */
     fun checkEffects() {
-        if (steps.get(currentElement)!!.modifiers != null) effects(
+        if (steps.getOrNull(currentElement)?.modifiers != null) effects(
             Objects.requireNonNull<HashMap<String, ArrayList<Double>>?>(
-                steps.get(currentElement)!!.modifiers
-            ), steps.get(currentElement)!!.currentBeat
+                steps.getOrNull(currentElement)?.modifiers
+            ), steps.getOrNull(currentElement)?.currentBeat ?: 0.0
         )
     }
 
@@ -111,12 +111,12 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
             val entry = effects.get("WARPS")
             currentBeat += entry!!.get(1)!!
             val metaBeat = effectBeat + entry.get(1)!!
-            while (steps.get(currentElement)!!.currentBeat < metaBeat) {
-                steps.get(currentElement)!!.hasPressed = true
+            while (steps.getOrNull(currentElement)?.currentBeat ?: 0.0 < metaBeat) {
+                steps.getOrNull(currentElement)?.hasPressed = true
                 currentElement++
-                steps.get(currentElement)!!.hasPressed = true
+                steps.getOrNull(currentElement)?.hasPressed = true
                 checkEffects()
-                if (almostEqual(metaBeat, steps.get(currentElement)!!.currentBeat)) {
+                if (almostEqual(metaBeat, steps.getOrNull(currentElement)?.currentBeat ?: 0.0)) {
                 }
             }
         }
@@ -227,52 +227,87 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
             val addBeats = secondToBeat(rBad / 1000.0, BPM)
             posBack = 0
             //Search outBeatRange gameRow
-            while ((currentElement + posBack) > 0 &&
-                steps.get(currentElement + posBack)!!.currentBeat >= (currentBeat - addBeats)
-            ) {
+            while ((currentElement + posBack) > 0) { // Changed loop condition
+                val stepIndex = currentElement + posBack
+                if (stepIndex >= 0 && stepIndex < steps.size) {
+                    val step = steps.get(stepIndex)
+                    if (step != null && step.currentBeat < (currentBeat - addBeats)) {
+                        // We've gone back far enough
+                        break
+                    }
+                } else {
+                    // Index out of bounds
+                    break
+                }
                 posBack--
             }
             ///**/MISS**/
-            if ((currentElement + posBack) > 0 && !steps.get(currentElement + posBack - 1)!!.hasPressed &&
-                Evaluator.Companion.containNoteToEvaluate(steps.get(currentElement + posBack - 1)!!)
-            ) {
-                combo!!.setComboUpdate(Combo.VALUE_MISS.toShort())
-                steps.get(currentElement + posBack - 1)!!.hasPressed = true
+            if ((currentElement + posBack) > 0) {
+                val checkIndex = currentElement + posBack - 1
+                if (checkIndex >= 0 && checkIndex < steps.size) {
+                    val step = steps.get(checkIndex)
+                    if (step != null && !step.hasPressed &&
+                        Evaluator.Companion.containNoteToEvaluate(step)
+                    ) {
+                        combo?.setComboUpdate(Combo.VALUE_MISS.toShort())
+                        step.hasPressed = true
+                    }
+                }
             }
 
             var posEvaluate = -1
-            while ((currentElement + posBack) < steps.size &&
-                steps.get(currentElement + posBack)!!.currentBeat <= (currentBeat + addBeats)
-            ) {
-                if ((steps.get(currentElement + posBack))!!.notes != null) { //Validate emptyRow
+            while ((currentElement + posBack) < steps.size) { // Changed loop condition
+                val stepIndex = currentElement + posBack
+                if (stepIndex < 0) {
+                    posBack++
+                    continue
+                }
+
+                val currentStep = steps.get(stepIndex)
+                if (currentStep == null) {
+                    posBack++
+                    continue
+                }
+
+                if (currentStep.currentBeat > (currentBeat + addBeats)) {
+                    // We've gone forward enough
+                    break
+                }
+
+                if (currentStep.notes != null) { //Validate emptyRow and null step
                     //boolean checkLong = true;
                     //byte[] auxRow = (byte[]) steps.get(currentElement + posBack)[0];
-                    for (arrowIndex in steps.get(currentElement + posBack)!!.notes!!.indices) {
-                        val currentChar =
-                            steps.get(currentElement + posBack)!!.notes!!.get(arrowIndex)
-                        if (inputs[arrowIndex] == CommonSteps.Companion.ARROW_PRESSED && currentChar.type == CommonSteps.Companion.NOTE_TAP) { //NORMALTAP
+                    for (arrowIndex in currentStep.notes!!.indices) {
+                        val currentChar = currentStep.notes!!.get(arrowIndex)
+                        // Add null check for currentChar if needed, but assuming it's not null based on type
+
+                        if (arrowIndex < inputs.size && inputs[arrowIndex] == CommonSteps.Companion.ARROW_PRESSED && currentChar.type == CommonSteps.Companion.NOTE_TAP) { //NORMALTAP
                             stepsDrawer?.selectedSkin?.explotions?.get(arrowIndex)?.play()
-                            steps.get(currentElement + posBack)!!.notes!!.get(arrowIndex).type =
+                            currentStep.notes!!.get(arrowIndex).type =
                                 CommonSteps.Companion.NOTE_PRESSED
-                            inputs[arrowIndex] = CommonSteps.Companion.ARROW_HOLD_PRESSED
+                            if (arrowIndex < inputs.size) {
+                                inputs[arrowIndex] = CommonSteps.Companion.ARROW_HOLD_PRESSED
+                            }
                             posEvaluate = currentElement + posBack
                             // continue;
                         }
-                        if (inputs[arrowIndex] != CommonSteps.Companion.ARROW_UNPRESSED && (currentChar.type == CommonSteps.Companion.NOTE_LONG_START || currentChar.type == CommonSteps.Companion.NOTE_LONG_BODY || currentChar.type == CommonSteps.Companion.NOTE_LONG_END)
+                        if (arrowIndex < inputs.size && inputs[arrowIndex] != CommonSteps.Companion.ARROW_UNPRESSED && (currentChar.type == CommonSteps.Companion.NOTE_LONG_START || currentChar.type == CommonSteps.Companion.NOTE_LONG_BODY || currentChar.type == CommonSteps.Companion.NOTE_LONG_END)
                             && posBack < 0
                         ) { // tap1
-                            steps.get(currentElement + posBack)!!.notes!!.get(arrowIndex).type =
+                            currentStep.notes!!.get(arrowIndex).type =
                                 CommonSteps.Companion.NOTE_LONG_PRESSED
                             //                            steps.get(currentElement + posBack).getNotes().get(arrowIndex).setType(currentChar.getType() == NOTE_LONG_END ? NOTE_PRESSED : NOTE_LONG_PRESSED);
-                            if (!Evaluator.Companion.containNoteToEvaluate(steps.get(currentElement + posBack)!!)) {
-                                steps.get(currentElement + posBack)!!.hasPressed = true
-                                combo!!.setComboUpdate(Combo.VALUE_PERFECT.toShort())
+                            if (!Evaluator.Companion.containNoteToEvaluate(currentStep)) {
+                                currentStep.hasPressed = true
+                                combo?.setComboUpdate(Combo.VALUE_PERFECT.toShort())
                             }
 
                             stepsDrawer?.selectedSkin?.explotionTails?.get(arrowIndex)?.play()
-                            inputs[arrowIndex] = CommonSteps.Companion.ARROW_HOLD_PRESSED
+                            if (arrowIndex < inputs.size) {
+                                inputs[arrowIndex] = CommonSteps.Companion.ARROW_HOLD_PRESSED
+                            }
                         }
-                        if (inputs[arrowIndex] == CommonSteps.Companion.ARROW_UNPRESSED) {
+                        if (arrowIndex < inputs.size && inputs[arrowIndex] == CommonSteps.Companion.ARROW_UNPRESSED) {
                             val selectedSkin = stepsDrawer?.selectedSkin
                             if (arrowIndex < (selectedSkin?.explotionTails?.size ?: 0)) {
                                 selectedSkin?.explotionTails?.get(arrowIndex)?.stop()
@@ -281,42 +316,48 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
                     }
                 }
                 if (posEvaluate != -1) {
-                    val bol = !steps.get(posEvaluate)!!.hasPressed
+                    if (posEvaluate >= 0 && posEvaluate < steps.size) {
+                        val evaluatedStep = steps.get(posEvaluate)
+                        if (evaluatedStep != null) {
+                            val bol = !evaluatedStep.hasPressed
 
-                    if (!Evaluator.Companion.containNoteToEvaluate(steps.get(posEvaluate)!!) && bol) { //mejorar la condicion xdd
-                        steps.get(posEvaluate)!!.hasPressed = true
-                        val auxRetro = abs(
-                            beatToSecond(
-                                currentBeat - steps.get(posEvaluate)!!.currentBeat,
-                                BPM
-                            )
-                        ) * 1000
-                        println("🎯 Timing evaluation: auxRetro=${auxRetro}ms, rGreat=${rGreat}ms, rGood=${rGood}ms, rBad=${rBad}ms")
-                        if (Evaluator.Companion.containsNoteLongPressed(steps.get(posEvaluate)!!)) {
-                            println("🎵 LONG NOTE -> PERFECT")
-                            combo!!.setComboUpdate(Combo.VALUE_PERFECT.toShort())
-                        } else if (auxRetro < rGreat) { //perfetc
-                            println("🎵 PERFECT (${auxRetro} < ${rGreat})")
-                            combo!!.setComboUpdate(Combo.VALUE_PERFECT.toShort())
-                        } else if (auxRetro < rGood) { //great
-                            println("🎵 GREAT (${auxRetro} < ${rGood})")
-                            combo!!.setComboUpdate(Combo.VALUE_GREAT.toShort())
-                        } else if (auxRetro < rBad) { //good
-                            println("🎵 GOOD (${auxRetro} < ${rBad})")
-                            combo!!.setComboUpdate(Combo.VALUE_GOOD.toShort())
-                        } else { //bad
-                            println("🎵 BAD (${auxRetro} >= ${rBad})")
-                            combo!!.setComboUpdate(Combo.VALUE_BAD.toShort())
+                            if (!Evaluator.Companion.containNoteToEvaluate(evaluatedStep) && bol) { //mejorar la condicion xdd
+                                evaluatedStep.hasPressed = true
+                                val auxRetro = abs(
+                                    beatToSecond(
+                                        currentBeat - evaluatedStep.currentBeat,
+                                        BPM
+                                    )
+                                ) * 1000
+                                println("🎯 Timing evaluation: auxRetro=${auxRetro}ms, rGreat=${rGreat}ms, rGood=${rGood}ms, rBad=${rBad}ms")
+                                if (Evaluator.Companion.containsNoteLongPressed(evaluatedStep)) {
+                                    println("🎵 LONG NOTE -> PERFECT")
+                                    combo?.setComboUpdate(Combo.VALUE_PERFECT.toShort())
+                                } else if (auxRetro < rGreat) { //perfetc
+                                    println("🎵 PERFECT (${auxRetro} < ${rGreat})")
+                                    combo?.setComboUpdate(Combo.VALUE_PERFECT.toShort())
+                                } else if (auxRetro < rGood) { //great
+                                    println("🎵 GREAT (${auxRetro} < ${rGood})")
+                                    combo?.setComboUpdate(Combo.VALUE_GREAT.toShort())
+                                } else if (auxRetro < rBad) { //good
+                                    println("🎵 GOOD (${auxRetro} < ${rBad})")
+                                    combo?.setComboUpdate(Combo.VALUE_GOOD.toShort())
+                                } else { //bad
+                                    println("🎵 BAD (${auxRetro} >= ${rBad})")
+                                    combo?.setComboUpdate(Combo.VALUE_BAD.toShort())
+                                }
+                                eventAux =
+                                    "add:" + addBeats + " positions to check:" + posBack + "beat eval:" + evaluatedStep.currentBeat
+                                continue
+                            }
                         }
-                        eventAux =
-                            "add:" + addBeats + " positions to check:" + posBack + "beat eval:" + steps.get(
-                                posEvaluate
-                            )!!.currentBeat
-                        continue
                     }
                 }
-                eventAux =
-                    currentBeat.toString() + ":" + steps.get(posBack + currentElement)!!.currentBeat
+
+                val nextStep = steps.getOrNull(posBack + currentElement)
+                if (nextStep != null) {
+                    eventAux = currentBeat.toString() + ":" + nextStep.currentBeat
+                }
                 posBack++
             }
         }

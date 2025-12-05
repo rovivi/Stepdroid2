@@ -49,6 +49,7 @@
 
     <application
         android:allowBackup="true"
+        android:extractNativeLibs="true"
         android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
@@ -122,6 +123,13 @@
             android:exported="false" />
         <activity
             android:name=".views.gameplayactivity.GamePlayActivity"
+            android:exported="false"
+            android:hardwareAccelerated="true"
+            android:keepScreenOn="true"
+            android:screenOrientation="fullSensor"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation" />
+        <activity
+            android:name=".views.gameplayactivity.GamePlayLibGDXActivity"
             android:exported="false"
             android:hardwareAccelerated="true"
             android:keepScreenOn="true"

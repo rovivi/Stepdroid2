@@ -54,6 +54,7 @@ import com.kyagamy.step.viewmodels.SongViewModel
 import com.kyagamy.step.viewmodels.LevelViewModel
 import com.kyagamy.step.ui.ui.theme.StepDroidTheme
 import com.kyagamy.step.views.TestGLPlayerActivity
+import com.kyagamy.step.views.gameplayactivity.GamePlayLibGDXActivity
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -378,7 +379,7 @@ fun StartScreen(viewModel: StartViewModel) {
                     val folderPath = randomSong.PATH_SONG
                     val intent = Intent(
                         context,
-                        com.kyagamy.step.views.gameplayactivity.GamePlayActivity::class.java
+                        GamePlayLibGDXActivity::class.java
                     ).apply {
                         putExtra("ssc", sscPath)
                         putExtra("path", folderPath)
@@ -444,7 +445,7 @@ fun StartScreen(viewModel: StartViewModel) {
                     val randomSong = filteredSongs[Random.nextInt(filteredSongs.size)]
                     val sscPath = randomSong.PATH_File
                     val folderPath = randomSong.PATH_SONG
-                    val intent = Intent(context, TestGLPlayerActivity::class.java).apply {
+                    val intent = Intent(context, GamePlayLibGDXActivity::class.java).apply {
                         putExtra("ssc", sscPath)
                         putExtra("path", folderPath)
                         putExtra("nchar", 0)
