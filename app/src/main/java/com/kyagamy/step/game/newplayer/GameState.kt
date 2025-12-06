@@ -6,6 +6,8 @@ import com.kyagamy.step.common.step.CommonSteps.Companion.almostEqual
 import com.kyagamy.step.common.step.CommonSteps.Companion.beatToSecond
 import com.kyagamy.step.common.step.CommonSteps.Companion.secondToBeat
 import com.kyagamy.step.common.step.Game.GameRow
+import com.kyagamy.step.game.interfaces.ICombo
+import com.kyagamy.step.game.interfaces.IStepsDrawer
 import game.StepObject
 import java.util.*
 import kotlin.math.abs
@@ -46,10 +48,10 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
     private val touchPad: GamePad? = null
 
     @JvmField
-    var combo: Combo? = null
+    var combo: ICombo? = null
 
     @JvmField
-    var stepsDrawer: StepsDrawer? = null
+    var stepsDrawer: IStepsDrawer? = null
     var eventAux: String = ""
 
 
@@ -187,31 +189,7 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
 
     fun evaluate() {
         if (false) { //Autoplay
-
-//            if (Evaluator.Companion.containNoteType(steps.get(currentElement), CommonSteps.NOTE_TAP)) {
-//               // combo.setComboUpdate(Combo.VALUE_PERFECT);
-//            }
-//            //ObjectCombo.posjudge = 0;
-//            if (Evaluator.Companion.containsNoteTap(steps.get(currentElement))) {
-//                //  combopp();
-//                //currentLife += 0.5 * currentCombo;
-//                //ObjectCombo.show();
-//                GameRow auxrow = steps.get(currentElement);
-//                for (int w = 0; auxrow.getNotes() != null && w < auxrow.getNotes().size(); w++) {//animations
-//                    int aux = auxrow.getNotes().get(w).getType();
-//                    if (aux == NOTE_TAP)
-//                        stepsDrawer.noteSkins[0].explotions[w].play();
-//                    else if (aux == NOTE_LONG_BODY) {
-//                        stepsDrawer.noteSkins[0].explotions[w].play();
-//                        stepsDrawer.noteSkins[0].explotionTails[w].play();
-//                    } else if (aux == NOTE_EMPTY)
-//                        stepsDrawer.noteSkins[0].explotionTails[w].stop();
-//                }
-//                steps.get(currentElement).setHasPressed(true);
-//            } else if (Evaluator.Companion.containNoteLong(steps.get(currentElement))) {
-//                combo.setComboUpdate(Combo.VALUE_PERFECT);
-//            }
-//            steps.get(currentElement).setHasPressed(true);
+            // ... (Autoplay logic commented out)
         } else { //juicio normal
             val currentJudge = JUDMENT[2] //se busca el miss
             var posBack: Int
@@ -227,9 +205,13 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
             val addBeats = secondToBeat(rBad / 1000.0, BPM)
             posBack = 0
             //Search outBeatRange gameRow
-            while ((currentElement + posBack) > 0) { // Changed loop condition
+            while (true) {
                 val stepIndex = currentElement + posBack
-                if (stepIndex >= 0 && stepIndex < steps.size) {
+                if (stepIndex <= 0) {
+                    // Reached the beginning
+                    break
+                }
+                if (stepIndex < steps.size) {
                     val step = steps.get(stepIndex)
                     if (step != null && step.currentBeat < (currentBeat - addBeats)) {
                         // We've gone back far enough
@@ -242,25 +224,28 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
                 posBack--
             }
             ///**/MISS**/
-            if ((currentElement + posBack) > 0) {
-                val checkIndex = currentElement + posBack - 1
-                if (checkIndex >= 0 && checkIndex < steps.size) {
-                    val step = steps.get(checkIndex)
-                    if (step != null && !step.hasPressed &&
-                        Evaluator.Companion.containNoteToEvaluate(step)
-                    ) {
-                        combo?.setComboUpdate(Combo.VALUE_MISS.toShort())
-                        step.hasPressed = true
-                    }
+            val checkIndex = currentElement + posBack - 1
+            if (checkIndex >= 0 && checkIndex < steps.size) {
+                val step = steps.get(checkIndex)
+                if (step != null && !step.hasPressed &&
+                    Evaluator.Companion.containNoteToEvaluate(step)
+                ) {
+                    combo?.setComboUpdate(Combo.VALUE_MISS.toShort())
+                    step.hasPressed = true
                 }
             }
 
             var posEvaluate = -1
-            while ((currentElement + posBack) < steps.size) { // Changed loop condition
+            while (true) {
                 val stepIndex = currentElement + posBack
                 if (stepIndex < 0) {
                     posBack++
                     continue
+                }
+
+                if (stepIndex >= steps.size) {
+                    // Reached the end
+                    break
                 }
 
                 val currentStep = steps.get(stepIndex)
@@ -282,7 +267,7 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
                         // Add null check for currentChar if needed, but assuming it's not null based on type
 
                         if (arrowIndex < inputs.size && inputs[arrowIndex] == CommonSteps.Companion.ARROW_PRESSED && currentChar.type == CommonSteps.Companion.NOTE_TAP) { //NORMALTAP
-                            stepsDrawer?.selectedSkin?.explotions?.get(arrowIndex)?.play()
+                            stepsDrawer?.playExplosion(arrowIndex)
                             currentStep.notes!!.get(arrowIndex).type =
                                 CommonSteps.Companion.NOTE_PRESSED
                             if (arrowIndex < inputs.size) {
@@ -302,16 +287,13 @@ class GameState(stepData: StepObject, @JvmField var inputs: ByteArray) {
                                 combo?.setComboUpdate(Combo.VALUE_PERFECT.toShort())
                             }
 
-                            stepsDrawer?.selectedSkin?.explotionTails?.get(arrowIndex)?.play()
+                            stepsDrawer?.playExplosionTail(arrowIndex)
                             if (arrowIndex < inputs.size) {
                                 inputs[arrowIndex] = CommonSteps.Companion.ARROW_HOLD_PRESSED
                             }
                         }
                         if (arrowIndex < inputs.size && inputs[arrowIndex] == CommonSteps.Companion.ARROW_UNPRESSED) {
-                            val selectedSkin = stepsDrawer?.selectedSkin
-                            if (arrowIndex < (selectedSkin?.explotionTails?.size ?: 0)) {
-                                selectedSkin?.explotionTails?.get(arrowIndex)?.stop()
-                            }
+                            stepsDrawer?.stopExplosionTail(arrowIndex)
                         }
                     }
                 }

@@ -5,7 +5,7 @@ import android.graphics.Rect
 import android.opengl.GLES20
 import android.opengl.GLUtils
 import android.opengl.Matrix
-import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
+import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader
 
 class SpriteGLAdapter(private val spriteReader: SpriteReader) : ISpriteRenderer {
 

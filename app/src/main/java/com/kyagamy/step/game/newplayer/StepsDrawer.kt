@@ -9,7 +9,8 @@ import android.graphics.Rect
 import com.kyagamy.step.common.step.CommonSteps
 import com.kyagamy.step.common.step.Game.GameRow
 import com.kyagamy.step.common.step.Game.NOT_DRAWABLE
-import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
+import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader
+import com.kyagamy.step.game.interfaces.IStepsDrawer
 import game.Note
 import java.util.*
 import kotlin.math.abs
@@ -20,7 +21,7 @@ class StepsDrawer internal constructor(
     aspectRatio: String,
     landScape: Boolean,
     screenSize: Point
-) {
+) : IStepsDrawer {
     // Enums
     enum class GameMode(val value: String, val steps: Int) {
         PUMP_ROUTINE("pump-routine", 10),
@@ -379,5 +380,17 @@ class StepsDrawer internal constructor(
         private const val LONG_NOTE_BODY_OFFSET = 0.35f
         private const val LONG_NOTE_TAIL_OFFSET_DIVISOR = 3
         private const val DEBUG_TEXT_SIZE = 20f
+    }
+
+    override fun playExplosion(index: Int) {
+        selectedSkin?.explotions?.get(index)?.play()
+    }
+
+    override fun playExplosionTail(index: Int) {
+        selectedSkin?.explotionTails?.get(index)?.play()
+    }
+
+    override fun stopExplosionTail(index: Int) {
+        selectedSkin?.explotionTails?.get(index)?.stop()
     }
 }

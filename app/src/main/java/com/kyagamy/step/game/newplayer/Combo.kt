@@ -7,10 +7,12 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import com.kyagamy.step.R
-import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
+import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader
+import com.kyagamy.step.game.interfaces.ICombo
+import com.kyagamy.step.game.interfaces.ILifeBar
 import kotlin.math.abs
 
-class Combo(c: Context, stepsDrawer: StepsDrawer) {
+class Combo(c: Context, stepsDrawer: StepsDrawer) : ICombo {
     private var timeMark: Long?
 
     private val judgeSprite: SpriteReader
@@ -54,8 +56,8 @@ class Combo(c: Context, stepsDrawer: StepsDrawer) {
         badCombo = BitmapFactory.decodeResource(c.getResources(), R.drawable.play_combo_bad, myOpt2)
     }
 
-    fun setLifeBar(lifeBar: LifeBar) {
-        this.lifeBar = lifeBar
+    override fun setLifeBar(lifeBar: ILifeBar) {
+        this.lifeBar = lifeBar as? LifeBar
     }
 
     fun show() {
@@ -64,7 +66,7 @@ class Combo(c: Context, stepsDrawer: StepsDrawer) {
         currentBitMapCombo = if (combo >= 0) comboImage else badCombo
     }
 
-    fun setComboUpdate(typeTap: Short) {
+    override fun setComboUpdate(typeTap: Short) {
         positionJudge = typeTap
         when (typeTap) {
             VALUE_PERFECT -> {

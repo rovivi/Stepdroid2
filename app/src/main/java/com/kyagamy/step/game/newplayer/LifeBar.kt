@@ -5,13 +5,14 @@ import android.graphics.*
 import com.kyagamy.step.R
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.cutBitmap
 import com.kyagamy.step.common.step.CommonGame.TransformBitmap.Companion.makeTransparent
+import com.kyagamy.step.game.interfaces.ILifeBar
 import kotlin.math.abs
 
 class LifeBar(
     context: Context,
     stepsDrawer: StepsDrawer
 
-) {
+) : ILifeBar {
 
     private val sizeX: Int
     private val sizeY: Int
@@ -116,7 +117,7 @@ class LifeBar(
         }
     }
 
-    fun updateLife(typeTap: Short, combo: Int) {
+    override fun updateLife(typeTap: Short, combo: Int) {
         when (typeTap) {
             Combo.VALUE_PERFECT, Combo.VALUE_GREAT -> life+=1*abs(combo)
             Combo.VALUE_BAD -> life-=0.3f*abs(combo)

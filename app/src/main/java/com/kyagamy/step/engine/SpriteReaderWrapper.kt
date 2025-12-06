@@ -2,7 +2,7 @@ package com.kyagamy.step.engine
 
 import android.graphics.Canvas
 import android.graphics.Rect
-import com.kyagamy.step.common.step.commonGame.customSprite.SpriteReader
+import com.kyagamy.step.common.step.CommonGame.CustomSprite.SpriteReader
 
 class SpriteReaderWrapper(private val sprite: SpriteReader) : ISpriteRenderer {
     private var canvas: Canvas? = null
