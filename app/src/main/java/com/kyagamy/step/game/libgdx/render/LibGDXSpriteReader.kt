@@ -9,6 +9,7 @@ import com.badlogic.gdx.utils.Array
 class LibGDXSpriteReader {
     private var animation: Animation<TextureRegion>
     private var stateTime = 0f
+    var speedMultiplier = 1.0f // Animation speed multiplier (BPM-based)
 
     constructor(texture: Texture, cols: Int, rows: Int, frameDuration: Float) {
         val tmp = TextureRegion.split(
@@ -37,7 +38,8 @@ class LibGDXSpriteReader {
     }
 
     fun update(delta: Float) {
-        stateTime += delta
+        // Apply speed multiplier to animation (based on BPM)
+        stateTime += delta * speedMultiplier
     }
 
     fun draw(batch: SpriteBatch, x: Float, y: Float, width: Float, height: Float) {

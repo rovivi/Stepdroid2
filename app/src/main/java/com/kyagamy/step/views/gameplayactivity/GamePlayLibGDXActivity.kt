@@ -163,6 +163,9 @@ class GamePlayLibGDXActivity : AndroidApplication() {
             val index = parent.indexOfChild(binding.gamePlay)
             parent.removeView(binding.gamePlay)
             parent.addView(gameView, index, layoutParams)
+
+            // Setup videoView dimensions based on game area aspect ratio
+            setupVideoViewDimensions()
         }
 
         // EdgeToEdge
@@ -229,6 +232,38 @@ class GamePlayLibGDXActivity : AndroidApplication() {
         binding.openGLSpriteView?.visibility = View.GONE
         binding.bgPad?.visibility = View.VISIBLE
         binding.videoViewBGA?.visibility = View.VISIBLE
+    }
+
+    private fun setupVideoViewDimensions() {
+        // Apply aspect ratio to videoView similar to GamePlayNew.setupVideoView()
+        // This ensures the video matches the game area proportions
+        binding.videoViewBGA?.post {
+            binding.videoViewBGA?.layoutParams?.let { params ->
+                val screenWidth = displayMetrics.widthPixels
+                val screenHeight = displayMetrics.heightPixels
+                val isLandscape = screenWidth > screenHeight
+
+                if (isLandscape) {
+                    // Landscape: 16:9 aspect ratio
+                    val gameAreaHeight = screenHeight
+                    val gameAreaWidth = (screenHeight * 1.77777778f).toInt()
+
+                    if (gameAreaWidth <= screenWidth) {
+                        params.width = gameAreaWidth
+                        params.height = gameAreaHeight
+                    } else {
+                        params.width = screenWidth
+                        params.height = (screenWidth / 1.77777778f).toInt()
+                    }
+                } else {
+                    // Portrait: 4:3 aspect ratio (from GameConstants.ASPECT_RATIO_4_3)
+                    params.width = screenWidth
+                    params.height = (screenWidth * 0.75).toInt()
+                }
+
+                binding.videoViewBGA?.layoutParams = params
+            }
+        }
     }
 
     private fun startGamePlay() {

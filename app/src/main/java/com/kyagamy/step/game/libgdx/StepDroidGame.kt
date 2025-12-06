@@ -38,6 +38,11 @@ class StepDroidGame(private val stepData: StepObject?) : ApplicationAdapter() {
     private val drawList = ArrayList<GameRow>()
     private var speed = 0.0
 
+    // IMPORTANT: Game area uses 4:3 aspect ratio (0.75) like GamePlayNew
+    // This creates a better visual proportion for the game
+    // playerSizeY = playerSizeX * 0.75 (from GameConstants.ASPECT_RATIO_4_3)
+    // LibGDXStepsDrawer handles this proportion internally
+
     override fun create() {
         batch = SpriteBatch()
         font = BitmapFont()
@@ -65,6 +70,10 @@ class StepDroidGame(private val stepData: StepObject?) : ApplicationAdapter() {
             // Link UI to GameState
             gameState?.stepsDrawer = stepsDrawer
             gameState?.combo = combo
+
+            // Set animation speed based on BPM (80 BPM = 1.0x speed)
+            val currentBPM = stepData.getDisplayBPM().toFloat()
+            libGDXDrawer.updateAnimationSpeed(currentBPM)
 
             try {
                 val musicFile = Gdx.files.absolute(stepData.getMusicPath())
@@ -99,9 +108,15 @@ class StepDroidGame(private val stepData: StepObject?) : ApplicationAdapter() {
     }
 
     override fun resize(width: Int, height: Int) {
+        // Use the full screen dimensions for the camera
         camera.setToOrtho(false, width.toFloat(), height.toFloat())
         camera.update()
+
+        // Recalculate game area with 4:3 aspect ratio
         (stepsDrawer as? LibGDXStepsDrawer)?.calculateDimensions()
+
+        // Recalculate UI dimensions to match new screen size
+        (lifeBar as? LibGDXLifeBar)?.calculateDimensions()
     }
 
     override fun render() {
@@ -114,6 +129,7 @@ class StepDroidGame(private val stepData: StepObject?) : ApplicationAdapter() {
         gameState?.update()
         (stepsDrawer as? LibGDXStepsDrawer)?.update(Gdx.graphics.deltaTime)
         (combo as? LibGDXCombo)?.update(Gdx.graphics.deltaTime)
+        (lifeBar as? LibGDXLifeBar)?.update()
 
         // Sync Logic
         music?.let { m ->

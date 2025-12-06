@@ -20,9 +20,23 @@ class LibGDXNoteSkin(private val skinName: String, private val type: String) {
     
     private val textures = ArrayList<Texture>()
 
+    // Animation speed based on BPM (80 BPM = 1.0x speed)
+    private var animationSpeedMultiplier = 1.0f
+    private val BASE_BPM = 80f
+
     init {
         loadSkin()
     }
+
+    /**
+     * Sets the animation speed based on current BPM.
+     * Formula: speed = currentBPM / 80 (80 BPM = 1.0x speed)
+     */
+    fun setAnimationSpeed(currentBPM: Float) {
+        animationSpeedMultiplier = currentBPM / BASE_BPM
+    }
+
+    fun getAnimationSpeed(): Float = animationSpeedMultiplier
 
     private fun loadSkin() {
         val pathNS = "NoteSkins/pump/$skinName/"
